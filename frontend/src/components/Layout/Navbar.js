@@ -45,6 +45,8 @@ const Navbar = () => {
               currentUser
                 ? currentUser.role === "student"
                   ? `/students/dashboard/${currentUser._id || currentUser.id}`
+                  : currentUser.role === "faculty"
+                  ? `/faculty/dashboard/${currentUser._id || currentUser.id}`
                   : `/dashboard/${currentUser.role}`
                 : "/login"
             }
@@ -131,19 +133,75 @@ const Navbar = () => {
                     </>
                   )}
 
+                {/* Faculty Navigation */}
+                {currentUser.role === "faculty" &&
+                  (currentUser._id || currentUser.id) && (
+                    <>
+                      <Link
+                        to={`/faculty/dashboard/${
+                          currentUser._id || currentUser.id
+                        }`}
+                        className="nav-link"
+                        onClick={closeMenu}
+                      >
+                        <span className="nav-icon">
+                          <i className="fas fa-tachometer-alt"></i>
+                        </span>
+                        Dashboard
+                      </Link>
+                      <Link
+                        to={`/faculty/reviews/${
+                          currentUser._id || currentUser.id
+                        }`}
+                        className="nav-link"
+                        onClick={closeMenu}
+                      >
+                        <span className="nav-icon">
+                          <i className="fas fa-clipboard-list"></i>
+                        </span>
+                        Reviews
+                      </Link>
+                      <Link
+                        to={`/faculty/students/${
+                          currentUser._id || currentUser.id
+                        }`}
+                        className="nav-link"
+                        onClick={closeMenu}
+                      >
+                        <span className="nav-icon">
+                          <i className="fas fa-users"></i>
+                        </span>
+                        Students
+                      </Link>
+                      <Link
+                        to={`/faculty/analytics/${
+                          currentUser._id || currentUser.id
+                        }`}
+                        className="nav-link"
+                        onClick={closeMenu}
+                      >
+                        <span className="nav-icon">
+                          <i className="fas fa-chart-bar"></i>
+                        </span>
+                        Analytics
+                      </Link>
+                    </>
+                  )}
+
                 {/* Other Roles Navigation */}
-                {currentUser.role !== "student" && (
-                  <Link
-                    to={`/dashboard/${currentUser.role}`}
-                    className="nav-link"
-                    onClick={closeMenu}
-                  >
-                    <span className="nav-icon">
-                      <i className="fas fa-home"></i>
-                    </span>
-                    Dashboard
-                  </Link>
-                )}
+                {currentUser.role !== "student" &&
+                  currentUser.role !== "faculty" && (
+                    <Link
+                      to={`/dashboard/${currentUser.role}`}
+                      className="nav-link"
+                      onClick={closeMenu}
+                    >
+                      <span className="nav-icon">
+                        <i className="fas fa-home"></i>
+                      </span>
+                      Dashboard
+                    </Link>
+                  )}
               </>
             )}
           </div>

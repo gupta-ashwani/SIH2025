@@ -1,14 +1,22 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Faculty = require("../model/faculty");
 const Student = require("../model/student");
-const { isLoggedIn } = require("../middleware/auth");
+const { requireAuth } = require("../middleware/auth");
 
 // Faculty Dashboard
-router.get("/dashboard/:id", isLoggedIn, async (req, res) => {
+router.get("/dashboard/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
+    // Security check: Ensure the logged-in user is accessing their own dashboard
+    if (req.user.role !== "faculty" || req.user._id.toString() !== id) {
+      return res.status(403).json({
+        error: "Access denied. You can only access your own dashboard.",
+      });
+    }
+
     const faculty = await Faculty.findById(id)
       .populate("department", "name")
       .populate("students", "name studentID");
@@ -17,110 +25,182 @@ router.get("/dashboard/:id", isLoggedIn, async (req, res) => {
       return res.status(404).json({ error: "Faculty not found" });
     }
 
-    // Get pending reviews count
+    // Get pending reviews count with proper error handling
     const pendingReviews = await Student.aggregate([
       {
         $match: {
-          _id: { $in: faculty.students }
-        }
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
       },
       {
-        $unwind: "$achievements"
+        $unwind: {
+          path: "$achievements",
+          preserveNullAndEmptyArrays: false,
+        },
       },
       {
         $match: {
-          "achievements.status": "Pending"
-        }
+          "achievements.status": "Pending",
+        },
       },
       {
-        $count: "total"
-      }
+        $count: "total",
+      },
     ]);
 
-    // Get this week's approved achievements
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    // Get this month's approved achievements dynamically from database
+    const now = new Date();
+    const oneMonthAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
 
-    const approvedThisWeek = faculty.achievementsReviewed.filter(
-      review => review.status === "Approved" && review.reviewedAt >= oneWeekAgo
-    ).length;
+    // Handle edge case where current day doesn't exist in previous month (e.g., Jan 31 -> Feb 28)
+    if (oneMonthAgo.getMonth() !== (now.getMonth() - 1 + 12) % 12) {
+      oneMonthAgo.setDate(0); // Set to last day of previous month
+    }
 
-    // Get recent pending reviews for display
+    const approvedThisMonth = await Student.aggregate([
+      {
+        $match: {
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $unwind: {
+          path: "$achievements",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $match: {
+          "achievements.status": "Approved",
+          "achievements.reviewedAt": {
+            $exists: true,
+            $gte: oneMonthAgo,
+          },
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    // Get total reviewed achievements dynamically from database
+    const totalReviewed = await Student.aggregate([
+      {
+        $match: {
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $unwind: {
+          path: "$achievements",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $match: {
+          "achievements.status": { $in: ["Approved", "Rejected"] },
+          "achievements.reviewedAt": { $exists: true },
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    // Get recent pending reviews for display with better error handling
     const recentPendingReviews = await Student.aggregate([
       {
         $match: {
-          _id: { $in: faculty.students }
-        }
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
       },
       {
-        $unwind: "$achievements"
+        $unwind: {
+          path: "$achievements",
+          preserveNullAndEmptyArrays: false,
+        },
       },
       {
         $match: {
-          "achievements.status": "Pending"
-        }
+          "achievements.status": "Pending",
+        },
       },
       {
         $sort: {
-          "achievements.uploadedAt": -1
-        }
+          "achievements.uploadedAt": -1,
+        },
       },
       {
-        $limit: 5
+        $limit: 5,
       },
       {
         $project: {
           student: {
             _id: "$_id",
-            name: "$name"
+            name: "$name",
           },
-          achievement: "$achievements"
-        }
-      }
+          achievement: "$achievements",
+        },
+      },
     ]);
 
-    // Get student statistics
+    // Get student statistics with proper null handling
+    const totalStudentsCount = await Student.countDocuments({
+      coordinator: new mongoose.Types.ObjectId(id),
+    });
+
     const studentStats = {
-      active: faculty.students.length,
+      active: totalStudentsCount,
       highPerformers: await Student.countDocuments({
-        _id: { $in: faculty.students },
-        gpa: { $gte: 8.0 }
+        coordinator: new mongoose.Types.ObjectId(id),
+        gpa: { $gte: 8.0 },
       }),
       recentSubmissions: await Student.aggregate([
         {
           $match: {
-            _id: { $in: faculty.students }
-          }
+            coordinator: new mongoose.Types.ObjectId(id),
+          },
         },
         {
-          $unwind: "$achievements"
+          $unwind: {
+            path: "$achievements",
+            preserveNullAndEmptyArrays: false,
+          },
         },
         {
           $match: {
-            "achievements.uploadedAt": { $gte: oneWeekAgo }
-          }
+            "achievements.uploadedAt": {
+              $exists: true,
+              $gte: oneMonthAgo,
+            },
+          },
         },
         {
-          $count: "total"
-        }
-      ]).then(result => result[0]?.total || 0)
+          $count: "total",
+        },
+      ]).then((result) => result[0]?.total || 0),
     };
 
-    // Get recent activities
-    const recentActivities = faculty.achievementsReviewed
+    // Get recent activities with null handling
+    const recentActivities = (faculty.achievementsReviewed || [])
       .slice(-5)
       .reverse()
-      .map(review => ({
-        description: `${review.status} achievement review`,
-        timestamp: review.reviewedAt,
-        action: review.status
+      .map((review) => ({
+        description: `${review.status || "Unknown"} achievement review`,
+        timestamp: review.reviewedAt || new Date(),
+        action: review.status || "Unknown",
       }));
 
+    // Calculate stats with proper null/undefined handling
     const stats = {
-      totalStudents: faculty.students.length,
+      totalStudents: totalStudentsCount,
       pendingReviews: pendingReviews[0]?.total || 0,
-      approvedThisWeek,
-      totalReviews: faculty.achievementsReviewed.length
+      approvedThisMonth: approvedThisMonth[0]?.total || 0,
+      totalReviewed: totalReviewed[0]?.total || 0,
     };
 
     res.json({
@@ -128,9 +208,8 @@ router.get("/dashboard/:id", isLoggedIn, async (req, res) => {
       stats,
       pendingReviews: recentPendingReviews,
       recentActivities,
-      studentStats
+      studentStats,
     });
-
   } catch (error) {
     console.error("Faculty dashboard error:", error);
     res.status(500).json({ error: "Failed to load dashboard data" });
@@ -138,61 +217,78 @@ router.get("/dashboard/:id", isLoggedIn, async (req, res) => {
 });
 
 // Get Reviews
-router.get("/reviews/:id", isLoggedIn, async (req, res) => {
+router.get("/reviews/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { filter = "all" } = req.query;
-    
-    const faculty = await Faculty.findById(id).populate("students");
-    
+
+    // Security check: Ensure the logged-in user is accessing their own data
+    if (req.user.role !== "faculty" || req.user._id.toString() !== id) {
+      return res
+        .status(403)
+        .json({ error: "Access denied. You can only access your own data." });
+    }
+
+    const faculty = await Faculty.findById(id);
+
     if (!faculty) {
       return res.status(404).json({ error: "Faculty not found" });
     }
 
     let matchStage = {
-      _id: { $in: faculty.students }
+      coordinator: new mongoose.Types.ObjectId(id),
     };
 
     // Apply filter for achievement status
     if (filter !== "all") {
-      matchStage["achievements.status"] = filter === "pending" ? "Pending" : 
-                                         filter === "approved" ? "Approved" : 
-                                         "Rejected";
+      matchStage["achievements.status"] =
+        filter === "pending"
+          ? "Pending"
+          : filter === "approved"
+          ? "Approved"
+          : "Rejected";
     }
 
     const reviews = await Student.aggregate([
       {
-        $match: matchStage
+        $match: matchStage,
       },
       {
-        $unwind: "$achievements"
+        $unwind: "$achievements",
       },
       {
-        $match: filter !== "all" ? {
-          "achievements.status": filter === "pending" ? "Pending" : 
-                               filter === "approved" ? "Approved" : 
-                               "Rejected"
-        } : {}
+        $match:
+          filter !== "all"
+            ? {
+                "achievements.status":
+                  filter === "pending"
+                    ? "Pending"
+                    : filter === "approved"
+                    ? "Approved"
+                    : "Rejected",
+              }
+            : {},
       },
       {
         $sort: {
-          "achievements.uploadedAt": -1
-        }
+          "achievements.uploadedAt": -1,
+        },
       },
       {
         $project: {
           student: {
             _id: "$_id",
             name: "$name",
-            studentID: "$studentID"
+            studentID: "$studentID",
+            course: "$course",
+            year: "$year",
           },
-          achievement: "$achievements"
-        }
-      }
+          achievement: "$achievements",
+        },
+      },
     ]);
 
     res.json({ reviews });
-
   } catch (error) {
     console.error("Reviews error:", error);
     res.status(500).json({ error: "Failed to load reviews" });
@@ -200,82 +296,110 @@ router.get("/reviews/:id", isLoggedIn, async (req, res) => {
 });
 
 // Review Achievement
-router.post("/review/:facultyId/:achievementId", isLoggedIn, async (req, res) => {
-  try {
-    const { facultyId, achievementId } = req.params;
-    const { status, comment, studentId } = req.body;
+router.post(
+  "/review/:facultyId/:achievementId",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const { facultyId, achievementId } = req.params;
+      const { status, comment, studentId } = req.body;
 
-    // Update student's achievement status
-    await Student.updateOne(
-      { _id: studentId, "achievements._id": achievementId },
-      {
-        $set: {
-          "achievements.$.status": status,
-          "achievements.$.comment": comment || "",
-          "achievements.$.reviewedAt": new Date()
-        }
+      // Security check: Ensure the logged-in user is the faculty making the review
+      if (
+        req.user.role !== "faculty" ||
+        req.user._id.toString() !== facultyId
+      ) {
+        return res
+          .status(403)
+          .json({ error: "Access denied. You can only review as yourself." });
       }
-    );
 
-    // Add to faculty's reviewed achievements
-    await Faculty.updateOne(
-      { _id: facultyId },
-      {
-        $push: {
-          achievementsReviewed: {
-            achievementId,
-            studentId,
-            status,
-            comment: comment || "",
-            reviewedAt: new Date()
-          }
+      // Update student's achievement status
+      await Student.updateOne(
+        { _id: studentId, "achievements._id": achievementId },
+        {
+          $set: {
+            "achievements.$.status": status,
+            "achievements.$.comment": comment || "",
+            "achievements.$.reviewedAt": new Date(),
+          },
         }
-      }
-    );
+      );
 
-    res.json({ message: "Achievement reviewed successfully" });
+      // Add to faculty's reviewed achievements
+      await Faculty.updateOne(
+        { _id: facultyId },
+        {
+          $push: {
+            achievementsReviewed: {
+              achievementId,
+              studentId,
+              status,
+              comment: comment || "",
+              reviewedAt: new Date(),
+            },
+          },
+        }
+      );
 
-  } catch (error) {
-    console.error("Review error:", error);
-    res.status(500).json({ error: "Failed to review achievement" });
+      res.json({ message: "Achievement reviewed successfully" });
+    } catch (error) {
+      console.error("Review error:", error);
+      res.status(500).json({ error: "Failed to review achievement" });
+    }
   }
-});
+);
 
 // Get Faculty Students
-router.get("/students/:id", isLoggedIn, async (req, res) => {
+router.get("/students/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
+    // Security check: Ensure the logged-in user is accessing their own data
+    if (req.user.role !== "faculty" || req.user._id.toString() !== id) {
+      return res.status(403).json({
+        error: "Access denied. You can only access your own students.",
+      });
+    }
+
     const faculty = await Faculty.findById(id);
-    
+
     if (!faculty) {
       return res.status(404).json({ error: "Faculty not found" });
     }
 
+    // Find students where this faculty is the coordinator
     const students = await Student.find({
-      _id: { $in: faculty.students }
+      coordinator: id,
     })
-    .populate("department", "name")
-    .lean();
+      .populate("department", "name")
+      .lean();
 
     // Enhance student data with calculated fields
-    const enhancedStudents = students.map(student => {
+    const enhancedStudents = students.map((student) => {
       const achievementCount = student.achievements?.length || 0;
-      const pendingReviews = student.achievements?.filter(a => a.status === "Pending").length || 0;
-      const approvedAchievements = student.achievements?.filter(a => a.status === "Approved").length || 0;
-      
+      const pendingReviews =
+        student.achievements?.filter((a) => a.status === "Pending").length || 0;
+      const approvedAchievements =
+        student.achievements?.filter((a) => a.status === "Approved").length ||
+        0;
+
       // Calculate performance score based on GPA, achievements, and attendance
       const gpaScore = ((student.gpa || 0) / 10) * 40; // 40% weight
       const achievementScore = Math.min(achievementCount * 5, 30); // 30% weight, max 30
       const attendanceScore = ((student.attendance || 0) / 100) * 30; // 30% weight
-      const performanceScore = Math.round(gpaScore + achievementScore + attendanceScore);
+      const performanceScore = Math.round(
+        gpaScore + achievementScore + attendanceScore
+      );
 
       // Get recent achievements
-      const recentAchievements = student.achievements
-        ?.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
-        .slice(0, 3) || [];
+      const recentAchievements =
+        student.achievements
+          ?.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
+          .slice(0, 3) || [];
 
-      const lastActivity = recentAchievements[0]?.uploadedAt || student.updatedAt;
+      const lastActivity =
+        recentAchievements[0]?.uploadedAt || student.updatedAt;
 
       return {
         ...student,
@@ -283,12 +407,11 @@ router.get("/students/:id", isLoggedIn, async (req, res) => {
         pendingReviews,
         performanceScore,
         recentAchievements,
-        lastActivity
+        lastActivity,
       };
     });
 
     res.json({ students: enhancedStudents });
-
   } catch (error) {
     console.error("Students error:", error);
     res.status(500).json({ error: "Failed to load students" });
@@ -296,13 +419,20 @@ router.get("/students/:id", isLoggedIn, async (req, res) => {
 });
 
 // Get Analytics
-router.get("/analytics/:id", isLoggedIn, async (req, res) => {
+router.get("/analytics/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { period = "month" } = req.query;
-    
+
+    // Security check: Ensure the logged-in user is accessing their own data
+    if (req.user.role !== "faculty" || req.user._id.toString() !== id) {
+      return res.status(403).json({
+        error: "Access denied. You can only access your own analytics.",
+      });
+    }
+
     const faculty = await Faculty.findById(id);
-    
+
     if (!faculty) {
       return res.status(404).json({ error: "Faculty not found" });
     }
@@ -310,7 +440,7 @@ router.get("/analytics/:id", isLoggedIn, async (req, res) => {
     // Calculate date range based on period
     const now = new Date();
     let startDate;
-    
+
     switch (period) {
       case "week":
         startDate = new Date(now.setDate(now.getDate() - 7));
@@ -329,16 +459,16 @@ router.get("/analytics/:id", isLoggedIn, async (req, res) => {
     const submissionTrend = await Student.aggregate([
       {
         $match: {
-          _id: { $in: faculty.students }
-        }
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
       },
       {
-        $unwind: "$achievements"
+        $unwind: "$achievements",
       },
       {
         $match: {
-          "achievements.uploadedAt": { $gte: startDate }
-        }
+          "achievements.uploadedAt": { $gte: startDate },
+        },
       },
       {
         $group: {
@@ -346,47 +476,47 @@ router.get("/analytics/:id", isLoggedIn, async (req, res) => {
             date: {
               $dateToString: {
                 format: "%Y-%m-%d",
-                date: "$achievements.uploadedAt"
-              }
-            }
+                date: "$achievements.uploadedAt",
+              },
+            },
           },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       {
-        $sort: { "_id.date": 1 }
-      }
+        $sort: { "_id.date": 1 },
+      },
     ]);
 
     // Get achievement types distribution
     const achievementTypes = await Student.aggregate([
       {
         $match: {
-          _id: { $in: faculty.students }
-        }
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
       },
       {
-        $unwind: "$achievements"
+        $unwind: "$achievements",
       },
       {
         $group: {
           _id: "$achievements.type",
-          count: { $sum: 1 }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
     // Get student performance data
     const studentPerformance = await Student.find({
-      _id: { $in: faculty.students }
+      coordinator: new mongoose.Types.ObjectId(id),
     }).select("name gpa achievements");
 
     // Get top performers
     const topPerformers = studentPerformance
-      .map(student => ({
+      .map((student) => ({
         name: `${student.name.first} ${student.name.last}`,
         achievements: student.achievements?.length || 0,
-        score: Math.round(((student.gpa || 0) / 10) * 100)
+        score: Math.round(((student.gpa || 0) / 10) * 100),
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
@@ -395,19 +525,19 @@ router.get("/analytics/:id", isLoggedIn, async (req, res) => {
     const recentActivity = await Student.aggregate([
       {
         $match: {
-          _id: { $in: faculty.students }
-        }
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
       },
       {
-        $unwind: "$achievements"
+        $unwind: "$achievements",
       },
       {
         $sort: {
-          "achievements.uploadedAt": -1
-        }
+          "achievements.uploadedAt": -1,
+        },
       },
       {
-        $limit: 10
+        $limit: 10,
       },
       {
         $project: {
@@ -417,86 +547,88 @@ router.get("/analytics/:id", isLoggedIn, async (req, res) => {
           date: {
             $dateToString: {
               format: "%Y-%m-%d",
-              date: "$achievements.uploadedAt"
-            }
-          }
-        }
-      }
+              date: "$achievements.uploadedAt",
+            },
+          },
+        },
+      },
     ]);
 
     // Calculate overview statistics
     const totalSubmissions = await Student.aggregate([
       {
         $match: {
-          _id: { $in: faculty.students }
-        }
+          coordinator: new mongoose.Types.ObjectId(id),
+        },
       },
       {
-        $unwind: "$achievements"
+        $unwind: "$achievements",
       },
       {
         $match: {
-          "achievements.uploadedAt": { $gte: startDate }
-        }
+          "achievements.uploadedAt": { $gte: startDate },
+        },
       },
       {
-        $count: "total"
-      }
+        $count: "total",
+      },
     ]);
 
     const activeStudents = await Student.countDocuments({
-      _id: { $in: faculty.students },
-      updatedAt: { $gte: startDate }
+      coordinator: new mongoose.Types.ObjectId(id),
+      updatedAt: { $gte: startDate },
     });
 
     const overview = {
       totalSubmissions: totalSubmissions[0]?.total || 0,
       submissionGrowth: 12, // Mock data - calculate based on previous period
       activeStudents,
-      totalStudents: faculty.students.length,
+      totalStudents: studentPerformance.length,
       avgReviewTime: 24, // Mock data - calculate from review timestamps
       reviewTimeImprovement: 15, // Mock data
       approvalRate: 85, // Mock data - calculate from approved vs total reviews
-      approvalRateChange: 5 // Mock data
+      approvalRateChange: 5, // Mock data
     };
 
     // Format data for charts
     const analyticsData = {
       overview,
       submissionTrend: {
-        labels: submissionTrend.map(item => item._id.date),
-        data: submissionTrend.map(item => item.count)
+        labels: submissionTrend.map((item) => item._id.date),
+        data: submissionTrend.map((item) => item.count),
       },
       achievementTypes: {
-        labels: achievementTypes.map(item => item._id || "Other"),
-        data: achievementTypes.map(item => item.count)
+        labels: achievementTypes.map((item) => item._id || "Other"),
+        data: achievementTypes.map((item) => item.count),
       },
       studentPerformance: {
-        labels: studentPerformance.map(s => `${s.name.first} ${s.name.last}`),
-        data: studentPerformance.map(s => Math.round(((s.gpa || 0) / 10) * 100))
+        labels: studentPerformance.map((s) => `${s.name.first} ${s.name.last}`),
+        data: studentPerformance.map((s) =>
+          Math.round(((s.gpa || 0) / 10) * 100)
+        ),
       },
       topPerformers,
       recentActivity,
       monthlyStats: {
         currentMonth: {
           submissions: totalSubmissions[0]?.total || 0,
-          reviews: faculty.achievementsReviewed.filter(r => 
-            new Date(r.reviewedAt) >= startDate
+          reviews: faculty.achievementsReviewed.filter(
+            (r) => new Date(r.reviewedAt) >= startDate
           ).length,
-          approvals: faculty.achievementsReviewed.filter(r => 
-            r.status === "Approved" && new Date(r.reviewedAt) >= startDate
-          ).length
+          approvals: faculty.achievementsReviewed.filter(
+            (r) =>
+              r.status === "Approved" && new Date(r.reviewedAt) >= startDate
+          ).length,
         },
         lastMonth: {
           submissions: 45, // Mock data
-          reviews: 42,    // Mock data
-          approvals: 38   // Mock data
-        }
-      }
+          reviews: 42, // Mock data
+          approvals: 38, // Mock data
+        },
+      },
     };
 
     res.json(analyticsData);
-
   } catch (error) {
     console.error("Analytics error:", error);
     res.status(500).json({ error: "Failed to load analytics" });

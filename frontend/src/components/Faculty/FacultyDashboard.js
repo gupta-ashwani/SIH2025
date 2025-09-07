@@ -13,18 +13,47 @@ const FacultyDashboard = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // If user is logged in as faculty and trying to access wrong dashboard, redirect to their own
+    if (
+      currentUser &&
+      currentUser.role === "faculty" &&
+      currentUser._id !== id
+    ) {
+      navigate(`/faculty/dashboard/${currentUser._id}`);
+      return;
+    }
     fetchDashboardData();
-  }, [id]);
+  }, [id, currentUser]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError("");
+
+      // Additional security check: Ensure current user can access this faculty dashboard
+      if (
+        currentUser &&
+        currentUser.role === "faculty" &&
+        currentUser._id !== id
+      ) {
+        setError("Access denied. You can only access your own dashboard.");
+        return;
+      }
+
       const response = await facultyService.getFacultyDashboard(id);
       setDashboardData(response.data);
     } catch (error) {
       console.error("Dashboard error:", error);
-      setError(error.response?.data?.error || "Failed to load dashboard data");
+      if (error.response?.status === 403) {
+        setError("Access denied. You can only access your own dashboard.");
+      } else if (error.response?.status === 401) {
+        setError("Please log in to access your dashboard.");
+        navigate("/login");
+      } else {
+        setError(
+          error.response?.data?.error || "Failed to load dashboard data"
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -53,10 +82,6 @@ const FacultyDashboard = () => {
       default:
         return "#6b7280";
     }
-  };
-
-  const handleNavigate = (path) => {
-    navigate(`/faculty/${path}/${id}`);
   };
 
   const handleReviewAchievement = (achievementId, studentId) => {
@@ -126,10 +151,12 @@ const FacultyDashboard = () => {
 
   return (
     <div className="faculty-dashboard">
-      {/* Welcome Section */}
+      {/* Welcome Section - Full Width */}
       <div className="welcome-section">
         <div className="welcome-content">
-          <h1>Welcome back, {faculty?.designation} {facultyFirstName}!</h1>
+          <h1>
+            Welcome back, {faculty?.designation} {facultyFirstName}!
+          </h1>
           <p>
             {faculty?.department?.name || "Department not specified"} •{" "}
             {faculty?.designation || "Faculty"}
@@ -149,7 +176,7 @@ const FacultyDashboard = () => {
         {/* Stats Cards */}
         <div className="stats-container">
           <div className="stat-card">
-            <div className="stat-icon students">
+            <div className="stat-icon">
               <i className="fas fa-users"></i>
             </div>
             <div className="stat-content">
@@ -159,7 +186,7 @@ const FacultyDashboard = () => {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon pending">
+            <div className="stat-icon">
               <i className="fas fa-clock"></i>
             </div>
             <div className="stat-content">
@@ -169,22 +196,22 @@ const FacultyDashboard = () => {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon approved">
+            <div className="stat-icon">
               <i className="fas fa-check-circle"></i>
             </div>
             <div className="stat-content">
-              <div className="stat-label">Approved This Week</div>
-              <div className="stat-number">{stats?.approvedThisWeek || 0}</div>
+              <div className="stat-label">Approved This Month</div>
+              <div className="stat-number">{stats?.approvedThisMonth || 0}</div>
             </div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon achievements">
+            <div className="stat-icon">
               <i className="fas fa-trophy"></i>
             </div>
             <div className="stat-content">
-              <div className="stat-label">Total Reviews</div>
-              <div className="stat-number">{stats?.totalReviews || 0}</div>
+              <div className="stat-label">Total Reviewed</div>
+              <div className="stat-number">{stats?.totalReviewed || 0}</div>
             </div>
           </div>
         </div>
@@ -196,40 +223,33 @@ const FacultyDashboard = () => {
             <div className="card-header">
               <h2>Pending Reviews</h2>
               <button
-                className="view-all-btn"
-                onClick={() => handleNavigate("reviews")}
+                className="add-new-btn"
+                onClick={() => navigate(`/faculty/reviews/${id}`)}
               >
                 View All
               </button>
             </div>
-            <div className="reviews-list">
+            <div className="activities-list">
               {pendingReviews && pendingReviews.length > 0 ? (
                 pendingReviews.slice(0, 5).map((review, index) => (
-                  <div key={index} className="review-item">
-                    <div className="review-icon">
+                  <div key={index} className="activity-item">
+                    <div className="activity-icon">
                       <i className="fas fa-file-alt"></i>
                     </div>
-                    <div className="review-content">
-                      <h3>{review.achievement?.title || "Untitled Achievement"}</h3>
+                    <div className="activity-content">
+                      <h3>
+                        {review.achievement?.title || "Untitled Achievement"}
+                      </h3>
                       <p>
-                        {review.student?.name?.first} {review.student?.name?.last} •{" "}
+                        {review.student?.name?.first}{" "}
+                        {review.student?.name?.last} •{" "}
                         {review.achievement?.type || "General"} •{" "}
                         {formatDate(review.achievement?.uploadedAt)}
                       </p>
                     </div>
-                    <div className="review-actions">
-                      <button
-                        className="review-btn"
-                        onClick={() =>
-                          handleReviewAchievement(
-                            review.achievement?._id,
-                            review.student?._id
-                          )
-                        }
-                      >
-                        Review
-                      </button>
-                    </div>
+                    <span className="activity-status status-pending">
+                      Review
+                    </span>
                   </div>
                 ))
               ) : (
@@ -247,98 +267,91 @@ const FacultyDashboard = () => {
           {/* Right Sidebar */}
           <div className="sidebar">
             {/* Student Statistics */}
-            <div className="content-card student-stats-card">
+            <div className="content-card progress-card">
               <h2>Student Statistics</h2>
-              <div className="student-stats">
-                <div className="stat-item">
-                  <div className="stat-header">
-                    <span>Active Students</span>
-                    <span className="stat-value">
-                      {studentStats?.active || 0}
-                    </span>
-                  </div>
-                  <div className="stat-bar">
-                    <div
-                      className="stat-fill active"
-                      style={{
-                        width: `${
-                          ((studentStats?.active || 0) /
-                            Math.max(stats?.totalStudents || 1, 1)) *
-                          100
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
+              <div className="progress-item">
+                <div className="progress-header">
+                  <span>Active Students</span>
+                  <span className="progress-value">
+                    {studentStats?.active || 0}/{stats?.totalStudents || 0}
+                  </span>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-header">
-                    <span>High Performers</span>
-                    <span className="stat-value">
-                      {studentStats?.highPerformers || 0}
-                    </span>
-                  </div>
-                  <div className="stat-bar">
-                    <div
-                      className="stat-fill high-performer"
-                      style={{
-                        width: `${
-                          ((studentStats?.highPerformers || 0) /
-                            Math.max(stats?.totalStudents || 1, 1)) *
-                          100
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${
+                        ((studentStats?.active || 0) /
+                          Math.max(stats?.totalStudents || 1, 1)) *
+                        100
+                      }%`,
+                      backgroundColor: "#10b981",
+                    }}
+                  ></div>
                 </div>
-                <div className="stat-item">
-                  <div className="stat-header">
-                    <span>Recent Submissions</span>
-                    <span className="stat-value">
-                      {studentStats?.recentSubmissions || 0}
-                    </span>
-                  </div>
-                  <div className="stat-bar">
-                    <div
-                      className="stat-fill recent"
-                      style={{
-                        width: `${Math.min(
-                          ((studentStats?.recentSubmissions || 0) / 10) * 100,
-                          100
-                        )}%`,
-                      }}
-                    ></div>
-                  </div>
+              </div>
+              <div className="progress-item">
+                <div className="progress-header">
+                  <span>High Performers</span>
+                  <span className="progress-value">
+                    {studentStats?.highPerformers || 0}/
+                    {stats?.totalStudents || 0}
+                  </span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${
+                        ((studentStats?.highPerformers || 0) /
+                          Math.max(stats?.totalStudents || 1, 1)) *
+                        100
+                      }%`,
+                      backgroundColor: "#f59e0b",
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <div className="progress-item">
+                <div className="progress-header">
+                  <span>Recent Submissions</span>
+                  <span className="progress-value">
+                    {studentStats?.recentSubmissions || 0}
+                  </span>
+                </div>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${Math.min(
+                        ((studentStats?.recentSubmissions || 0) / 10) * 100,
+                        100
+                      )}%`,
+                      backgroundColor: "#6366f1",
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
 
             {/* Recent Activities */}
-            <div className="content-card activities-card">
+            <div className="content-card events-card">
               <h2>Recent Activities</h2>
-              <div className="activities-list">
+              <div className="events-list">
                 {recentActivities && recentActivities.length > 0 ? (
                   recentActivities.map((activity, index) => (
-                    <div key={index} className="activity-item">
-                      <div className="activity-indicator">
-                        <div
-                          className="activity-dot"
-                          style={{
-                            backgroundColor: getStatusColor(activity.action),
-                          }}
-                        ></div>
-                      </div>
-                      <div className="activity-content">
+                    <div key={index} className="event-item">
+                      <div className="event-indicator"></div>
+                      <div className="event-content">
                         <h3>{activity.description}</h3>
                         <p>{formatDate(activity.timestamp)}</p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-activities">
-                    <div className="activity-indicator">
-                      <div className="activity-dot"></div>
-                    </div>
-                    <div className="activity-content">
+                  <div className="empty-events">
+                    <div className="event-indicator"></div>
+                    <div className="event-content">
                       <h3>No recent activities</h3>
                       <p>Your activity will appear here</p>
                     </div>
@@ -346,41 +359,6 @@ const FacultyDashboard = () => {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="quick-actions-section">
-          <h2>Quick Actions</h2>
-          <div className="action-buttons">
-            <button
-              className="action-btn primary"
-              onClick={() => handleNavigate("reviews")}
-            >
-              <i className="fas fa-clipboard-list"></i>
-              Review Achievements
-            </button>
-            <button
-              className="action-btn secondary"
-              onClick={() => handleNavigate("students")}
-            >
-              <i className="fas fa-users"></i>
-              View Students
-            </button>
-            <button
-              className="action-btn secondary"
-              onClick={() => handleNavigate("analytics")}
-            >
-              <i className="fas fa-chart-bar"></i>
-              Analytics
-            </button>
-            <button
-              className="action-btn secondary"
-              onClick={() => handleNavigate("reports")}
-            >
-              <i className="fas fa-file-export"></i>
-              Generate Reports
-            </button>
           </div>
         </div>
       </div>

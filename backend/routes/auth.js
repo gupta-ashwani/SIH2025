@@ -28,7 +28,7 @@ router.post("/login", (req, res, next) => {
         institute: "/dashboard/institute",
         college: "/dashboard/college",
         department: "/dashboard/department",
-        faculty: "/dashboard/faculty",
+        faculty: `/faculty/dashboard/${user._id}`,
         student: `/students/dashboard/${user._id}`,
       };
 

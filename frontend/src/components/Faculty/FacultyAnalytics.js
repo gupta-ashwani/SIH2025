@@ -131,11 +131,13 @@ const FacultyAnalytics = () => {
   if (loading) {
     return (
       <div className="faculty-analytics">
-        <div className="loading-container">
-          <div className="loading-spinner">
-            <i className="fas fa-spinner fa-spin"></i>
+        <div className="dashboard-content">
+          <div className="loading-container">
+            <div className="loading-spinner">
+              <i className="fas fa-spinner fa-spin"></i>
+            </div>
+            <p>Loading analytics...</p>
           </div>
-          <p>Loading analytics...</p>
         </div>
       </div>
     );
@@ -144,16 +146,18 @@ const FacultyAnalytics = () => {
   if (error) {
     return (
       <div className="faculty-analytics">
-        <div className="error-container">
-          <div className="error-icon">
-            <i className="fas fa-exclamation-triangle"></i>
+        <div className="dashboard-content">
+          <div className="error-container">
+            <div className="error-icon">
+              <i className="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2>Error Loading Analytics</h2>
+            <p>{error}</p>
+            <button onClick={fetchAnalytics} className="retry-btn">
+              <i className="fas fa-redo"></i>
+              Try Again
+            </button>
           </div>
-          <h2>Error Loading Analytics</h2>
-          <p>{error}</p>
-          <button onClick={fetchAnalytics} className="retry-btn">
-            <i className="fas fa-redo"></i>
-            Try Again
-          </button>
         </div>
       </div>
     );
@@ -164,7 +168,7 @@ const FacultyAnalytics = () => {
       {/* Header */}
       <div className="page-header">
         <div className="header-content">
-          <button 
+          <button
             className="back-btn"
             onClick={() => navigate(`/faculty/dashboard/${id}`)}
           >
@@ -173,7 +177,7 @@ const FacultyAnalytics = () => {
           </button>
           <h1>Analytics Dashboard</h1>
         </div>
-        
+
         <div className="period-selector">
           <label htmlFor="period-select">Time Period:</label>
           <select
@@ -190,189 +194,213 @@ const FacultyAnalytics = () => {
       </div>
 
       {/* Overview Stats */}
-      <div className="analytics-overview">
-        <div className="overview-card">
-          <div className="overview-icon">
-            <i className="fas fa-chart-line"></i>
+      <div className="dashboard-content">
+        <div className="analytics-overview">
+          <div className="overview-card">
+            <div className="overview-icon">
+              <i className="fas fa-chart-line"></i>
+            </div>
+            <div className="overview-content">
+              <h3>Total Submissions</h3>
+              <p className="overview-number">
+                {analyticsData?.overview?.totalSubmissions || 0}
+              </p>
+              <span className="overview-change positive">
+                +{analyticsData?.overview?.submissionGrowth || 0}% from last
+                period
+              </span>
+            </div>
           </div>
-          <div className="overview-content">
-            <h3>Total Submissions</h3>
-            <p className="overview-number">
-              {analyticsData?.overview?.totalSubmissions || 0}
-            </p>
-            <span className="overview-change positive">
-              +{analyticsData?.overview?.submissionGrowth || 0}% from last period
-            </span>
+
+          <div className="overview-card">
+            <div className="overview-icon">
+              <i className="fas fa-users"></i>
+            </div>
+            <div className="overview-content">
+              <h3>Active Students</h3>
+              <p className="overview-number">
+                {analyticsData?.overview?.activeStudents || 0}
+              </p>
+              <span className="overview-change positive">
+                {(
+                  ((analyticsData?.overview?.activeStudents || 0) /
+                    Math.max(analyticsData?.overview?.totalStudents || 1, 1)) *
+                  100
+                ).toFixed(1)}
+                % of total
+              </span>
+            </div>
+          </div>
+
+          <div className="overview-card">
+            <div className="overview-icon">
+              <i className="fas fa-clock"></i>
+            </div>
+            <div className="overview-content">
+              <h3>Avg Review Time</h3>
+              <p className="overview-number">
+                {analyticsData?.overview?.avgReviewTime || 0}h
+              </p>
+              <span className="overview-change negative">
+                -{analyticsData?.overview?.reviewTimeImprovement || 0}% faster
+              </span>
+            </div>
+          </div>
+
+          <div className="overview-card">
+            <div className="overview-icon">
+              <i className="fas fa-thumbs-up"></i>
+            </div>
+            <div className="overview-content">
+              <h3>Approval Rate</h3>
+              <p className="overview-number">
+                {analyticsData?.overview?.approvalRate || 0}%
+              </p>
+              <span className="overview-change positive">
+                +{analyticsData?.overview?.approvalRateChange || 0}% from last
+                period
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="overview-card">
-          <div className="overview-icon">
-            <i className="fas fa-users"></i>
+        {/* Charts Grid */}
+        <div className="charts-grid">
+          {/* Submission Trend */}
+          <div className="chart-card large">
+            <div className="chart-header">
+              <h2>Submission Trend</h2>
+              <p>Student achievement submissions over time</p>
+            </div>
+            <div className="chart-container">
+              <Line data={submissionTrendData} options={chartOptions} />
+            </div>
           </div>
-          <div className="overview-content">
-            <h3>Active Students</h3>
-            <p className="overview-number">
-              {analyticsData?.overview?.activeStudents || 0}
-            </p>
-            <span className="overview-change positive">
-              {((analyticsData?.overview?.activeStudents || 0) / 
-                Math.max(analyticsData?.overview?.totalStudents || 1, 1) * 100).toFixed(1)}% of total
-            </span>
-          </div>
-        </div>
 
-        <div className="overview-card">
-          <div className="overview-icon">
-            <i className="fas fa-clock"></i>
+          {/* Achievement Types */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h2>Achievement Types</h2>
+              <p>Distribution of achievement categories</p>
+            </div>
+            <div className="chart-container">
+              <Doughnut data={achievementTypeData} options={doughnutOptions} />
+            </div>
           </div>
-          <div className="overview-content">
-            <h3>Avg Review Time</h3>
-            <p className="overview-number">
-              {analyticsData?.overview?.avgReviewTime || 0}h
-            </p>
-            <span className="overview-change negative">
-              -{analyticsData?.overview?.reviewTimeImprovement || 0}% faster
-            </span>
-          </div>
-        </div>
 
-        <div className="overview-card">
-          <div className="overview-icon">
-            <i className="fas fa-thumbs-up"></i>
+          {/* Student Performance */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h2>Student Performance</h2>
+              <p>Performance scores distribution</p>
+            </div>
+            <div className="chart-container">
+              <Bar data={performanceData} options={chartOptions} />
+            </div>
           </div>
-          <div className="overview-content">
-            <h3>Approval Rate</h3>
-            <p className="overview-number">
-              {analyticsData?.overview?.approvalRate || 0}%
-            </p>
-            <span className="overview-change positive">
-              +{analyticsData?.overview?.approvalRateChange || 0}% from last period
-            </span>
-          </div>
-        </div>
-      </div>
 
-      {/* Charts Grid */}
-      <div className="charts-grid">
-        {/* Submission Trend */}
-        <div className="chart-card large">
-          <div className="chart-header">
-            <h2>Submission Trend</h2>
-            <p>Student achievement submissions over time</p>
-          </div>
-          <div className="chart-container">
-            <Line data={submissionTrendData} options={chartOptions} />
-          </div>
-        </div>
-
-        {/* Achievement Types */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h2>Achievement Types</h2>
-            <p>Distribution of achievement categories</p>
-          </div>
-          <div className="chart-container">
-            <Doughnut data={achievementTypeData} options={doughnutOptions} />
-          </div>
-        </div>
-
-        {/* Student Performance */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h2>Student Performance</h2>
-            <p>Performance scores distribution</p>
-          </div>
-          <div className="chart-container">
-            <Bar data={performanceData} options={chartOptions} />
-          </div>
-        </div>
-
-        {/* Top Performers */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h2>Top Performers</h2>
-            <p>Students with highest achievement scores</p>
-          </div>
-          <div className="top-performers-list">
-            {analyticsData?.topPerformers?.map((student, index) => (
-              <div key={index} className="performer-item">
-                <div className="performer-rank">#{index + 1}</div>
-                <div className="performer-info">
-                  <h4>{student.name}</h4>
-                  <p>{student.achievements} achievements</p>
+          {/* Top Performers */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h2>Top Performers</h2>
+              <p>Students with highest achievement scores</p>
+            </div>
+            <div className="top-performers-list">
+              {analyticsData?.topPerformers?.map((student, index) => (
+                <div key={index} className="performer-item">
+                  <div className="performer-rank">#{index + 1}</div>
+                  <div className="performer-info">
+                    <h4>{student.name}</h4>
+                    <p>{student.achievements} achievements</p>
+                  </div>
+                  <div className="performer-score">{student.score}%</div>
                 </div>
-                <div className="performer-score">{student.score}%</div>
-              </div>
-            )) || (
-              <div className="no-data">
-                <p>No performance data available</p>
-              </div>
-            )}
+              )) || (
+                <div className="no-data">
+                  <p>No performance data available</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="chart-card">
-          <div className="chart-header">
-            <h2>Recent Activity</h2>
-            <p>Latest student activities</p>
-          </div>
-          <div className="activity-timeline">
-            {analyticsData?.recentActivity?.map((activity, index) => (
-              <div key={index} className="timeline-item">
-                <div className="timeline-marker"></div>
-                <div className="timeline-content">
-                  <h4>{activity.title}</h4>
-                  <p>{activity.student} • {activity.type}</p>
-                  <span className="timeline-date">{activity.date}</span>
+          {/* Recent Activity */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h2>Recent Activity</h2>
+              <p>Latest student activities</p>
+            </div>
+            <div className="activity-timeline">
+              {analyticsData?.recentActivity?.map((activity, index) => (
+                <div key={index} className="timeline-item">
+                  <div className="timeline-marker"></div>
+                  <div className="timeline-content">
+                    <h4>{activity.title}</h4>
+                    <p>
+                      {activity.student} • {activity.type}
+                    </p>
+                    <span className="timeline-date">{activity.date}</span>
+                  </div>
                 </div>
-              </div>
-            )) || (
-              <div className="no-data">
-                <p>No recent activity</p>
-              </div>
-            )}
+              )) || (
+                <div className="no-data">
+                  <p>No recent activity</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Monthly Statistics */}
-        <div className="chart-card large">
-          <div className="chart-header">
-            <h2>Monthly Statistics</h2>
-            <p>Key metrics comparison by month</p>
-          </div>
-          <div className="monthly-stats">
-            <div className="stats-grid">
-              <div className="stat-box">
-                <h3>This Month</h3>
-                <div className="stat-row">
-                  <span>Submissions:</span>
-                  <span>{analyticsData?.monthlyStats?.currentMonth?.submissions || 0}</span>
+          {/* Monthly Statistics */}
+          <div className="chart-card large">
+            <div className="chart-header">
+              <h2>Monthly Statistics</h2>
+              <p>Key metrics comparison by month</p>
+            </div>
+            <div className="monthly-stats">
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <h3>This Month</h3>
+                  <div className="stat-row">
+                    <span>Submissions:</span>
+                    <span>
+                      {analyticsData?.monthlyStats?.currentMonth?.submissions ||
+                        0}
+                    </span>
+                  </div>
+                  <div className="stat-row">
+                    <span>Reviews:</span>
+                    <span>
+                      {analyticsData?.monthlyStats?.currentMonth?.reviews || 0}
+                    </span>
+                  </div>
+                  <div className="stat-row">
+                    <span>Approvals:</span>
+                    <span>
+                      {analyticsData?.monthlyStats?.currentMonth?.approvals ||
+                        0}
+                    </span>
+                  </div>
                 </div>
-                <div className="stat-row">
-                  <span>Reviews:</span>
-                  <span>{analyticsData?.monthlyStats?.currentMonth?.reviews || 0}</span>
-                </div>
-                <div className="stat-row">
-                  <span>Approvals:</span>
-                  <span>{analyticsData?.monthlyStats?.currentMonth?.approvals || 0}</span>
-                </div>
-              </div>
-              
-              <div className="stat-box">
-                <h3>Last Month</h3>
-                <div className="stat-row">
-                  <span>Submissions:</span>
-                  <span>{analyticsData?.monthlyStats?.lastMonth?.submissions || 0}</span>
-                </div>
-                <div className="stat-row">
-                  <span>Reviews:</span>
-                  <span>{analyticsData?.monthlyStats?.lastMonth?.reviews || 0}</span>
-                </div>
-                <div className="stat-row">
-                  <span>Approvals:</span>
-                  <span>{analyticsData?.monthlyStats?.lastMonth?.approvals || 0}</span>
+
+                <div className="stat-box">
+                  <h3>Last Month</h3>
+                  <div className="stat-row">
+                    <span>Submissions:</span>
+                    <span>
+                      {analyticsData?.monthlyStats?.lastMonth?.submissions || 0}
+                    </span>
+                  </div>
+                  <div className="stat-row">
+                    <span>Reviews:</span>
+                    <span>
+                      {analyticsData?.monthlyStats?.lastMonth?.reviews || 0}
+                    </span>
+                  </div>
+                  <div className="stat-row">
+                    <span>Approvals:</span>
+                    <span>
+                      {analyticsData?.monthlyStats?.lastMonth?.approvals || 0}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

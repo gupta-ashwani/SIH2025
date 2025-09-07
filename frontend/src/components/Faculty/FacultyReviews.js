@@ -74,115 +74,130 @@ const FacultyReviews = () => {
 
   const filteredReviews = reviews.filter((review) => {
     const matchesSearch =
-      review.achievement?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.student?.name?.first?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.student?.name?.last?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      review.achievement?.title
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      review.student?.name?.first
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      review.student?.name?.last
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
     return matchesSearch;
   });
 
   if (loading) {
     return (
-      <div className="faculty-reviews">
-        <div className="loading-container">
-          <div className="loading-spinner">
-            <i className="fas fa-spinner fa-spin"></i>
+      <div className="faculty-dashboard">
+        <div className="dashboard-content">
+          <div className="loading-container">
+            <div className="loading-spinner">
+              <i className="fas fa-spinner fa-spin"></i>
+            </div>
+            <p>Loading reviews...</p>
           </div>
-          <p>Loading reviews...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="faculty-reviews">
-      {/* Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <button 
-            className="back-btn"
-            onClick={() => navigate(`/faculty/dashboard/${id}`)}
-          >
-            <i className="fas fa-arrow-left"></i>
-            Back to Dashboard
-          </button>
+    <div className="faculty-dashboard">
+      {/* Welcome Section - Full Width */}
+      <div className="welcome-section">
+        <div className="welcome-content">
           <h1>Achievement Reviews</h1>
+          <p>Review and approve student achievements</p>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="reviews-controls">
-        <div className="filter-tabs">
-          <button
-            className={`filter-tab ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            All Reviews
-          </button>
-          <button
-            className={`filter-tab ${filter === "pending" ? "active" : ""}`}
-            onClick={() => setFilter("pending")}
-          >
-            Pending
-          </button>
-          <button
-            className={`filter-tab ${filter === "approved" ? "active" : ""}`}
-            onClick={() => setFilter("approved")}
-          >
-            Approved
-          </button>
-          <button
-            className={`filter-tab ${filter === "rejected" ? "active" : ""}`}
-            onClick={() => setFilter("rejected")}
-          >
-            Rejected
-          </button>
-        </div>
-        
-        <div className="search-box">
-          <i className="fas fa-search"></i>
-          <input
-            type="text"
-            placeholder="Search achievements or students..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Reviews List */}
-      <div className="reviews-container">
-        {filteredReviews.length > 0 ? (
-          <div className="reviews-grid">
-            {filteredReviews.map((review, index) => (
-              <ReviewCard
-                key={index}
-                review={review}
-                onReview={handleReview}
-                formatDate={formatDate}
-                getActivityIcon={getActivityIcon}
-              />
-            ))}
+      {/* Main Content */}
+      <div className="dashboard-content">
+        {/* Filters and Search */}
+        <div className="reviews-controls">
+          <div className="filter-tabs">
+            <button
+              className={`filter-tab ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              All Reviews
+            </button>
+            <button
+              className={`filter-tab ${filter === "pending" ? "active" : ""}`}
+              onClick={() => setFilter("pending")}
+            >
+              Pending
+            </button>
+            <button
+              className={`filter-tab ${filter === "approved" ? "active" : ""}`}
+              onClick={() => setFilter("approved")}
+            >
+              Approved
+            </button>
+            <button
+              className={`filter-tab ${filter === "rejected" ? "active" : ""}`}
+              onClick={() => setFilter("rejected")}
+            >
+              Rejected
+            </button>
           </div>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-icon">
-              <i className="fas fa-clipboard-check"></i>
+
+          <div className="search-box">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Search achievements or students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Reviews Table */}
+        <div className="reviews-container">
+          {filteredReviews.length > 0 ? (
+            <div className="reviews-table">
+              <div className="table-header">
+                <div className="table-header-cell student-col">STUDENT</div>
+                <div className="table-header-cell activity-col">ACTIVITY</div>
+                <div className="table-header-cell type-col">TYPE</div>
+                <div className="table-header-cell submitted-col">SUBMITTED</div>
+                <div className="table-header-cell status-col">STATUS</div>
+                <div className="table-header-cell actions-col">ACTIONS</div>
+              </div>
+              <div className="table-body">
+                {filteredReviews.map((review, index) => (
+                  <ReviewRow
+                    key={index}
+                    review={review}
+                    onReview={handleReview}
+                    formatDate={formatDate}
+                    getActivityIcon={getActivityIcon}
+                  />
+                ))}
+              </div>
             </div>
-            <h3>No Reviews Found</h3>
-            <p>
-              {searchTerm
-                ? `No reviews match "${searchTerm}"`
-                : `No ${filter === "all" ? "" : filter} reviews available`}
-            </p>
-          </div>
-        )}
+          ) : (
+            <div className="empty-state">
+              <div className="empty-icon">
+                <i className="fas fa-clipboard-check"></i>
+              </div>
+              <h3>No Reviews Found</h3>
+              <p>
+                {searchTerm
+                  ? `No reviews match "${searchTerm}"`
+                  : `No ${filter === "all" ? "" : filter} reviews available`}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-const ReviewCard = ({ review, onReview, formatDate, getActivityIcon }) => {
+const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
   const [showModal, setShowModal] = useState(false);
   const [comment, setComment] = useState("");
   const [reviewStatus, setReviewStatus] = useState("");
@@ -201,61 +216,131 @@ const ReviewCard = ({ review, onReview, formatDate, getActivityIcon }) => {
     }
   };
 
+  const getStatusBadgeClass = (status) => {
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return "status-approved";
+      case "rejected":
+        return "status-rejected";
+      case "pending":
+      default:
+        return "status-pending";
+    }
+  };
+
+  const getTypeBadgeClass = (type) => {
+    switch (type?.toLowerCase()) {
+      case "conference":
+        return "type-conference";
+      case "certification":
+        return "type-certification";
+      case "competition":
+        return "type-competition";
+      case "internship":
+        return "type-internship";
+      default:
+        return "type-default";
+    }
+  };
+
   return (
     <>
-      <div className="review-card">
-        <div className="review-card-header">
-          <div className="achievement-icon">
-            <i className={getActivityIcon(review.achievement?.type)}></i>
+      <div className="table-row">
+        <div className="table-cell student-col">
+          <div className="student-info">
+            <div className="student-avatar">
+              {review.student?.name?.first?.charAt(0) || "S"}
+              {review.student?.name?.last?.charAt(0) || ""}
+            </div>
+            <div className="student-details">
+              <div className="student-name">
+                {review.student?.name?.first} {review.student?.name?.last}
+              </div>
+              <div className="student-class">
+                {review.student?.course} - {review.student?.year}
+              </div>
+            </div>
           </div>
-          <div className="achievement-info">
-            <h3>{review.achievement?.title || "Untitled Achievement"}</h3>
-            <p className="student-name">
-              {review.student?.name?.first} {review.student?.name?.last}
-            </p>
-            <p className="achievement-meta">
-              {review.achievement?.type} • {formatDate(review.achievement?.uploadedAt)}
-            </p>
+        </div>
+
+        <div className="table-cell activity-col">
+          <div className="activity-title">
+            {review.achievement?.title || "Untitled Achievement"}
           </div>
-          <div className="review-status">
-            {review.status ? (
-              <span className={`status-badge ${review.status.toLowerCase()}`}>
-                {review.status}
-              </span>
-            ) : (
-              <span className="status-badge pending">Pending</span>
+        </div>
+
+        <div className="table-cell type-col">
+          <span
+            className={`type-badge ${getTypeBadgeClass(
+              review.achievement?.type
+            )}`}
+          >
+            {review.achievement?.type || "Other"}
+          </span>
+        </div>
+
+        <div className="table-cell submitted-col">
+          {formatDate(review.achievement?.uploadedAt)}
+        </div>
+
+        <div className="table-cell status-col">
+          <span
+            className={`status-badge ${getStatusBadgeClass(
+              review.achievement?.status || "pending"
+            )}`}
+          >
+            {review.achievement?.status === "Pending"
+              ? "Pending Review"
+              : review.achievement?.status === "Rejected"
+              ? "Needs Revision"
+              : review.achievement?.status || "Pending Review"}
+          </span>
+        </div>
+
+        <div className="table-cell actions-col">
+          {(!review.achievement?.status ||
+            review.achievement?.status === "Pending") && (
+            <div className="action-buttons">
+              <button
+                className="action-btn review-btn"
+                onClick={() => setShowModal(true)}
+              >
+                Review
+              </button>
+              <button
+                className="action-btn approve-btn"
+                onClick={() =>
+                  onReview(
+                    review.achievement._id,
+                    review.student._id,
+                    "Approved",
+                    ""
+                  )
+                }
+              >
+                Approve
+              </button>
+              <button
+                className="action-btn reject-btn"
+                onClick={() =>
+                  onReview(
+                    review.achievement._id,
+                    review.student._id,
+                    "Rejected",
+                    ""
+                  )
+                }
+              >
+                Reject
+              </button>
+            </div>
+          )}
+          {review.achievement?.status &&
+            review.achievement?.status !== "Pending" && (
+              <button className="action-btn view-details-btn">
+                View Details
+              </button>
             )}
-          </div>
-        </div>
-
-        <div className="review-card-content">
-          <p className="achievement-description">
-            {review.achievement?.description || "No description available"}
-          </p>
-          
-          {review.achievement?.certificateUrl && (
-            <div className="certificate-preview">
-              <i className="fas fa-file-pdf"></i>
-              <span>Certificate attached</span>
-            </div>
-          )}
-        </div>
-
-        <div className="review-card-actions">
-          {!review.status && (
-            <button
-              className="review-action-btn"
-              onClick={() => setShowModal(true)}
-            >
-              <i className="fas fa-eye"></i>
-              Review
-            </button>
-          )}
-          {review.status && review.comment && (
-            <div className="review-comment">
-              <strong>Comment:</strong> {review.comment}
-            </div>
-          )}
         </div>
       </div>
 
@@ -265,21 +350,29 @@ const ReviewCard = ({ review, onReview, formatDate, getActivityIcon }) => {
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Review Achievement</h2>
-              <button
-                className="close-btn"
-                onClick={() => setShowModal(false)}
-              >
+              <button className="close-btn" onClick={() => setShowModal(false)}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            
+
             <div className="modal-content">
               <div className="achievement-details">
                 <h3>{review.achievement?.title}</h3>
-                <p><strong>Student:</strong> {review.student?.name?.first} {review.student?.name?.last}</p>
-                <p><strong>Type:</strong> {review.achievement?.type}</p>
-                <p><strong>Description:</strong> {review.achievement?.description}</p>
-                <p><strong>Submitted:</strong> {formatDate(review.achievement?.uploadedAt)}</p>
+                <p>
+                  <strong>Student:</strong> {review.student?.name?.first}{" "}
+                  {review.student?.name?.last}
+                </p>
+                <p>
+                  <strong>Type:</strong> {review.achievement?.type}
+                </p>
+                <p>
+                  <strong>Description:</strong>{" "}
+                  {review.achievement?.description}
+                </p>
+                <p>
+                  <strong>Submitted:</strong>{" "}
+                  {formatDate(review.achievement?.uploadedAt)}
+                </p>
               </div>
 
               <div className="review-form">
@@ -287,14 +380,18 @@ const ReviewCard = ({ review, onReview, formatDate, getActivityIcon }) => {
                   <label>Review Decision:</label>
                   <div className="status-buttons">
                     <button
-                      className={`status-btn approve ${reviewStatus === "Approved" ? "active" : ""}`}
+                      className={`status-btn approve ${
+                        reviewStatus === "Approved" ? "active" : ""
+                      }`}
                       onClick={() => setReviewStatus("Approved")}
                     >
                       <i className="fas fa-check"></i>
                       Approve
                     </button>
                     <button
-                      className={`status-btn reject ${reviewStatus === "Rejected" ? "active" : ""}`}
+                      className={`status-btn reject ${
+                        reviewStatus === "Rejected" ? "active" : ""
+                      }`}
                       onClick={() => setReviewStatus("Rejected")}
                     >
                       <i className="fas fa-times"></i>
