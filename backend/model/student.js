@@ -1,0 +1,95 @@
+const mongoose = require("mongoose");
+
+const studentSchema = new mongoose.Schema(
+  {
+    department: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department",
+      required: true,
+    },
+    coordinator: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Faculty",
+    },
+    name: {
+      first: { type: String, required: true },
+      last: { type: String },
+    },
+    studentID: {
+      type: String,
+      required: true,
+      unique: true, // e.g., Roll number
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    dob: Date,
+    gender: { type: String, enum: ["Male", "Female", "Other"] },
+    contactNumber: String,
+    address: {
+      line1: String,
+      line2: String,
+      city: String,
+      state: String,
+      country: String,
+      pincode: String,
+    },
+    enrollmentYear: Number,
+    batch: String,
+    // certificates & achievements
+    achievements: [
+      {
+        title: String,
+        type: {
+          type: String,
+          enum: [
+            "Workshop",
+            "Conference",
+            "Hackathon",
+            "Internship",
+            "Course",
+            "Competition",
+            "CommunityService",
+            "Leadership",
+          ],
+        },
+        description: String,
+        fileUrl: String,
+        status: {
+          type: String,
+          enum: ["Pending", "Approved", "Rejected"],
+          default: "Pending",
+        },
+        rejectionComment: String,
+        uploadedAt: { type: Date, default: Date.now },
+        verifiedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Faculty",
+        },
+      },
+    ],
+    // academic performance
+    gpa: Number,
+    attendance: Number,
+    skills: [String],
+    resumeGenerated: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["Active", "Inactive"],
+      default: "Active",
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Student", studentSchema);
