@@ -96,13 +96,6 @@ const FacultyStudents = () => {
       {/* Welcome Section - Full Width */}
       <div className="welcome-section">
         <div className="welcome-content">
-          <button
-            className="back-btn"
-            onClick={() => navigate(`/faculty/dashboard/${id}`)}
-          >
-            <i className="fas fa-arrow-left"></i>
-            Back to Dashboard
-          </button>
           <h1>My Students</h1>
           <p>Manage and monitor your assigned students</p>
         </div>
@@ -146,127 +139,78 @@ const FacultyStudents = () => {
           </div>
         </div>
 
-        {/* Students Grid */}
+        {/* Students List */}
         <div className="students-container">
           {filteredAndSortedStudents.length > 0 ? (
-            <div className="students-grid">
+            <div className="students-list">
               {filteredAndSortedStudents.map((student, index) => (
-                <div key={student._id || index} className="student-card">
-                  <div className="student-card-header">
-                    <div className="student-avatar">
-                      <i className="fas fa-user"></i>
-                    </div>
-                    <div className="student-info">
-                      <h3>
+                <div
+                  key={student._id || index}
+                  className="student-list-item"
+                  onClick={() => handleViewStudent(student._id)}
+                >
+                  <div className="student-list-avatar">
+                    {student.profileImage ? (
+                      <>
+                        <img
+                          src={student.profileImage}
+                          alt={`${student.name?.first} ${student.name?.last}`}
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                            e.target.nextSibling.style.display = "flex";
+                          }}
+                        />
+                        <div
+                          className="student-list-avatar-fallback"
+                          style={{ display: "none" }}
+                        >
+                          {student.name?.first?.charAt(0) || "S"}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="student-list-avatar-fallback">
+                        {student.name?.first?.charAt(0) || "S"}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="student-list-info">
+                    <div className="student-list-main">
+                      <h3 className="student-list-name">
                         {student.name?.first} {student.name?.last}
                       </h3>
-                      <p className="student-id">ID: {student.studentID}</p>
-                      <p className="student-batch">Batch: {student.batch}</p>
+                      <span className="student-list-id">
+                        ID: {student.studentID}
+                      </span>
                     </div>
-                    <div className="performance-indicator">
-                      <div
-                        className="performance-circle"
-                        style={{
-                          borderColor: getPerformanceColor(
-                            student.performanceScore || 0
-                          ),
-                        }}
-                      >
-                        <span
-                          style={{
-                            color: getPerformanceColor(
-                              student.performanceScore || 0
-                            ),
-                          }}
-                        >
-                          {student.performanceScore || 0}%
-                        </span>
-                      </div>
-                      <span className="performance-label">
-                        {getPerformanceLevel(student.performanceScore || 0)}{" "}
-                        Performer
+                    <div className="student-list-details">
+                      <span className="student-list-batch">
+                        Batch: {student.batch}
+                      </span>
+                      <span className="student-list-achievements">
+                        <i className="fas fa-trophy"></i>
+                        {student.achievementCount || 0} Achievements
                       </span>
                     </div>
                   </div>
 
-                  <div className="student-stats">
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <i className="fas fa-trophy"></i>
-                      </div>
-                      <div className="stat-content">
-                        <span className="stat-number">
-                          {student.achievementCount || 0}
-                        </span>
-                        <span className="stat-label">Achievements</span>
-                      </div>
+                  <div className="student-list-stats">
+                    <div className="student-list-stat">
+                      <span className="stat-value">
+                        {student.cgpa ? `${student.cgpa}/10` : "N/A"}
+                      </span>
+                      <span className="stat-label">CGPA</span>
                     </div>
-
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <i className="fas fa-clock"></i>
-                      </div>
-                      <div className="stat-content">
-                        <span className="stat-number">
-                          {student.pendingReviews || 0}
-                        </span>
-                        <span className="stat-label">Pending</span>
-                      </div>
-                    </div>
-
-                    <div className="stat-item">
-                      <div className="stat-icon">
-                        <i className="fas fa-chart-line"></i>
-                      </div>
-                      <div className="stat-content">
-                        <span className="stat-number">
-                          {student.cgpa ? `${student.cgpa}/10` : "0"}
-                        </span>
-                        <span className="stat-label">CGPA</span>
-                      </div>
+                    <div className="student-list-stat">
+                      <span className="stat-value">
+                        {student.pendingReviews || 0}
+                      </span>
+                      <span className="stat-label">Pending</span>
                     </div>
                   </div>
 
-                  <div className="student-recent-activity">
-                    <h4>Recent Activity</h4>
-                    {student.recentAchievements &&
-                    student.recentAchievements.length > 0 ? (
-                      <div className="recent-achievements">
-                        {student.recentAchievements
-                          .slice(0, 2)
-                          .map((achievement, idx) => (
-                            <div key={idx} className="achievement-item">
-                              <span className="achievement-title">
-                                {achievement.title}
-                              </span>
-                              <span className="achievement-date">
-                                {new Date(
-                                  achievement.uploadedAt
-                                ).toLocaleDateString()}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <p className="no-activity">No recent activity</p>
-                    )}
-                  </div>
-
-                  <div className="student-actions">
-                    <button
-                      className="action-btn primary"
-                      onClick={() => handleViewStudent(student._id)}
-                    >
-                      <i className="fas fa-eye"></i>
-                      View Dashboard
-                    </button>
-                    <button
-                      className="action-btn secondary"
-                      onClick={() => handleViewPortfolio(student._id)}
-                    >
-                      <i className="fas fa-folder"></i>
-                      Portfolio
-                    </button>
+                  <div className="student-list-action">
+                    <i className="fas fa-chevron-right"></i>
                   </div>
                 </div>
               ))}
