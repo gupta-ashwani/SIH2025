@@ -203,6 +203,12 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
   const [reviewStatus, setReviewStatus] = useState("");
 
   const handleSubmitReview = () => {
+    // Check if comment is required for rejection
+    if (reviewStatus === "Rejected" && !comment.trim()) {
+      alert("Comment is required when rejecting an achievement.");
+      return;
+    }
+
     if (reviewStatus) {
       onReview(
         review.achievement._id,
@@ -302,12 +308,6 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
             review.achievement?.status === "Pending") && (
             <div className="action-buttons">
               <button
-                className="action-btn review-btn"
-                onClick={() => setShowModal(true)}
-              >
-                Review
-              </button>
-              <button
                 className="action-btn approve-btn"
                 onClick={() =>
                   onReview(
@@ -333,11 +333,20 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
               >
                 Reject
               </button>
+              <button
+                className="action-btn review-btn"
+                onClick={() => setShowModal(true)}
+              >
+                Review
+              </button>
             </div>
           )}
           {review.achievement?.status &&
             review.achievement?.status !== "Pending" && (
-              <button className="action-btn view-details-btn">
+              <button
+                className="action-btn view-details-btn"
+                onClick={() => setShowModal(true)}
+              >
                 View Details
               </button>
             )}
@@ -349,7 +358,12 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Review Achievement</h2>
+              <h2>
+                {review.achievement?.status === "Pending" ||
+                !review.achievement?.status
+                  ? "Review Achievement"
+                  : "Achievement Details"}
+              </h2>
               <button className="close-btn" onClick={() => setShowModal(false)}>
                 <i className="fas fa-times"></i>
               </button>
@@ -373,60 +387,136 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
                   <strong>Submitted:</strong>{" "}
                   {formatDate(review.achievement?.uploadedAt)}
                 </p>
+                {review.achievement?.status &&
+                  review.achievement?.status !== "Pending" && (
+                    <p>
+                      <strong>Status:</strong>{" "}
+                      <span
+                        className={`status-badge ${getStatusBadgeClass(
+                          review.achievement?.status
+                        )}`}
+                      >
+                        {review.achievement?.status === "Rejected"
+                          ? "Needs Revision"
+                          : review.achievement?.status}
+                      </span>
+                    </p>
+                  )}
+                {review.achievement?.reviewComment && (
+                  <p>
+                    <strong>Review Comment:</strong>{" "}
+                    {review.achievement?.reviewComment}
+                  </p>
+                )}
+
+                {/* Certificate Image */}
+                <div className="certificate-image-container">
+                  <div className="certificate-image-label">
+                    Certificate/Document
+                  </div>
+                  {review.achievement?.certificateUrl ? (
+                    <img
+                      src={review.achievement.certificateUrl}
+                      alt="Achievement Certificate"
+                      className="certificate-image"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "block";
+                      }}
+                    />
+                  ) : (
+                    <div className="no-certificate">
+                      No certificate image available
+                    </div>
+                  )}
+                  <div className="no-certificate" style={{ display: "none" }}>
+                    Certificate image could not be loaded
+                  </div>
+                </div>
               </div>
 
-              <div className="review-form">
-                <div className="status-selection">
-                  <label>Review Decision:</label>
-                  <div className="status-buttons">
+              {(!review.achievement?.status ||
+                review.achievement?.status === "Pending") && (
+                <div className="review-form">
+                  <div className="status-selection">
+                    <label>Review Decision:</label>
+                    <div className="status-buttons">
+                      <button
+                        className={`status-btn approve ${
+                          reviewStatus === "Approved" ? "active" : ""
+                        }`}
+                        onClick={() => setReviewStatus("Approved")}
+                      >
+                        <i className="fas fa-check"></i>
+                        Approve
+                      </button>
+                      <button
+                        className={`status-btn reject ${
+                          reviewStatus === "Rejected" ? "active" : ""
+                        }`}
+                        onClick={() => setReviewStatus("Rejected")}
+                      >
+                        <i className="fas fa-times"></i>
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="comment-section">
+                    <label htmlFor="comment">
+                      Comment{" "}
+                      {reviewStatus === "Rejected"
+                        ? "(Required for rejection)"
+                        : "(Optional)"}
+                      :
+                    </label>
+                    <textarea
+                      id="comment"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder={
+                        reviewStatus === "Rejected"
+                          ? "Please provide a reason for rejection..."
+                          : "Add your feedback..."
+                      }
+                      rows="4"
+                      className={
+                        reviewStatus === "Rejected" && !comment.trim()
+                          ? "required-field"
+                          : ""
+                      }
+                    />
+                  </div>
+
+                  <div className="modal-actions">
                     <button
-                      className={`status-btn approve ${
-                        reviewStatus === "Approved" ? "active" : ""
-                      }`}
-                      onClick={() => setReviewStatus("Approved")}
+                      className="cancel-btn"
+                      onClick={() => setShowModal(false)}
                     >
-                      <i className="fas fa-check"></i>
-                      Approve
+                      Cancel
                     </button>
                     <button
-                      className={`status-btn reject ${
-                        reviewStatus === "Rejected" ? "active" : ""
-                      }`}
-                      onClick={() => setReviewStatus("Rejected")}
+                      className="submit-btn"
+                      onClick={handleSubmitReview}
+                      disabled={!reviewStatus}
                     >
-                      <i className="fas fa-times"></i>
-                      Reject
+                      Submit Review
                     </button>
                   </div>
                 </div>
+              )}
 
-                <div className="comment-section">
-                  <label htmlFor="comment">Comment (Optional):</label>
-                  <textarea
-                    id="comment"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Add your feedback..."
-                    rows="4"
-                  />
-                </div>
-
-                <div className="modal-actions">
-                  <button
-                    className="cancel-btn"
-                    onClick={() => setShowModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="submit-btn"
-                    onClick={handleSubmitReview}
-                    disabled={!reviewStatus}
-                  >
-                    Submit Review
-                  </button>
-                </div>
-              </div>
+              {review.achievement?.status &&
+                review.achievement?.status !== "Pending" && (
+                  <div className="modal-actions">
+                    <button
+                      className="cancel-btn"
+                      onClick={() => setShowModal(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         </div>

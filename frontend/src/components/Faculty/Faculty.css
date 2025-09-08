@@ -1345,8 +1345,8 @@
 
 .review-modal {
   background: white;
-  border-radius: 8px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 8px;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
@@ -1358,8 +1358,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 2px;
+  padding-bottom: 2px;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -1390,7 +1390,6 @@
 .modal-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
 .achievement-details {
@@ -1411,6 +1410,37 @@
   margin: 8px 0;
   color: #374151;
   font-size: 0.875rem;
+}
+
+.certificate-image-container {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.certificate-image-label {
+  background: #f9fafb;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.certificate-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  background: #f9fafb;
+}
+
+.no-certificate {
+  padding: 20px;
+  text-align: center;
+  color: #9ca3af;
+  background: #f9fafb;
+  font-style: italic;
 }
 
 .review-form {
@@ -1485,6 +1515,11 @@
   outline: none;
   border-color: #284b63;
   box-shadow: 0 0 0 3px rgba(40, 75, 99, 0.1);
+}
+
+.comment-section textarea.required-field {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .modal-actions {
@@ -3730,8 +3765,8 @@
 }
 
 .type-internship {
-  background: #1e3a8a;
-  color: white;
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .type-default {
