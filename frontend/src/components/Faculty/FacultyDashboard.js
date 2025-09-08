@@ -46,7 +46,9 @@ const FacultyDashboard = () => {
     try {
       setLoadingEvents(true);
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:3030/api'}/events/faculty/${id}`,
+        `${
+          process.env.REACT_APP_API_URL || "http://localhost:3030/api"
+        }/events/faculty/${id}`,
         {
           credentials: "include",
         }
@@ -160,14 +162,19 @@ const FacultyDashboard = () => {
 
       console.log("Creating event with data:", eventData);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3030/api'}/events/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(eventData),
-      });
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_API_URL || "http://localhost:3030/api"
+        }/events/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(eventData),
+        }
+      );
 
       const data = await response.json();
       console.log("Response status:", response.status);
@@ -379,74 +386,6 @@ const FacultyDashboard = () => {
 
           {/* Right Sidebar */}
           <div className="sidebar">
-            {/* Student Statistics */}
-            <div className="content-card progress-card">
-              <h2>Student Statistics</h2>
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span>Active Students</span>
-                  <span className="progress-value">
-                    {studentStats?.active || 0}/{stats?.totalStudents || 0}
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${
-                        ((studentStats?.active || 0) /
-                          Math.max(stats?.totalStudents || 1, 1)) *
-                        100
-                      }%`,
-                      backgroundColor: "#10b981",
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span>High Performers</span>
-                  <span className="progress-value">
-                    {studentStats?.highPerformers || 0}/
-                    {stats?.totalStudents || 0}
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${
-                        ((studentStats?.highPerformers || 0) /
-                          Math.max(stats?.totalStudents || 1, 1)) *
-                        100
-                      }%`,
-                      backgroundColor: "#f59e0b",
-                    }}
-                  ></div>
-                </div>
-              </div>
-              <div className="progress-item">
-                <div className="progress-header">
-                  <span>Recent Submissions</span>
-                  <span className="progress-value">
-                    {studentStats?.recentSubmissions || 0}
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${Math.min(
-                        ((studentStats?.recentSubmissions || 0) / 10) * 100,
-                        100
-                      )}%`,
-                      backgroundColor: "#6366f1",
-                    }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-
             {/* Upcoming Events */}
             <div className="content-card events-card">
               <div className="card-header">
