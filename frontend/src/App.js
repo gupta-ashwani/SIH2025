@@ -9,10 +9,12 @@ import StudentDashboard from "./components/Student/StudentDashboard";
 import StudentUpload from "./components/Student/StudentUpload";
 import StudentPortfolio from "./components/Student/StudentPortfolio";
 import StudentAnalytics from "./components/Student/StudentAnalytics";
+import StudentAllEvents from "./components/Student/StudentAllEvents";
 import FacultyDashboard from "./components/Faculty/FacultyDashboard";
 import FacultyReviews from "./components/Faculty/FacultyReviews";
 import FacultyStudents from "./components/Faculty/FacultyStudents";
 import FacultyAnalytics from "./components/Faculty/FacultyAnalytics";
+import AllEvents from "./components/Faculty/AllEvents";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import "./styles/animations.css";
@@ -85,6 +87,17 @@ function App() {
                 }
               />
 
+              <Route
+                path="/student/events"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <StudentAllEvents />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Faculty Routes */}
               <Route
                 path="/faculty/dashboard/:id"
@@ -125,6 +138,17 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <FacultyAnalytics />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/faculty/events"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <AllEvents />
                     </div>
                   </ProtectedRoute>
                 }

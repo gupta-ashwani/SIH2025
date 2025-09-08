@@ -405,24 +405,37 @@ const FacultyDashboard = () => {
                     <span>Loading events...</span>
                   </div>
                 ) : upcomingEvents && upcomingEvents.length > 0 ? (
-                  upcomingEvents.slice(0, 5).map((event, index) => (
-                    <div key={event._id} className="event-item">
-                      <div className="event-indicator"></div>
-                      <div className="event-content">
-                        <h3>{event.title}</h3>
-                        <p>
-                          <i className="fas fa-calendar"></i>
-                          {formatEventDate(event.eventDate)}
-                          {event.eventTime && ` • ${event.eventTime}`}
-                        </p>
-                        <p>
-                          <i className="fas fa-map-marker-alt"></i>
-                          {event.venue}
-                        </p>
-                        <span className="event-type">{event.eventType}</span>
+                  <>
+                    {upcomingEvents.slice(0, 2).map((event, index) => (
+                      <div key={event._id} className="event-item">
+                        <div className="event-indicator"></div>
+                        <div className="event-content">
+                          <h3>{event.title}</h3>
+                          <p>
+                            <i className="fas fa-calendar"></i>
+                            {formatEventDate(event.eventDate)}
+                            {event.eventTime && ` • ${event.eventTime}`}
+                          </p>
+                          <p>
+                            <i className="fas fa-map-marker-alt"></i>
+                            {event.venue}
+                          </p>
+                          <span className="event-type">{event.eventType}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {upcomingEvents.length > 2 && (
+                      <div className="show-more-container">
+                        <button
+                          className="show-more-btn"
+                          onClick={() => navigate("/faculty/events")}
+                        >
+                          <i className="fas fa-calendar-plus"></i>
+                          Show More Events
+                        </button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="empty-events">
                     <div className="event-indicator"></div>
