@@ -153,7 +153,7 @@ const StudentPortfolio = () => {
                 </p>
                 <p>
                   {student.gpa
-                    ? `CGPA ${student.gpa}/10`
+                    ? `CGPA ${student.gpa.toFixed(2)}/10`
                     : "CGPA not available"}{" "}
                   •
                   {student.studentID

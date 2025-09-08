@@ -55,6 +55,23 @@ export const studentService = {
   getEvents: (id) => {
     return api.get(`/events/student/${id}`);
   },
+
+  // New profile-related endpoints
+  getStudentProfile: (id) => {
+    return api.get(`/students/profile/${id}`);
+  },
+
+  updateProfile: (id, profileData) => {
+    return api.put(`/students/profile/${id}`, profileData);
+  },
+
+  uploadProfilePicture: (id, formData) => {
+    return api.post(`/students/profile/${id}/picture`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };
 
 export const facultyService = {

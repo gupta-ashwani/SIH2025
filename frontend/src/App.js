@@ -10,6 +10,7 @@ import StudentUpload from "./components/Student/StudentUpload";
 import StudentPortfolio from "./components/Student/StudentPortfolio";
 import StudentAnalytics from "./components/Student/StudentAnalytics";
 import StudentAllEvents from "./components/Student/StudentAllEvents";
+import StudentProfile from "./components/Student/StudentProfile";
 import FacultyDashboard from "./components/Faculty/FacultyDashboard";
 import FacultyReviews from "./components/Faculty/FacultyReviews";
 import FacultyStudents from "./components/Faculty/FacultyStudents";
@@ -82,6 +83,17 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <StudentAnalytics />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/students/profile/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <StudentProfile />
                     </div>
                   </ProtectedRoute>
                 }

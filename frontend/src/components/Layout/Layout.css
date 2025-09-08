@@ -154,6 +154,19 @@
   gap: var(--spacing-md);
 }
 
+.user-info-link {
+  text-decoration: none;
+  color: inherit;
+  transition: var(--transition);
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.user-info-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
 .user-info {
   display: flex;
   align-items: center;

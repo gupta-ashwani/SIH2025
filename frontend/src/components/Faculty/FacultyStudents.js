@@ -205,7 +205,7 @@ const FacultyStudents = () => {
                   <div className="student-list-stats">
                     <div className="student-list-stat">
                       <span className="stat-value">
-                        {student.cgpa ? `${student.cgpa}/10` : "N/A"}
+                        {student.cgpa ? `${student.cgpa.toFixed(2)}/10` : "N/A"}
                       </span>
                       <span className="stat-label">CGPA</span>
                     </div>

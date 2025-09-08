@@ -60,8 +60,10 @@ router.get(
 
       // Calculate academic progress
       const academicProgress = {
-        cgpa: student.gpa || 0,
-        attendance: student.attendance || 0,
+        cgpa: student.gpa ? parseFloat(student.gpa.toFixed(2)) : 0,
+        attendance: student.attendance
+          ? parseFloat(student.attendance.toFixed(2))
+          : 0,
       };
 
       // Get upcoming events from the events API
@@ -226,6 +228,123 @@ router.get(
   }
 );
 
+// Profile page - Get detailed student profile
+router.get(
+  "/profile/:id",
+  requireAuth,
+  checkStudentAccess,
+  async (req, res) => {
+    try {
+      const student = await Student.findById(req.params.id)
+        .populate("department")
+        .populate("coordinator");
+
+      if (!student) {
+        return res.status(404).json({
+          error: "Student not found",
+        });
+      }
+
+      res.json({
+        student,
+        title: `${student.name.first}'s Profile`,
+      });
+    } catch (error) {
+      console.error("Profile error:", error);
+      res.status(500).json({
+        error: "Internal server error",
+      });
+    }
+  }
+);
+
+// Update student profile
+router.put(
+  "/profile/:id",
+  requireAuth,
+  checkStudentAccess,
+  async (req, res) => {
+    try {
+      const studentId = req.params.id;
+      const updateData = req.body;
+
+      // Remove sensitive fields that shouldn't be updated via this route
+      delete updateData.email;
+      delete updateData.studentID;
+      delete updateData.course;
+      delete updateData.department;
+      delete updateData.gpa;
+      delete updateData.achievements;
+
+      const updatedStudent = await Student.findByIdAndUpdate(
+        studentId,
+        updateData,
+        { new: true, runValidators: true }
+      ).populate("department");
+
+      if (!updatedStudent) {
+        return res.status(404).json({
+          error: "Student not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        student: updatedStudent,
+      });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      res.status(500).json({
+        error: "Failed to update profile",
+      });
+    }
+  }
+);
+
+// Upload profile picture
+router.post(
+  "/profile/:id/picture",
+  requireAuth,
+  checkStudentAccess,
+  upload.single("profilePicture"),
+  async (req, res) => {
+    try {
+      const studentId = req.params.id;
+
+      if (!req.file) {
+        return res.status(400).json({
+          error: "No file uploaded",
+        });
+      }
+
+      const updatedStudent = await Student.findByIdAndUpdate(
+        studentId,
+        { profilePicture: req.file.path },
+        { new: true }
+      ).populate("department");
+
+      if (!updatedStudent) {
+        return res.status(404).json({
+          error: "Student not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Profile picture updated successfully",
+        profilePicture: req.file.path,
+        student: updatedStudent,
+      });
+    } catch (error) {
+      console.error("Profile picture upload error:", error);
+      res.status(500).json({
+        error: "Failed to upload profile picture",
+      });
+    }
+  }
+);
+
 // Analytics page
 router.get(
   "/analytics/:id",
@@ -274,8 +393,10 @@ router.get(
 
         // Academic metrics
         academicMetrics: {
-          cgpa: student.gpa || 0,
-          attendance: student.attendance || 0,
+          cgpa: student.gpa ? parseFloat(student.gpa.toFixed(2)) : 0,
+          attendance: student.attendance
+            ? parseFloat(student.attendance.toFixed(2))
+            : 0,
           enrollmentYear: student.enrollmentYear,
           batch: student.batch,
         },

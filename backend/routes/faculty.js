@@ -396,6 +396,10 @@ router.get("/students/:id", requireAuth, async (req, res) => {
 
       return {
         ...student,
+        cgpa: student.gpa ? parseFloat(student.gpa.toFixed(2)) : 0,
+        attendance: student.attendance
+          ? parseFloat(student.attendance.toFixed(2))
+          : 0,
         achievementCount,
         pendingReviews,
         performanceScore,

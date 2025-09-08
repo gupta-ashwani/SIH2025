@@ -31,8 +31,27 @@ const studentSchema = new mongoose.Schema(
       required: true,
     },
     dob: Date,
+    dateOfBirth: Date, // Alternative field name for consistency
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     contactNumber: String,
+    bio: String,
+    profilePicture: String,
+    contact: {
+      phone: String,
+      address: String,
+    },
+    emergencyContact: {
+      name: String,
+      phone: String,
+      relationship: String,
+    },
+    course: String, // e.g., "Computer Science", "Mechanical Engineering"
+    year: String, // e.g., "2nd Year", "Final Year"
+    interests: [String],
+    skills: {
+      technical: [String],
+      soft: [String],
+    },
     address: {
       line1: String,
       line2: String,
@@ -80,7 +99,7 @@ const studentSchema = new mongoose.Schema(
     // academic performance
     gpa: Number,
     attendance: Number,
-    skills: [String],
+    // Remove old skills field as we've updated it above
     resumeGenerated: {
       type: Boolean,
       default: false,
