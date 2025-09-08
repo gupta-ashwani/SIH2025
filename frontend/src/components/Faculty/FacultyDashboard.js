@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { facultyService } from "../../services/authService";
+import BulkStudentUpload from "./BulkStudentUpload";
 import "./Faculty.css";
 
 const FacultyDashboard = () => {
@@ -14,6 +15,7 @@ const FacultyDashboard = () => {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [eventForm, setEventForm] = useState({
     title: "",
     description: "",
@@ -214,6 +216,15 @@ const FacultyDashboard = () => {
     }
   };
 
+  const handleBulkUploadSuccess = (count) => {
+    alert(`Successfully uploaded ${count} students!`);
+    fetchDashboardData(); // Refresh dashboard data to update student count
+  };
+
+  const handleBulkUploadClose = () => {
+    setShowBulkUpload(false);
+  };
+
   if (loading) {
     return (
       <div className="faculty-dashboard">
@@ -334,6 +345,17 @@ const FacultyDashboard = () => {
               <div className="stat-number">{stats?.totalReviewed || 0}</div>
             </div>
           </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="quick-actions">
+          <button
+            className="action-btn bulk-upload"
+            onClick={() => setShowBulkUpload(true)}
+          >
+            <i className="fas fa-file-excel"></i>
+            Bulk Upload Students
+          </button>
         </div>
 
         {/* Main Content Grid */}
@@ -628,6 +650,14 @@ const FacultyDashboard = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Bulk Student Upload Modal */}
+      {showBulkUpload && (
+        <BulkStudentUpload
+          onClose={handleBulkUploadClose}
+          onSuccess={handleBulkUploadSuccess}
+        />
       )}
     </div>
   );

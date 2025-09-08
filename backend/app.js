@@ -68,6 +68,7 @@ const dashboardRoutes = require("./routes/dashboard");
 const studentRoutes = require("./routes/students");
 const facultyRoutes = require("./routes/faculty");
 const eventRoutes = require("./routes/events");
+const bulkStudentsRoutes = require("./routes/bulkStudents");
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -75,6 +76,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/bulk-students", bulkStudentsRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
