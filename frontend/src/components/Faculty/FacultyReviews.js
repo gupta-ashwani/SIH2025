@@ -367,38 +367,42 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
           {(!review.achievement?.status ||
             review.achievement?.status === "Pending") && (
             <div className="action-buttons">
-              <button
-                className="action-btn approve-btn"
-                onClick={() =>
-                  onReview(
-                    review.achievement._id,
-                    review.student._id,
-                    "Approved",
-                    ""
-                  )
-                }
-              >
-                Approve
-              </button>
-              <button
-                className="action-btn reject-btn"
-                onClick={() =>
-                  onReview(
-                    review.achievement._id,
-                    review.student._id,
-                    "Rejected",
-                    ""
-                  )
-                }
-              >
-                Reject
-              </button>
-              <button
-                className="action-btn review-btn"
-                onClick={() => setShowModal(true)}
-              >
-                Review
-              </button>
+              <div className="action-row">
+                <button
+                  className="action-btn approve-btn"
+                  onClick={() =>
+                    onReview(
+                      review.achievement._id,
+                      review.student._id,
+                      "Approved",
+                      ""
+                    )
+                  }
+                >
+                  Approve
+                </button>
+                <button
+                  className="action-btn reject-btn"
+                  onClick={() =>
+                    onReview(
+                      review.achievement._id,
+                      review.student._id,
+                      "Rejected",
+                      ""
+                    )
+                  }
+                >
+                  Reject
+                </button>
+              </div>
+              <div className="action-row">
+                <button
+                  className="action-btn review-btn"
+                  onClick={() => setShowModal(true)}
+                >
+                  Review
+                </button>
+              </div>
             </div>
           )}
           {review.achievement?.status &&
