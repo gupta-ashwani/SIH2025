@@ -67,8 +67,10 @@ const studentSchema = new mongoose.Schema(
           enum: ["Pending", "Approved", "Rejected"],
           default: "Pending",
         },
-        rejectionComment: String,
+        comment: String,
+        rejectionComment: String, // For backward compatibility
         uploadedAt: { type: Date, default: Date.now },
+        reviewedAt: Date,
         verifiedBy: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Faculty",

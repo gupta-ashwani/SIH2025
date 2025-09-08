@@ -64,21 +64,48 @@ router.get(
         attendance: student.attendance || 0,
       };
 
-      // Mock upcoming events (you can replace with actual events from DB)
-      const upcomingEvents = [
-        {
-          title: "Tech Symposium",
-          date: "Dec 20, 2023",
-        },
-        {
-          title: "Career Fair",
-          date: "Jan 5, 2024",
-        },
-        {
-          title: "Workshop: AI/ML",
-          date: "Jan 12, 2024",
-        },
-      ];
+      // Get upcoming events from the events API
+      let upcomingEvents = [];
+      try {
+        // Import Event model to fetch real events
+        const Event = require("../model/event");
+
+        const events = await Event.find({
+          college: student.department.institute,
+          status: "Published",
+          eventDate: { $gte: new Date() },
+          $or: [
+            { targetAudience: "All" },
+            { targetAudience: "Students" },
+            { targetAudience: student.batch },
+          ],
+        })
+          .populate("department", "name")
+          .populate("createdBy", "name designation")
+          .sort({ eventDate: 1 })
+          .limit(5);
+
+        upcomingEvents = events.map((event) => ({
+          title: event.title,
+          date: event.eventDate.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          time: event.eventTime,
+          venue: event.venue,
+          type: event.eventType,
+          id: event._id,
+        }));
+      } catch (eventError) {
+        console.error(
+          "Error fetching events for student dashboard:",
+          eventError
+        );
+        // If events fetch fails, use empty array
+        upcomingEvents = [];
+      }
 
       res.json({
         student,

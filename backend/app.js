@@ -63,12 +63,14 @@ const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
 const studentRoutes = require("./routes/students");
 const facultyRoutes = require("./routes/faculty");
+const eventRoutes = require("./routes/events");
 
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/faculty", facultyRoutes);
+app.use("/api/events", eventRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -138,7 +140,9 @@ app.post("/api/test/create-faculty", async (req, res) => {
     const Student = require("./model/student");
 
     // Check if test faculty already exists
-    const existingFaculty = await Faculty.findOne({ email: "test@faculty.com" });
+    const existingFaculty = await Faculty.findOne({
+      email: "test@faculty.com",
+    });
     if (existingFaculty) {
       return res.json({
         message: "Test faculty already exists",
@@ -150,7 +154,7 @@ app.post("/api/test/create-faculty", async (req, res) => {
 
     // Get all students to assign to faculty
     const students = await Student.find({});
-    const studentIds = students.map(student => student._id);
+    const studentIds = students.map((student) => student._id);
 
     const facultyData = {
       name: { first: "Test", last: "Faculty" },

@@ -51,6 +51,10 @@ export const studentService = {
   getAnalytics: (id) => {
     return api.get(`/students/analytics/${id}`);
   },
+
+  getEvents: (id) => {
+    return api.get(`/events/student/${id}`);
+  },
 };
 
 export const facultyService = {
@@ -63,7 +67,10 @@ export const facultyService = {
   },
 
   reviewAchievement: (facultyId, achievementId, reviewData) => {
-    return api.post(`/faculty/review/${facultyId}/${achievementId}`, reviewData);
+    return api.post(
+      `/faculty/review/${facultyId}/${achievementId}`,
+      reviewData
+    );
   },
 
   getStudents: (id) => {
@@ -76,6 +83,37 @@ export const facultyService = {
 
   generateReport: (id, reportType, params) => {
     return api.post(`/faculty/reports/${id}`, { reportType, ...params });
+  },
+};
+
+export const eventService = {
+  getCollegeEvents: (collegeId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/events/college/${collegeId}?${queryString}`);
+  },
+
+  getFacultyEvents: (facultyId) => {
+    return api.get(`/events/faculty/${facultyId}`);
+  },
+
+  createEvent: (eventData) => {
+    return api.post("/events/create", eventData);
+  },
+
+  updateEvent: (eventId, eventData) => {
+    return api.put(`/events/${eventId}`, eventData);
+  },
+
+  deleteEvent: (eventId) => {
+    return api.delete(`/events/${eventId}`);
+  },
+
+  getEvent: (eventId) => {
+    return api.get(`/events/${eventId}`);
+  },
+
+  registerForEvent: (eventId) => {
+    return api.post(`/events/${eventId}/register`);
   },
 };
 

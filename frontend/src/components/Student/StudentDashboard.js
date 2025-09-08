@@ -11,10 +11,35 @@ const StudentDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchUpcomingEvents();
   }, [id]);
+
+  const fetchUpcomingEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      const response = await fetch(
+        `http://localhost:3030/api/events/student/${id}`,
+        {
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setUpcomingEvents(data.events || []);
+      } else {
+        console.error("Failed to fetch events:", data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -37,6 +62,19 @@ const StudentDashboard = () => {
         year: "numeric",
         month: "short",
         day: "numeric",
+      });
+    } catch {
+      return "Date not available";
+    }
+  };
+
+  const formatEventDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       });
     } catch {
       return "Date not available";
@@ -130,8 +168,7 @@ const StudentDashboard = () => {
     );
   }
 
-  const { student, stats, recentActivities, academicProgress, upcomingEvents } =
-    dashboardData;
+  const { student, stats, recentActivities, academicProgress } = dashboardData;
   const studentFirstName = student?.name?.first || "Student";
   const studentLastName = student?.name?.last || "";
   const fullName = `${studentFirstName} ${studentLastName}`.trim();
@@ -263,7 +300,7 @@ const StudentDashboard = () => {
                   <span>Overall CGPA</span>
                   <span className="progress-value">
                     {academicProgress?.cgpa
-                      ? `${academicProgress.cgpa}/10`
+                      ? `${parseFloat(academicProgress.cgpa).toFixed(2)}/10`
                       : "Not Available"}
                   </span>
                 </div>
@@ -288,7 +325,7 @@ const StudentDashboard = () => {
                   <span>Attendance</span>
                   <span className="progress-value">
                     {academicProgress?.attendance
-                      ? `${academicProgress.attendance}%`
+                      ? `${parseFloat(academicProgress.attendance).toFixed(2)}%`
                       : "Not Available"}
                   </span>
                 </div>
@@ -316,13 +353,31 @@ const StudentDashboard = () => {
             <div className="content-card events-card">
               <h2>Upcoming Events</h2>
               <div className="events-list">
-                {upcomingEvents && upcomingEvents.length > 0 ? (
-                  upcomingEvents.map((event, index) => (
-                    <div key={index} className="event-item">
+                {loadingEvents ? (
+                  <div className="loading-events">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Loading events...</span>
+                  </div>
+                ) : upcomingEvents && upcomingEvents.length > 0 ? (
+                  upcomingEvents.slice(0, 5).map((event, index) => (
+                    <div key={event._id || index} className="event-item">
                       <div className="event-indicator"></div>
                       <div className="event-content">
                         <h3>{event.title}</h3>
-                        <p>{event.date}</p>
+                        <p>
+                          <i className="fas fa-calendar"></i>
+                          {formatEventDate(event.eventDate)}
+                          {event.eventTime && ` • ${event.eventTime}`}
+                        </p>
+                        {event.venue && (
+                          <p>
+                            <i className="fas fa-map-marker-alt"></i>
+                            {event.venue}
+                          </p>
+                        )}
+                        {event.eventType && (
+                          <span className="event-type">{event.eventType}</span>
+                        )}
                       </div>
                     </div>
                   ))

@@ -1257,3 +1257,39 @@
 .empty-events i {
   font-size: 1.2rem;
 }
+
+/* Event Loading Styles */
+.loading-events {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.event-type {
+  display: inline-block;
+  background: rgba(40, 75, 99, 0.1);
+  color: #284b63;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.event-content p {
+  margin: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.event-content p i {
+  width: 12px;
+  text-align: center;
+  opacity: 0.7;
+}

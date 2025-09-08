@@ -11,6 +11,22 @@ const FacultyDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [eventForm, setEventForm] = useState({
+    title: "",
+    description: "",
+    eventDate: "",
+    eventTime: "",
+    venue: "",
+    eventType: "Academic",
+    targetAudience: "All",
+    maxParticipants: "",
+    registrationRequired: false,
+    registrationDeadline: "",
+    tags: [],
+  });
 
   useEffect(() => {
     // If user is logged in as faculty and trying to access wrong dashboard, redirect to their own
@@ -23,7 +39,30 @@ const FacultyDashboard = () => {
       return;
     }
     fetchDashboardData();
+    fetchUpcomingEvents();
   }, [id, currentUser]);
+
+  const fetchUpcomingEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      const response = await fetch(
+        `http://localhost:3030/api/events/faculty/${id}`,
+        {
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setUpcomingEvents(data.events || []);
+      } else {
+        console.error("Failed to fetch events:", data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -71,6 +110,19 @@ const FacultyDashboard = () => {
     }
   };
 
+  const formatEventDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "Date not available";
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case "approved":
@@ -86,6 +138,73 @@ const FacultyDashboard = () => {
 
   const handleReviewAchievement = (achievementId, studentId) => {
     navigate(`/faculty/review/${id}/${achievementId}/${studentId}`);
+  };
+
+  const handleEventInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEventForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleCreateEvent = async (e) => {
+    e.preventDefault();
+    try {
+      const eventData = {
+        ...eventForm,
+        maxParticipants: eventForm.maxParticipants
+          ? parseInt(eventForm.maxParticipants)
+          : null,
+      };
+
+      console.log("Creating event with data:", eventData);
+
+      const response = await fetch("http://localhost:3030/api/events/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(eventData),
+      });
+
+      const data = await response.json();
+      console.log("Response status:", response.status);
+      console.log("Response data:", data);
+
+      if (response.ok) {
+        setShowEventForm(false);
+        setEventForm({
+          title: "",
+          description: "",
+          eventDate: "",
+          eventTime: "",
+          venue: "",
+          eventType: "Academic",
+          targetAudience: "All",
+          maxParticipants: "",
+          registrationRequired: false,
+          registrationDeadline: "",
+          tags: [],
+        });
+        fetchUpcomingEvents(); // Refresh events
+        alert("Event created successfully!");
+      } else {
+        console.error("Event creation failed:", data);
+        const errorMessage = data.details
+          ? `${data.error}: ${
+              Array.isArray(data.details)
+                ? data.details.join(", ")
+                : data.details
+            }`
+          : data.error || "Failed to create event";
+        alert(errorMessage);
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      alert(`Network error: ${error.message || "Failed to create event"}`);
+    }
   };
 
   if (loading) {
@@ -328,17 +447,40 @@ const FacultyDashboard = () => {
               </div>
             </div>
 
-            {/* Recent Activities */}
+            {/* Upcoming Events */}
             <div className="content-card events-card">
-              <h2>Recent Activities</h2>
+              <div className="card-header">
+                <h2>Upcoming Events</h2>
+                <button
+                  className="add-new-btn"
+                  onClick={() => setShowEventForm(true)}
+                >
+                  <i className="fas fa-plus"></i>
+                  Add Event
+                </button>
+              </div>
               <div className="events-list">
-                {recentActivities && recentActivities.length > 0 ? (
-                  recentActivities.map((activity, index) => (
-                    <div key={index} className="event-item">
+                {loadingEvents ? (
+                  <div className="loading-events">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Loading events...</span>
+                  </div>
+                ) : upcomingEvents && upcomingEvents.length > 0 ? (
+                  upcomingEvents.slice(0, 5).map((event, index) => (
+                    <div key={event._id} className="event-item">
                       <div className="event-indicator"></div>
                       <div className="event-content">
-                        <h3>{activity.description}</h3>
-                        <p>{formatDate(activity.timestamp)}</p>
+                        <h3>{event.title}</h3>
+                        <p>
+                          <i className="fas fa-calendar"></i>
+                          {formatEventDate(event.eventDate)}
+                          {event.eventTime && ` • ${event.eventTime}`}
+                        </p>
+                        <p>
+                          <i className="fas fa-map-marker-alt"></i>
+                          {event.venue}
+                        </p>
+                        <span className="event-type">{event.eventType}</span>
                       </div>
                     </div>
                   ))
@@ -346,8 +488,8 @@ const FacultyDashboard = () => {
                   <div className="empty-events">
                     <div className="event-indicator"></div>
                     <div className="event-content">
-                      <h3>No recent activities</h3>
-                      <p>Your activity will appear here</p>
+                      <h3>No upcoming events</h3>
+                      <p>Create an event to get started</p>
                     </div>
                   </div>
                 )}
@@ -356,6 +498,185 @@ const FacultyDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Event Creation Modal */}
+      {showEventForm && (
+        <div className="modal-overlay">
+          <div className="modal-content event-modal">
+            <div className="modal-header">
+              <h2>Create New Event</h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowEventForm(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form onSubmit={handleCreateEvent} className="event-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="title">Event Title *</label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={eventForm.title}
+                    onChange={handleEventInputChange}
+                    required
+                    placeholder="Enter event title"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="eventType">Event Type</label>
+                  <select
+                    id="eventType"
+                    name="eventType"
+                    value={eventForm.eventType}
+                    onChange={handleEventInputChange}
+                  >
+                    <option value="Academic">Academic</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Seminar">Seminar</option>
+                    <option value="Conference">Conference</option>
+                    <option value="Competition">Competition</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description">Description *</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={eventForm.description}
+                  onChange={handleEventInputChange}
+                  required
+                  rows="3"
+                  placeholder="Enter event description"
+                ></textarea>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="eventDate">Event Date *</label>
+                  <input
+                    type="date"
+                    id="eventDate"
+                    name="eventDate"
+                    value={eventForm.eventDate}
+                    onChange={handleEventInputChange}
+                    required
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="eventTime">Event Time</label>
+                  <input
+                    type="time"
+                    id="eventTime"
+                    name="eventTime"
+                    value={eventForm.eventTime}
+                    onChange={handleEventInputChange}
+                    placeholder="e.g., 10:00 AM"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="venue">Venue *</label>
+                <input
+                  type="text"
+                  id="venue"
+                  name="venue"
+                  value={eventForm.venue}
+                  onChange={handleEventInputChange}
+                  required
+                  placeholder="Enter event venue"
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="targetAudience">Target Audience</label>
+                  <select
+                    id="targetAudience"
+                    name="targetAudience"
+                    value={eventForm.targetAudience}
+                    onChange={handleEventInputChange}
+                  >
+                    <option value="All">All</option>
+                    <option value="Students">Students Only</option>
+                    <option value="Faculty">Faculty Only</option>
+                    <option value="First Year">First Year</option>
+                    <option value="Second Year">Second Year</option>
+                    <option value="Third Year">Third Year</option>
+                    <option value="Final Year">Final Year</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="maxParticipants">Max Participants</label>
+                  <input
+                    type="number"
+                    id="maxParticipants"
+                    name="maxParticipants"
+                    value={eventForm.maxParticipants}
+                    onChange={handleEventInputChange}
+                    min="1"
+                    placeholder="Leave empty for unlimited"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="registrationRequired"
+                    checked={eventForm.registrationRequired}
+                    onChange={handleEventInputChange}
+                  />
+                  <span className="checkmark"></span>
+                  Registration Required
+                </label>
+              </div>
+
+              {eventForm.registrationRequired && (
+                <div className="form-group">
+                  <label htmlFor="registrationDeadline">
+                    Registration Deadline
+                  </label>
+                  <input
+                    type="date"
+                    id="registrationDeadline"
+                    name="registrationDeadline"
+                    value={eventForm.registrationDeadline}
+                    onChange={handleEventInputChange}
+                    min={new Date().toISOString().split("T")[0]}
+                    max={eventForm.eventDate}
+                  />
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={() => setShowEventForm(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  <i className="fas fa-plus"></i>
+                  Create Event
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

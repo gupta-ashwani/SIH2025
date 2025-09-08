@@ -48,37 +48,28 @@ router.get("/dashboard/:id", requireAuth, async (req, res) => {
       },
     ]);
 
-    // Get this month's approved achievements dynamically from database
+    // Get this month's approved achievements dynamically from faculty's reviewed achievements
     const now = new Date();
-    const oneMonthAgo = new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      now.getDate()
-    );
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Handle edge case where current day doesn't exist in previous month (e.g., Jan 31 -> Feb 28)
-    if (oneMonthAgo.getMonth() !== (now.getMonth() - 1 + 12) % 12) {
-      oneMonthAgo.setDate(0); // Set to last day of previous month
-    }
-
-    const approvedThisMonth = await Student.aggregate([
+    const approvedThisMonth = await Faculty.aggregate([
       {
         $match: {
-          coordinator: new mongoose.Types.ObjectId(id),
+          _id: new mongoose.Types.ObjectId(id),
         },
       },
       {
         $unwind: {
-          path: "$achievements",
+          path: "$achievementsReviewed",
           preserveNullAndEmptyArrays: false,
         },
       },
       {
         $match: {
-          "achievements.status": "Approved",
-          "achievements.reviewedAt": {
+          "achievementsReviewed.status": "Approved",
+          "achievementsReviewed.reviewedAt": {
             $exists: true,
-            $gte: oneMonthAgo,
+            $gte: startOfMonth,
           },
         },
       },
@@ -87,23 +78,22 @@ router.get("/dashboard/:id", requireAuth, async (req, res) => {
       },
     ]);
 
-    // Get total reviewed achievements dynamically from database
-    const totalReviewed = await Student.aggregate([
+    // Get total reviewed achievements dynamically from faculty's reviewed achievements
+    const totalReviewed = await Faculty.aggregate([
       {
         $match: {
-          coordinator: new mongoose.Types.ObjectId(id),
+          _id: new mongoose.Types.ObjectId(id),
         },
       },
       {
         $unwind: {
-          path: "$achievements",
+          path: "$achievementsReviewed",
           preserveNullAndEmptyArrays: false,
         },
       },
       {
         $match: {
-          "achievements.status": { $in: ["Approved", "Rejected"] },
-          "achievements.reviewedAt": { $exists: true },
+          "achievementsReviewed.reviewedAt": { $exists: true },
         },
       },
       {
@@ -175,7 +165,7 @@ router.get("/dashboard/:id", requireAuth, async (req, res) => {
           $match: {
             "achievements.uploadedAt": {
               $exists: true,
-              $gte: oneMonthAgo,
+              $gte: startOfMonth,
             },
           },
         },
@@ -315,13 +305,14 @@ router.post(
       }
 
       // Update student's achievement status
+      const reviewedAt = new Date();
       await Student.updateOne(
         { _id: studentId, "achievements._id": achievementId },
         {
           $set: {
             "achievements.$.status": status,
             "achievements.$.comment": comment || "",
-            "achievements.$.reviewedAt": new Date(),
+            "achievements.$.reviewedAt": reviewedAt,
           },
         }
       );
@@ -336,7 +327,7 @@ router.post(
               studentId,
               status,
               comment: comment || "",
-              reviewedAt: new Date(),
+              reviewedAt: reviewedAt,
             },
           },
         }
