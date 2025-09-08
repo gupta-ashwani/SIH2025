@@ -103,7 +103,7 @@
 
 .welcome-section .welcome-content {
   max-width: 500px;
-  margin: 0 auto;
+  margin: 0 auto 0;
 }
 
 .welcome-section h1 {
@@ -1253,6 +1253,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-align: center;
 }
 
 .status-badge.pending {
@@ -2594,6 +2595,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .status-badge.approved {
@@ -3746,7 +3748,7 @@
   font-weight: 600;
   text-transform: capitalize;
   margin: 0;
-  text-align: left;
+  text-align: center;
 }
 
 .status-pending {

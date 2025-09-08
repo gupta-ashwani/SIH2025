@@ -162,12 +162,6 @@ const FacultyDashboard = () => {
             {faculty?.designation || "Faculty"}
             {faculty?.facultyID && ` • ID: ${faculty.facultyID}`}
           </p>
-          {faculty?.isCoordinator && (
-            <span className="coordinator-badge">
-              <i className="fas fa-star"></i>
-              Coordinator
-            </span>
-          )}
         </div>
       </div>
 
