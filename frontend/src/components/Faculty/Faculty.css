@@ -1813,21 +1813,23 @@
 .review-modal {
   background: white;
   border-radius: 16px;
-  padding: 8px;
-  max-width: 600px;
-  width: 100%;
+  max-width: 700px;
+  width: 95%;
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
-  padding-bottom: 2px;
+  padding: 24px 24px 16px 24px;
   border-bottom: 1px solid #e5e7eb;
+  background: #f8f9fa;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -1844,25 +1846,29 @@
   font-size: 1.25rem;
   color: #6b7280;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  background: #f3f4f6;
+  background: #e5e7eb;
   color: #374151;
 }
 
 .modal-content {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  flex: 1;
+  padding: 24px;
 }
 
 .achievement-details {
   background: #f8f9fa;
-  padding: 16px;
-  border-radius: 6px;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
 }
 
 .achievement-details h3 {
@@ -1880,30 +1886,34 @@
 }
 
 .certificate-image-container {
-  margin-top: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  margin-top: 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
   overflow: hidden;
+  background: white;
 }
 
 .certificate-image-label {
-  background: #f9fafb;
-  padding: 8px 12px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .certificate-image {
   width: 100%;
-  max-height: 300px;
+  max-height: 400px;
   object-fit: contain;
   background: #f9fafb;
+  display: block;
 }
 
 .no-certificate {
-  padding: 20px;
+  padding: 40px 20px;
   text-align: center;
   color: #9ca3af;
   background: #f9fafb;
@@ -1911,9 +1921,15 @@
 }
 
 .review-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.status-selection {
+  margin-bottom: 20px;
 }
 
 .status-selection label {
@@ -1921,7 +1937,8 @@
   margin-bottom: 12px;
   color: #374151;
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .status-buttons {
@@ -1933,7 +1950,7 @@
   flex: 1;
   padding: 12px 16px;
   border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   background: white;
   cursor: pointer;
   font-family: var(--font-body);
@@ -1942,21 +1959,25 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .status-btn.approve:hover,
 .status-btn.approve.active {
-  background: #d1fae5;
-  border-color: #10b981;
-  color: #065f46;
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #166534;
 }
 
 .status-btn.reject:hover,
 .status-btn.reject.active {
-  background: #fee2e2;
-  border-color: #ef4444;
+  background: #fef2f2;
+  border-color: #dc2626;
   color: #991b1b;
+}
+
+.comment-section {
+  margin-bottom: 20px;
 }
 
 .comment-section label {
@@ -1964,18 +1985,20 @@
   margin-bottom: 8px;
   color: #374151;
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .comment-section textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
   font-family: var(--font-body);
   font-size: 0.875rem;
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
+  transition: all 0.2s ease;
 }
 
 .comment-section textarea:focus {
@@ -1985,32 +2008,58 @@
 }
 
 .comment-section textarea.required-field {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .modal-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  padding-top: 16px;
+  padding-top: 20px;
+  margin-top: 20px;
   border-top: 1px solid #e5e7eb;
 }
 
 .cancel-btn {
   padding: 12px 24px;
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  background: #f8f9fa;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
   cursor: pointer;
   font-family: var(--font-body);
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .cancel-btn:hover {
   background: #e5e7eb;
+  color: #374151;
+}
+
+.submit-btn {
+  padding: 12px 24px;
+  background: #284b63;
+  color: white;
+  border: 2px solid #284b63;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #1e3a50;
+  border-color: #1e3a50;
+}
+
+.submit-btn:disabled {
+  background: #9ca3af;
+  border-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .submit-btn {
@@ -3230,7 +3279,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3239,13 +3289,14 @@
 }
 
 .review-modal {
-  background: white;
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(30, 58, 138, 0.3), 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(30, 58, 138, 0.1);
 }
 
 .modal-header {
@@ -3253,34 +3304,46 @@
   justify-content: space-between;
   align-items: center;
   padding: 2rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: none;
+  background: linear-gradient(135deg, #284b63 0%, #1e3a50 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .modal-header h2 {
-  color: #1f2937;
+  color: #ffffff;
   font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  color: #6b7280;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: scale(1.05);
 }
 
 .modal-content {
   padding: 2rem;
+  max-height: calc(90vh - 100px);
+  overflow-y: auto;
 }
 
 .achievement-details {

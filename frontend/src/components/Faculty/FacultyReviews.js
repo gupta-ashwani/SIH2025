@@ -282,6 +282,12 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
     }
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setComment("");
+    setReviewStatus("");
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status?.toLowerCase()) {
       case "approved":
@@ -383,14 +389,10 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
                 </button>
                 <button
                   className="action-btn reject-btn"
-                  onClick={() =>
-                    onReview(
-                      review.achievement._id,
-                      review.student._id,
-                      "Rejected",
-                      ""
-                    )
-                  }
+                  onClick={() => {
+                    setReviewStatus("Rejected");
+                    setShowModal(true);
+                  }}
                 >
                   Reject
                 </button>
@@ -419,7 +421,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
 
       {/* Review Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={handleCloseModal}>
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>
@@ -428,7 +430,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
                   ? "Review Achievement"
                   : "Achievement Details"}
               </h2>
-              <button className="close-btn" onClick={() => setShowModal(false)}>
+              <button className="close-btn" onClick={handleCloseModal}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -568,10 +570,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
                   </div>
 
                   <div className="modal-actions">
-                    <button
-                      className="cancel-btn"
-                      onClick={() => setShowModal(false)}
-                    >
+                    <button className="cancel-btn" onClick={handleCloseModal}>
                       Cancel
                     </button>
                     <button
@@ -588,10 +587,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
               {review.achievement?.status &&
                 review.achievement?.status !== "Pending" && (
                   <div className="modal-actions">
-                    <button
-                      className="cancel-btn"
-                      onClick={() => setShowModal(false)}
-                    >
+                    <button className="cancel-btn" onClick={handleCloseModal}>
                       Close
                     </button>
                   </div>
