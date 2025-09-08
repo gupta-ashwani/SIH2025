@@ -377,7 +377,9 @@ router.get("/students/:id", requireAuth, async (req, res) => {
 
     // Enhance student data with calculated fields
     const enhancedStudents = students.map((student) => {
-      const achievementCount = student.achievements?.length || 0;
+      const achievementCount =
+        student.achievements?.filter((a) => a.status === "Approved").length ||
+        0;
       const pendingReviews =
         student.achievements?.filter((a) => a.status === "Pending").length || 0;
       const approvedAchievements =
