@@ -9,9 +9,13 @@ const MongoStore = require("connect-mongo");
 const passport = require("./config/passport");
 
 // CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ["http://localhost:3000", "http://localhost:3001"];
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"], // React app URLs
+    origin: allowedOrigins,
     credentials: true,
   })
 );

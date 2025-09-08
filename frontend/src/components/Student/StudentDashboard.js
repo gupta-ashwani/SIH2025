@@ -23,7 +23,7 @@ const StudentDashboard = () => {
     try {
       setLoadingEvents(true);
       const response = await fetch(
-        `http://localhost:3030/api/events/student/${id}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:3030/api'}/events/student/${id}`,
         {
           credentials: "include",
         }

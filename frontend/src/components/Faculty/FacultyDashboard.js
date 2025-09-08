@@ -46,7 +46,7 @@ const FacultyDashboard = () => {
     try {
       setLoadingEvents(true);
       const response = await fetch(
-        `http://localhost:3030/api/events/faculty/${id}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:3030/api'}/events/faculty/${id}`,
         {
           credentials: "include",
         }
@@ -160,7 +160,7 @@ const FacultyDashboard = () => {
 
       console.log("Creating event with data:", eventData);
 
-      const response = await fetch("http://localhost:3030/api/events/create", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3030/api'}/events/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
