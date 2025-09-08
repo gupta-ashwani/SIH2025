@@ -554,4 +554,136 @@ router.get("/download-template", (req, res) => {
   }
 });
 
+// Single student creation route
+router.post("/single-student", requireAuth, async (req, res) => {
+  try {
+    console.log("=== SINGLE STUDENT CREATION ===");
+    console.log("Request user:", req.user);
+    console.log("Student data:", req.body);
+
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    // Find the faculty
+    const faculty = await Faculty.findById(req.user._id).populate("department");
+    if (!faculty) {
+      return res.status(404).json({ error: "Faculty not found" });
+    }
+
+    const studentData = req.body;
+
+    // Validate required fields
+    if (
+      !studentData["name.first"] ||
+      !studentData["name.last"] ||
+      !studentData.email ||
+      !studentData.studentID
+    ) {
+      return res.status(400).json({
+        error:
+          "Missing required fields: name.first, name.last, email, studentID",
+      });
+    }
+
+    // Check if student already exists
+    const existingStudent = await Student.findOne({
+      $or: [{ email: studentData.email }, { studentID: studentData.studentID }],
+    });
+
+    if (existingStudent) {
+      return res.status(400).json({
+        error: "Student with this email or student ID already exists",
+      });
+    }
+
+    // Generate password (default or from form)
+    const password = studentData.password || `${studentData.studentID}@123`;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Validate gender field
+    const validGenders = ["Male", "Female", "Other"];
+    const genderValue = studentData.gender?.trim();
+    const isValidGender = genderValue && validGenders.includes(genderValue);
+
+    // Parse skills array if provided as comma-separated string
+    let skillsArray = [];
+    if (studentData.skills && Array.isArray(studentData.skills)) {
+      skillsArray = studentData.skills.filter((skill) => skill && skill.trim());
+    }
+
+    // Create student object using exact model field names
+    const studentObj = {
+      name: {
+        first: studentData["name.first"].trim(),
+        last: studentData["name.last"]?.trim() || "",
+      },
+      email: studentData.email.toLowerCase().trim(),
+      password: hashedPassword,
+      studentID: studentData.studentID.toString().trim(),
+      department: faculty.department._id,
+      coordinator: faculty._id,
+      contactNumber: studentData.contactNumber || "",
+      address: {
+        line1: studentData["address.line1"] || "",
+        line2: studentData["address.line2"] || "",
+        city: studentData["address.city"] || "",
+        state: studentData["address.state"] || "",
+        country: studentData["address.country"] || "",
+        pincode: studentData["address.pincode"] || "",
+      },
+      enrollmentYear: studentData.enrollmentYear
+        ? parseInt(studentData.enrollmentYear)
+        : new Date().getFullYear(),
+      batch: studentData.batch || new Date().getFullYear().toString(),
+      skills: skillsArray,
+      status: studentData.status || "Active",
+    };
+
+    // Only add optional fields if they have valid values
+    if (studentData.dob) {
+      studentObj.dob = new Date(studentData.dob);
+    }
+
+    if (isValidGender) {
+      studentObj.gender = genderValue;
+    }
+
+    if (studentData.gpa && !isNaN(parseFloat(studentData.gpa))) {
+      studentObj.gpa = parseFloat(studentData.gpa);
+    }
+
+    if (studentData.attendance && !isNaN(parseFloat(studentData.attendance))) {
+      studentObj.attendance = parseFloat(studentData.attendance);
+    }
+
+    const newStudent = new Student(studentObj);
+
+    // Save student
+    const savedStudent = await newStudent.save();
+
+    // Add student to faculty's students array
+    faculty.students.push(savedStudent._id);
+    await faculty.save();
+
+    console.log("Student created successfully:", savedStudent._id);
+
+    res.json({
+      message: "Student created successfully",
+      student: {
+        id: savedStudent._id,
+        name: `${savedStudent.name.first} ${savedStudent.name.last}`,
+        email: savedStudent.email,
+        studentID: savedStudent.studentID,
+      },
+    });
+  } catch (error) {
+    console.error("Single student creation error:", error);
+    res.status(500).json({
+      error: "Server error during student creation",
+      details: error.message,
+    });
+  }
+});
+
 module.exports = router;

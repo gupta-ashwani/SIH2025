@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { studentService } from "../../services/authService";
 import "./Student.css";
 
 const StudentPortfolio = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [portfolioData, setPortfolioData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,6 +40,11 @@ const StudentPortfolio = () => {
       return "Date not available";
     }
   };
+
+  // Check if current user is viewing their own portfolio
+  const isOwnPortfolio = currentUser && currentUser._id === id;
+  // Check if current user is faculty viewing student portfolio
+  const isFacultyViewing = currentUser && currentUser.role === "faculty";
 
   const handleDownloadPDF = () => {
     // Implementation for PDF download
@@ -176,16 +183,19 @@ const StudentPortfolio = () => {
                 </div>
                 <h2>Portfolio is Empty</h2>
                 <p>
-                  Start building your portfolio by uploading your achievements
-                  and activities.
+                  {isOwnPortfolio && !isFacultyViewing
+                    ? "Start building your portfolio by uploading your achievements and activities."
+                    : "This student hasn't uploaded any achievements yet."}
                 </p>
-                <button
-                  className="add-activity-btn"
-                  onClick={() => navigate(`/students/upload/${id}`)}
-                >
-                  <i className="fas fa-plus"></i>
-                  Add Your First Activity
-                </button>
+                {isOwnPortfolio && !isFacultyViewing && (
+                  <button
+                    className="add-activity-btn"
+                    onClick={() => navigate(`/students/upload/${id}`)}
+                  >
+                    <i className="fas fa-plus"></i>
+                    Add Your First Activity
+                  </button>
+                )}
               </div>
             </div>
           ) : (

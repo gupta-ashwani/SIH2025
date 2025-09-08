@@ -51,6 +51,12 @@
   max-width: 600px;
 }
 
+.student-modal {
+  width: 95%;
+  max-width: 800px;
+  max-height: 85vh;
+}
+
 @keyframes modalSlideIn {
   from {
     opacity: 0;
@@ -340,6 +346,50 @@
   }
 }
 
+/* Student Form Styles */
+.student-form {
+  padding: 24px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.form-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #3b82f6;
+  display: inline-block;
+}
+
+/* Responsive Design for Student Modal */
+@media (max-width: 768px) {
+  .student-modal {
+    width: 98%;
+    margin: 8px;
+    max-height: 95vh;
+  }
+
+  .student-form {
+    padding: 16px;
+  }
+
+  .form-section {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+  }
+}
+
 /* Common Page Header */
 .page-header {
   background: linear-gradient(135deg, #284b63 0%, #1e3a50 100%);
@@ -416,7 +466,7 @@
   padding: 40px 24px;
   text-align: center;
   width: 60.75%;
-  margin: 3vh auto 1vh;
+  margin: 5vh auto 2vh;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
@@ -436,9 +486,11 @@
 
 .welcome-section p {
   color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 1.1rem;
   font-weight: 400;
+  line-height: 1.4;
+  word-spacing: 0.1em;
 }
 
 .coordinator-badge {
@@ -510,6 +562,8 @@
   gap: 16px;
   margin-bottom: 32px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .action-btn {
@@ -524,17 +578,33 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .action-btn.bulk-upload {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
+  border: 2px solid transparent;
 }
 
 .action-btn.bulk-upload:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
-  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.action-btn.add-student {
+  background: linear-gradient(135deg, #284b63 0%, #1e3a50 100%);
+  color: white;
+  border: 2px solid transparent;
+}
+
+.action-btn.add-student:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(40, 75, 99, 0.3);
+  background: linear-gradient(135deg, #1e3a50 0%, #16313f 100%);
 }
 
 .action-btn i {
@@ -2002,6 +2072,31 @@
     font-size: 2rem;
   }
 
+  .quick-actions {
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .action-btn {
+    min-width: 160px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  .custom-dropdown {
+    min-width: 140px;
+  }
+
+  .custom-dropdown-button {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+  }
+
+  .custom-dropdown-item {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+
   .stats-container,
   .analytics-overview {
     grid-template-columns: repeat(2, 1fr);
@@ -2092,6 +2187,33 @@
 
   .welcome-section h1 {
     font-size: 1.75rem;
+  }
+
+  .quick-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .custom-dropdown {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .sort-dropdown {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .sort-dropdown label {
+    font-size: 0.85rem;
+  }
+
+  .action-btn {
+    min-width: auto;
+    width: 100%;
+    padding: 14px 20px;
   }
 
   .student-card-header {

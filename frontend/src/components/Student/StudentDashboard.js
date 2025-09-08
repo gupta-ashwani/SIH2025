@@ -115,6 +115,11 @@ const StudentDashboard = () => {
     navigate(`/students/${path}/${id}`);
   };
 
+  // Check if current user is viewing their own dashboard
+  const isOwnDashboard = currentUser && currentUser._id === id;
+  // Check if current user is faculty viewing student dashboard
+  const isFacultyViewing = currentUser && currentUser.role === "faculty";
+
   if (loading) {
     return (
       <div className="student-dashboard">
@@ -180,11 +185,25 @@ const StudentDashboard = () => {
       {/* Welcome Section - Full Width */}
       <div className="welcome-section">
         <div className="welcome-content">
-          <h1>Welcome back, {studentFirstName}!</h1>
+          <h1>
+            {isFacultyViewing
+              ? `${studentFirstName}'s Profile`
+              : `Welcome back, ${studentFirstName}!`}
+          </h1>
           <p>
-            {student?.department?.name || "Department not specified"} •{" "}
-            {student?.batch || "Batch not specified"}
-            {student?.studentID && ` • Roll No: ${student.studentID}`}
+            <span>
+              {student?.department?.name || "Department not specified"}
+            </span>
+            {" • "}
+            <span>{student?.batch || "Batch not specified"}</span>
+            {student?.studentID && (
+              <>
+                {" • "}
+                <span style={{ whiteSpace: "nowrap" }}>
+                  Roll&nbsp;No:&nbsp;{student.studentID}
+                </span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -240,12 +259,14 @@ const StudentDashboard = () => {
           <div className="content-card activities-card">
             <div className="card-header">
               <h2>Recent Activities</h2>
-              <button
-                className="add-new-btn"
-                onClick={() => handleNavigate("upload")}
-              >
-                + Add New
-              </button>
+              {isOwnDashboard && !isFacultyViewing && (
+                <button
+                  className="add-new-btn"
+                  onClick={() => handleNavigate("upload")}
+                >
+                  + Add New
+                </button>
+              )}
             </div>
             <div className="activities-list">
               {recentActivities && recentActivities.length > 0 ? (
@@ -277,16 +298,19 @@ const StudentDashboard = () => {
                   </div>
                   <h3>No Activities Yet</h3>
                   <p>
-                    Start building your portfolio by uploading your first
-                    achievement!
+                    {isOwnDashboard && !isFacultyViewing
+                      ? "Start building your portfolio by uploading your first achievement!"
+                      : "This student hasn't uploaded any activities yet."}
                   </p>
-                  <button
-                    className="cta-btn"
-                    onClick={() => handleNavigate("upload")}
-                  >
-                    <i className="fas fa-plus"></i>
-                    Add Your First Activity
-                  </button>
+                  {isOwnDashboard && !isFacultyViewing && (
+                    <button
+                      className="cta-btn"
+                      onClick={() => handleNavigate("upload")}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Add Your First Activity
+                    </button>
+                  )}
                 </div>
               )}
             </div>

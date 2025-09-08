@@ -16,6 +16,7 @@ const FacultyDashboard = () => {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showAddStudent, setShowAddStudent] = useState(false);
   const [eventForm, setEventForm] = useState({
     title: "",
     description: "",
@@ -28,6 +29,29 @@ const FacultyDashboard = () => {
     registrationRequired: false,
     registrationDeadline: "",
     tags: [],
+  });
+
+  const [studentForm, setStudentForm] = useState({
+    "name.first": "",
+    "name.last": "",
+    email: "",
+    studentID: "",
+    dob: "",
+    gender: "",
+    contactNumber: "",
+    "address.line1": "",
+    "address.line2": "",
+    "address.city": "",
+    "address.state": "",
+    "address.country": "",
+    "address.pincode": "",
+    enrollmentYear: new Date().getFullYear(),
+    batch: new Date().getFullYear().toString(),
+    gpa: "",
+    attendance: "",
+    skills: "",
+    password: "",
+    status: "Active",
   });
 
   useEffect(() => {
@@ -225,6 +249,85 @@ const FacultyDashboard = () => {
     setShowBulkUpload(false);
   };
 
+  const handleStudentInputChange = (e) => {
+    const { name, value } = e.target;
+    setStudentForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAddStudentSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const formData = {
+        ...studentForm,
+        // Parse skills as comma-separated if provided
+        skills: studentForm.skills
+          ? studentForm.skills
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s)
+          : [],
+      };
+
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_API_URL || "http://localhost:3030/api"
+        }/bulk-students/single-student`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Student added successfully!");
+        setShowAddStudent(false);
+        // Reset form
+        setStudentForm({
+          "name.first": "",
+          "name.last": "",
+          email: "",
+          studentID: "",
+          dob: "",
+          gender: "",
+          contactNumber: "",
+          "address.line1": "",
+          "address.line2": "",
+          "address.city": "",
+          "address.state": "",
+          "address.country": "",
+          "address.pincode": "",
+          enrollmentYear: new Date().getFullYear(),
+          batch: new Date().getFullYear().toString(),
+          gpa: "",
+          attendance: "",
+          skills: "",
+          password: "",
+          status: "Active",
+        });
+        fetchDashboardData(); // Refresh dashboard data
+      } else {
+        alert(data.error || "Failed to add student");
+      }
+    } catch (error) {
+      console.error("Error adding student:", error);
+      alert("Failed to add student");
+    }
+  };
+
+  const handleAddStudentClose = () => {
+    setShowAddStudent(false);
+  };
+
   if (loading) {
     return (
       <div className="faculty-dashboard">
@@ -295,9 +398,20 @@ const FacultyDashboard = () => {
             Welcome back, {faculty?.designation} {facultyFirstName}!
           </h1>
           <p>
-            {faculty?.department?.name || "Department not specified"} •{" "}
-            {faculty?.designation || "Faculty"}
-            {faculty?.facultyID && ` • ID: ${faculty.facultyID}`}
+            <span>
+              {faculty?.department?.name || "Department not specified"}
+            </span>
+            {" • "}
+            <span>{faculty?.designation || "Faculty"}</span>
+            {faculty?.facultyID && (
+              <>
+                <br />
+                {" • "}
+                <span style={{ whiteSpace: "nowrap" }}>
+                  Faculty&nbsp;ID:&nbsp;{faculty.facultyID}
+                </span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -349,6 +463,13 @@ const FacultyDashboard = () => {
 
         {/* Quick Actions */}
         <div className="quick-actions">
+          <button
+            className="action-btn add-student"
+            onClick={() => setShowAddStudent(true)}
+          >
+            <i className="fas fa-user-plus"></i>
+            Add Single Student
+          </button>
           <button
             className="action-btn bulk-upload"
             onClick={() => setShowBulkUpload(true)}
@@ -658,6 +779,311 @@ const FacultyDashboard = () => {
           onClose={handleBulkUploadClose}
           onSuccess={handleBulkUploadSuccess}
         />
+      )}
+
+      {/* Single Student Form Modal */}
+      {showAddStudent && (
+        <div className="modal-overlay">
+          <div className="modal-content student-modal">
+            <div className="modal-header">
+              <h2>Add New Student</h2>
+              <button className="close-btn" onClick={handleAddStudentClose}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form onSubmit={handleAddStudentSubmit} className="student-form">
+              {/* Required Fields */}
+              <div className="form-section">
+                <h3>Required Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="name.first">First Name *</label>
+                    <input
+                      type="text"
+                      id="name.first"
+                      name="name.first"
+                      value={studentForm["name.first"]}
+                      onChange={handleStudentInputChange}
+                      required
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="name.last">Last Name *</label>
+                    <input
+                      type="text"
+                      id="name.last"
+                      name="name.last"
+                      value={studentForm["name.last"]}
+                      onChange={handleStudentInputChange}
+                      required
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="email">Email *</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={studentForm.email}
+                      onChange={handleStudentInputChange}
+                      required
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="studentID">Student ID *</label>
+                    <input
+                      type="text"
+                      id="studentID"
+                      name="studentID"
+                      value={studentForm.studentID}
+                      onChange={handleStudentInputChange}
+                      required
+                      placeholder="Enter student ID"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Information */}
+              <div className="form-section">
+                <h3>Personal Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="dob">Date of Birth</label>
+                    <input
+                      type="date"
+                      id="dob"
+                      name="dob"
+                      value={studentForm.dob}
+                      onChange={handleStudentInputChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="gender">Gender</label>
+                    <select
+                      id="gender"
+                      name="gender"
+                      value={studentForm.gender}
+                      onChange={handleStudentInputChange}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="contactNumber">Contact Number</label>
+                  <input
+                    type="tel"
+                    id="contactNumber"
+                    name="contactNumber"
+                    value={studentForm.contactNumber}
+                    onChange={handleStudentInputChange}
+                    placeholder="Enter contact number"
+                  />
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="form-section">
+                <h3>Address Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="address.line1">Address Line 1</label>
+                    <input
+                      type="text"
+                      id="address.line1"
+                      name="address.line1"
+                      value={studentForm["address.line1"]}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter address line 1"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="address.line2">Address Line 2</label>
+                    <input
+                      type="text"
+                      id="address.line2"
+                      name="address.line2"
+                      value={studentForm["address.line2"]}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter address line 2"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="address.city">City</label>
+                    <input
+                      type="text"
+                      id="address.city"
+                      name="address.city"
+                      value={studentForm["address.city"]}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter city"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="address.state">State</label>
+                    <input
+                      type="text"
+                      id="address.state"
+                      name="address.state"
+                      value={studentForm["address.state"]}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter state"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="address.country">Country</label>
+                    <input
+                      type="text"
+                      id="address.country"
+                      name="address.country"
+                      value={studentForm["address.country"]}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter country"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="address.pincode">PIN Code</label>
+                    <input
+                      type="text"
+                      id="address.pincode"
+                      name="address.pincode"
+                      value={studentForm["address.pincode"]}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter PIN code"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Academic Information */}
+              <div className="form-section">
+                <h3>Academic Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="enrollmentYear">Enrollment Year</label>
+                    <input
+                      type="number"
+                      id="enrollmentYear"
+                      name="enrollmentYear"
+                      value={studentForm.enrollmentYear}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter enrollment year"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="batch">Batch</label>
+                    <input
+                      type="text"
+                      id="batch"
+                      name="batch"
+                      value={studentForm.batch}
+                      onChange={handleStudentInputChange}
+                      placeholder="Enter batch (e.g., 2023-2027)"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="gpa">GPA</label>
+                    <input
+                      type="number"
+                      id="gpa"
+                      name="gpa"
+                      value={studentForm.gpa}
+                      onChange={handleStudentInputChange}
+                      step="0.01"
+                      min="0"
+                      max="10"
+                      placeholder="Enter GPA (0-10)"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="attendance">Attendance (%)</label>
+                    <input
+                      type="number"
+                      id="attendance"
+                      name="attendance"
+                      value={studentForm.attendance}
+                      onChange={handleStudentInputChange}
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      placeholder="Enter attendance percentage"
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="skills">Skills</label>
+                  <input
+                    type="text"
+                    id="skills"
+                    name="skills"
+                    value={studentForm.skills}
+                    onChange={handleStudentInputChange}
+                    placeholder="Enter skills separated by commas (e.g., JavaScript, Python, React)"
+                  />
+                </div>
+              </div>
+
+              {/* System Information */}
+              <div className="form-section">
+                <h3>System Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      value={studentForm.password}
+                      onChange={handleStudentInputChange}
+                      placeholder="Leave empty to auto-generate (studentID@123)"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="status">Status</label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={studentForm.status}
+                      onChange={handleStudentInputChange}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={handleAddStudentClose}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  <i className="fas fa-user-plus"></i>
+                  Add Student
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

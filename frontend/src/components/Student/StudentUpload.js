@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { studentService } from "../../services/authService";
 import "./Student.css";
 
 const StudentUpload = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -23,8 +25,22 @@ const StudentUpload = () => {
   const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
+    // Check if faculty is trying to access student upload page
+    if (currentUser && currentUser.role === "faculty") {
+      // Redirect faculty back to student dashboard (view-only)
+      navigate(`/students/dashboard/${id}`);
+      return;
+    }
+
+    // Check if student is viewing their own upload page
+    if (currentUser && currentUser._id !== id) {
+      // Redirect to their own dashboard if trying to access another student's upload
+      navigate(`/students/dashboard/${currentUser._id}`);
+      return;
+    }
+
     fetchStudentData();
-  }, [id]);
+  }, [id, currentUser, navigate]);
 
   const fetchStudentData = async () => {
     try {
