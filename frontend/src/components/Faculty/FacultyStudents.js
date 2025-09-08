@@ -9,8 +9,8 @@ const FacultyStudents = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchStudents();
@@ -49,32 +49,35 @@ const FacultyStudents = () => {
     return "Low";
   };
 
-  const filteredAndSortedStudents = students
-    .filter((student) => {
-      const fullName = `${student.name?.first || ""} ${
-        student.name?.last || ""
-      }`.toLowerCase();
-      const studentId = (student.studentID || "").toLowerCase();
-      const search = searchTerm.toLowerCase();
+  // Filter students based on search term
+  const filteredStudents = students.filter((student) => {
+    if (!searchTerm) return true;
 
-      return fullName.includes(search) || studentId.includes(search);
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return `${a.name?.first || ""} ${a.name?.last || ""}`.localeCompare(
-            `${b.name?.first || ""} ${b.name?.last || ""}`
-          );
-        case "performance":
-          return (b.performanceScore || 0) - (a.performanceScore || 0);
-        case "achievements":
-          return (b.achievementCount || 0) - (a.achievementCount || 0);
-        case "recent":
-          return new Date(b.lastActivity || 0) - new Date(a.lastActivity || 0);
-        default:
-          return 0;
-      }
-    });
+    const fullName = `${student.name?.first || ""} ${
+      student.name?.last || ""
+    }`.toLowerCase();
+    const studentId = (student.studentID || "").toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+
+    return fullName.includes(searchLower) || studentId.includes(searchLower);
+  });
+
+  const sortedStudents = filteredStudents.sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return `${a.name?.first || ""} ${a.name?.last || ""}`.localeCompare(
+          `${b.name?.first || ""} ${b.name?.last || ""}`
+        );
+      case "performance":
+        return (b.performanceScore || 0) - (a.performanceScore || 0);
+      case "achievements":
+        return (b.achievementCount || 0) - (a.achievementCount || 0);
+      case "recent":
+        return new Date(b.lastActivity || 0) - new Date(a.lastActivity || 0);
+      default:
+        return 0;
+    }
+  });
 
   if (loading) {
     return (
@@ -101,49 +104,54 @@ const FacultyStudents = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="dashboard-content">
-        {/* Controls */}
-        <div className="students-controls">
-          <div className="search-and-sort">
-            <div className="search-box">
-              <i className="fas fa-search"></i>
-              <input
-                type="text"
-                placeholder="Search students by name or ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="sort-dropdown">
-              <label htmlFor="sort-select">Sort by:</label>
-              <select
-                id="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="name">Name</option>
-                <option value="performance">Performance</option>
-                <option value="achievements">Achievements</option>
-                <option value="recent">Recent Activity</option>
-              </select>
-            </div>
+      {/* Students Controls */}
+      <div className="students-controls">
+        <div className="search-and-sort">
+          {/* Search Box */}
+          <div className="search-box">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Search by name or student ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
-          <div className="students-summary">
-            <span className="student-count">
-              {filteredAndSortedStudents.length} student
-              {filteredAndSortedStudents.length !== 1 ? "s" : ""}
-            </span>
+          {/* Sort Dropdown */}
+          <div className="sort-dropdown">
+            <label htmlFor="sort-select">Sort by:</label>
+            <select
+              id="sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="name">Name</option>
+              <option value="performance">Performance</option>
+              <option value="achievements">Achievements</option>
+              <option value="recent">Recent Activity</option>
+            </select>
           </div>
         </div>
 
+        <div className="students-summary">
+          <span className="student-count">
+            {filteredStudents.length === students.length
+              ? `${students.length} Student${students.length !== 1 ? "s" : ""}`
+              : `${filteredStudents.length} of ${students.length} Student${
+                  students.length !== 1 ? "s" : ""
+                }`}
+          </span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="dashboard-content">
         {/* Students List */}
         <div className="students-container">
-          {filteredAndSortedStudents.length > 0 ? (
+          {sortedStudents.length > 0 ? (
             <div className="students-list">
-              {filteredAndSortedStudents.map((student, index) => (
+              {sortedStudents.map((student, index) => (
                 <div
                   key={student._id || index}
                   className="student-list-item"
@@ -218,14 +226,20 @@ const FacultyStudents = () => {
           ) : (
             <div className="empty-state">
               <div className="empty-icon">
-                <i className="fas fa-users"></i>
+                <i className="fas fa-search"></i>
               </div>
               <h3>No Students Found</h3>
               <p>
                 {searchTerm
-                  ? `No students match "${searchTerm}"`
+                  ? `No students match "${searchTerm}". Try searching with a different name or student ID.`
                   : "No students assigned to you yet"}
               </p>
+              {searchTerm && (
+                <button className="cta-btn" onClick={() => setSearchTerm("")}>
+                  <i className="fas fa-times"></i>
+                  Clear Search
+                </button>
+              )}
             </div>
           )}
         </div>

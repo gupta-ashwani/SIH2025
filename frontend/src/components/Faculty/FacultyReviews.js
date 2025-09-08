@@ -10,7 +10,6 @@ const FacultyReviews = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchReviews();
@@ -72,21 +71,6 @@ const FacultyReviews = () => {
     }
   };
 
-  const filteredReviews = reviews.filter((review) => {
-    const matchesSearch =
-      review.achievement?.title
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      review.student?.name?.first
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      review.student?.name?.last
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
-
   if (loading) {
     return (
       <div className="faculty-dashboard">
@@ -114,49 +98,9 @@ const FacultyReviews = () => {
 
       {/* Main Content */}
       <div className="dashboard-content">
-        {/* Filters and Search */}
-        <div className="reviews-controls">
-          <div className="filter-tabs">
-            <button
-              className={`filter-tab ${filter === "all" ? "active" : ""}`}
-              onClick={() => setFilter("all")}
-            >
-              All Reviews
-            </button>
-            <button
-              className={`filter-tab ${filter === "pending" ? "active" : ""}`}
-              onClick={() => setFilter("pending")}
-            >
-              Pending
-            </button>
-            <button
-              className={`filter-tab ${filter === "approved" ? "active" : ""}`}
-              onClick={() => setFilter("approved")}
-            >
-              Approved
-            </button>
-            <button
-              className={`filter-tab ${filter === "rejected" ? "active" : ""}`}
-              onClick={() => setFilter("rejected")}
-            >
-              Rejected
-            </button>
-          </div>
-
-          <div className="search-box">
-            <i className="fas fa-search"></i>
-            <input
-              type="text"
-              placeholder="Search achievements or students..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
         {/* Reviews Table */}
         <div className="reviews-container">
-          {filteredReviews.length > 0 ? (
+          {reviews.length > 0 ? (
             <div className="reviews-table">
               <div className="table-header">
                 <div className="table-header-cell student-col">STUDENT</div>
@@ -167,7 +111,7 @@ const FacultyReviews = () => {
                 <div className="table-header-cell actions-col">ACTIONS</div>
               </div>
               <div className="table-body">
-                {filteredReviews.map((review, index) => (
+                {reviews.map((review, index) => (
                   <ReviewRow
                     key={index}
                     review={review}
@@ -184,11 +128,7 @@ const FacultyReviews = () => {
                 <i className="fas fa-clipboard-check"></i>
               </div>
               <h3>No Reviews Found</h3>
-              <p>
-                {searchTerm
-                  ? `No reviews match "${searchTerm}"`
-                  : `No ${filter === "all" ? "" : filter} reviews available`}
-              </p>
+              <p>No {filter === "all" ? "" : filter} reviews available</p>
             </div>
           )}
         </div>

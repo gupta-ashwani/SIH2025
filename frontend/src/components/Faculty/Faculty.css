@@ -98,7 +98,9 @@
   padding: 40px 24px;
   text-align: center;
   width: 60.75%;
-  margin: 5vh auto 2vh;
+  margin: 3vh auto 1vh;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .welcome-section .welcome-content {
@@ -231,75 +233,110 @@
 
 /* Student Controls */
 .students-controls {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px 24px;
+  background: linear-gradient(135deg, #284b63 0%, #1e3a50 100%);
+  max-width: 1000px;
+  margin: 4vh auto 2vh;
+  padding: 40px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .search-and-sort {
   display: flex;
-  gap: 16px;
+  gap: 24px;
   flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
 }
 
 .search-box {
   position: relative;
   display: flex;
   align-items: center;
+  margin-top: 4px;
 }
 
 .search-box i {
   position: absolute;
-  left: 12px;
-  color: #6b7280;
+  left: 16px;
+  color: rgba(255, 255, 255, 0.7);
   z-index: 1;
+  font-size: 1rem;
 }
 
 .search-box input {
-  padding: 12px 12px 12px 40px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  width: 300px;
+  padding: 14px 16px 14px 48px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  width: 350px;
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .search-box input:focus {
   outline: none;
-  border-color: #284b63;
-  box-shadow: 0 0 0 3px rgba(40, 75, 99, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .sort-dropdown {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .sort-dropdown label {
   font-family: var(--font-body);
-  font-weight: 500;
-  color: #374151;
-  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .sort-dropdown select {
-  padding: 12px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 14px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
   font-family: var(--font-body);
-  background: white;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sort-dropdown select:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.sort-dropdown select option {
+  background: #1f2937;
+  color: white;
 }
 
 .students-summary {
-  color: #6b7280;
+  color: white;
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 8px;
 }
 
 /* Students Grid */
