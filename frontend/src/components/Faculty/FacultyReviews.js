@@ -10,6 +10,8 @@ const FacultyReviews = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchReviews();
@@ -27,6 +29,57 @@ const FacultyReviews = () => {
       setLoading(false);
     }
   };
+
+  // Filter reviews based on search term
+  const filteredReviews = reviews.filter((review) => {
+    if (!searchTerm) return true;
+
+    const studentName = `${review.student?.name?.first || ""} ${
+      review.student?.name?.last || ""
+    }`.toLowerCase();
+    const achievementTitle = (review.achievement?.title || "").toLowerCase();
+    const studentId = (review.student?.studentID || "").toLowerCase();
+    const achievementType = (review.achievement?.type || "").toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+
+    return (
+      studentName.includes(searchLower) ||
+      achievementTitle.includes(searchLower) ||
+      studentId.includes(searchLower) ||
+      achievementType.includes(searchLower)
+    );
+  });
+
+  // Sort reviews
+  const sortedReviews = filteredReviews.sort((a, b) => {
+    switch (sortBy) {
+      case "student":
+        const nameA = `${a.student?.name?.first || ""} ${
+          a.student?.name?.last || ""
+        }`;
+        const nameB = `${b.student?.name?.first || ""} ${
+          b.student?.name?.last || ""
+        }`;
+        return nameA.localeCompare(nameB);
+      case "title":
+        return (a.achievement?.title || "").localeCompare(
+          b.achievement?.title || ""
+        );
+      case "status":
+        const statusA = a.achievement?.status || "Pending";
+        const statusB = b.achievement?.status || "Pending";
+        return statusA.localeCompare(statusB);
+      case "type":
+        return (a.achievement?.type || "").localeCompare(
+          b.achievement?.type || ""
+        );
+      case "recent":
+      default:
+        const dateA = new Date(a.achievement?.uploadedAt || 0);
+        const dateB = new Date(b.achievement?.uploadedAt || 0);
+        return dateB - dateA; // Most recent first
+    }
+  });
 
   const handleReview = async (achievementId, studentId, status, comment) => {
     try {
@@ -96,11 +149,68 @@ const FacultyReviews = () => {
         </div>
       </div>
 
+      {/* Reviews Controls */}
+      <div className="students-controls">
+        <div className="search-and-sort">
+          {/* Search Box */}
+          <div className="search-box">
+            <i className="fas fa-search"></i>
+            <input
+              type="text"
+              placeholder="Search by student name, achievement title, student ID, or type..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Filter Dropdown */}
+          <div className="sort-dropdown">
+            <label htmlFor="filter-select">Filter:</label>
+            <select
+              id="filter-select"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="sort-dropdown">
+            <label htmlFor="sort-select">Sort by:</label>
+            <select
+              id="sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="recent">Most Recent</option>
+              <option value="student">Student Name</option>
+              <option value="title">Achievement Title</option>
+              <option value="status">Status</option>
+              <option value="type">Achievement Type</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="students-summary">
+          <span className="student-count">
+            {searchTerm
+              ? `${filteredReviews.length} Review${
+                  filteredReviews.length !== 1 ? "s" : ""
+                }`
+              : `${reviews.length} Review${reviews.length !== 1 ? "s" : ""}`}
+          </span>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="dashboard-content">
         {/* Reviews Table */}
         <div className="reviews-container">
-          {reviews.length > 0 ? (
+          {sortedReviews.length > 0 ? (
             <div className="reviews-table">
               <div className="table-header">
                 <div className="table-header-cell student-col">STUDENT</div>
@@ -111,7 +221,7 @@ const FacultyReviews = () => {
                 <div className="table-header-cell actions-col">ACTIONS</div>
               </div>
               <div className="table-body">
-                {reviews.map((review, index) => (
+                {sortedReviews.map((review, index) => (
                   <ReviewRow
                     key={index}
                     review={review}
@@ -125,10 +235,20 @@ const FacultyReviews = () => {
           ) : (
             <div className="empty-state">
               <div className="empty-icon">
-                <i className="fas fa-clipboard-check"></i>
+                <i className="fas fa-search"></i>
               </div>
               <h3>No Reviews Found</h3>
-              <p>No {filter === "all" ? "" : filter} reviews available</p>
+              <p>
+                {searchTerm
+                  ? `No reviews match "${searchTerm}". Try searching with different terms.`
+                  : `No ${filter === "all" ? "" : filter} reviews available`}
+              </p>
+              {searchTerm && (
+                <button className="cta-btn" onClick={() => setSearchTerm("")}>
+                  <i className="fas fa-times"></i>
+                  Clear Search
+                </button>
+              )}
             </div>
           )}
         </div>

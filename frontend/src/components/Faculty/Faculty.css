@@ -704,6 +704,11 @@
   background: rgba(255, 255, 255, 0.1);
   color: white;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  height: auto;
 }
 
 .search-box input::placeholder {
@@ -3060,6 +3065,11 @@
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  height: auto;
 }
 
 .search-box input::placeholder {
@@ -3459,6 +3469,11 @@
   color: white;
   font-family: var(--font-body);
   font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  height: auto;
 }
 
 .faculty-students .search-box input::placeholder {
