@@ -370,6 +370,9 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
             </div>
 
             <div className="modal-content">
+              {/* Debug: Log achievement data to console */}
+              {console.log("Achievement data:", review.achievement)}
+
               <div className="achievement-details">
                 <h3>{review.achievement?.title}</h3>
                 <p>
@@ -414,9 +417,21 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
                   <div className="certificate-image-label">
                     Certificate/Document
                   </div>
-                  {review.achievement?.certificateUrl ? (
+                  {review.achievement?.certificateUrl ||
+                  review.achievement?.certificate ||
+                  review.achievement?.documentUrl ||
+                  review.achievement?.document ||
+                  review.achievement?.fileUrl ||
+                  review.achievement?.file ? (
                     <img
-                      src={review.achievement.certificateUrl}
+                      src={
+                        review.achievement?.certificateUrl ||
+                        review.achievement?.certificate ||
+                        review.achievement?.documentUrl ||
+                        review.achievement?.document ||
+                        review.achievement?.fileUrl ||
+                        review.achievement?.file
+                      }
                       alt="Achievement Certificate"
                       className="certificate-image"
                       onError={(e) => {
