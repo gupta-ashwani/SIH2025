@@ -64,7 +64,7 @@ const BulkStudentUpload = ({ onClose, onSuccess }) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "student_upload_template.xlsx";
+        a.download = "student_bulk_upload_template.xlsx";
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -229,13 +229,32 @@ const BulkStudentUpload = ({ onClose, onSuccess }) => {
           <h3>Instructions:</h3>
           <ul>
             <li>Download the Excel template and fill in student details</li>
-            <li>Required columns: firstName, lastName, email, rollNumber</li>
             <li>
-              Optional columns: contactNumber, dateOfBirth, gender, address,
-              year, semester, password
+              <strong>Required columns:</strong> name.first, name.last, email,
+              studentID
             </li>
-            <li>If no password is provided, default will be rollNumber@123</li>
+            <li>
+              <strong>Optional columns:</strong> dob, gender, contactNumber,
+              address fields (address.line1, address.city, etc.),
+              enrollmentYear, batch, gpa, attendance, skills, password, status
+            </li>
+            <li>If no password is provided, default will be studentID@123</li>
+            <li>
+              <strong>Skills:</strong> Enter as comma-separated values (e.g.,
+              "JavaScript, Python, React")
+            </li>
+            <li>
+              <strong>Date format:</strong> Use YYYY-MM-DD format for dates
+            </li>
+            <li>
+              The template includes an Instructions sheet with detailed field
+              descriptions
+            </li>
             <li>Maximum file size: 5MB</li>
+            <li>
+              <strong>Note:</strong> Department and coordinator will be
+              automatically assigned based on your faculty profile
+            </li>
           </ul>
         </div>
 

@@ -71,8 +71,8 @@ router.post(
           .json({ error: "Excel file is empty or invalid" });
       }
 
-      // Validate required columns
-      const requiredColumns = ["firstName", "lastName", "email", "rollNumber"];
+      // Validate required columns - using exact model field names
+      const requiredColumns = ["name.first", "name.last", "email", "studentID"];
       const firstRow = data[0];
       const missingColumns = requiredColumns.filter(
         (col) => !(col in firstRow)
@@ -81,7 +81,7 @@ router.post(
       if (missingColumns.length > 0) {
         return res.status(400).json({
           error: `Missing required columns: ${missingColumns.join(", ")}`,
-          note: "Required columns: firstName, lastName, email, rollNumber",
+          note: "Required columns: name.first, name.last, email, studentID",
         });
       }
 
@@ -97,12 +97,12 @@ router.post(
         const rowNumber = i + 2; // +2 because Excel rows start at 1 and we skip header
 
         try {
-          // Validate required fields
+          // Validate required fields - using exact model field names
           if (
-            !studentData.firstName ||
-            !studentData.lastName ||
+            !studentData["name.first"] ||
+            !studentData["name.last"] ||
             !studentData.email ||
-            !studentData.rollNumber
+            !studentData.studentID
           ) {
             results.errors.push({
               row: rowNumber,
@@ -116,7 +116,7 @@ router.post(
           const existingStudent = await Student.findOne({
             $or: [
               { email: studentData.email },
-              { studentID: studentData.rollNumber },
+              { studentID: studentData.studentID },
             ],
           });
 
@@ -131,36 +131,73 @@ router.post(
 
           // Generate password (default or from Excel)
           const password =
-            studentData.password || `${studentData.rollNumber}@123`;
+            studentData.password || `${studentData.studentID}@123`;
           const hashedPassword = await bcrypt.hash(password, 10);
 
-          // Create student object
-          const newStudent = new Student({
+          // Parse skills array if provided as comma-separated string
+          let skillsArray = [];
+          if (studentData.skills) {
+            skillsArray = studentData.skills
+              .split(",")
+              .map((skill) => skill.trim())
+              .filter((skill) => skill);
+          }
+
+          // Validate gender field
+          const validGenders = ["Male", "Female", "Other"];
+          const genderValue = studentData.gender?.trim();
+          const isValidGender =
+            genderValue && validGenders.includes(genderValue);
+
+          // Create student object using exact model field names
+          const studentObj = {
             name: {
-              first: studentData.firstName.trim(),
-              last: studentData.lastName.trim(),
+              first: studentData["name.first"].trim(),
+              last: studentData["name.last"]?.trim() || "",
             },
             email: studentData.email.toLowerCase().trim(),
             password: hashedPassword,
-            studentID: studentData.rollNumber.toString().trim(),
+            studentID: studentData.studentID.toString().trim(),
             department: faculty.department._id,
             coordinator: faculty._id,
             contactNumber: studentData.contactNumber || "",
-            dob: studentData.dateOfBirth
-              ? new Date(studentData.dateOfBirth)
-              : null,
-            gender: studentData.gender || "",
             address: {
-              line1: studentData.address || "",
-              city: "",
-              state: "",
-              country: "",
-              pincode: "",
+              line1: studentData["address.line1"] || "",
+              line2: studentData["address.line2"] || "",
+              city: studentData["address.city"] || "",
+              state: studentData["address.state"] || "",
+              country: studentData["address.country"] || "",
+              pincode: studentData["address.pincode"] || "",
             },
-            enrollmentYear: studentData.year || new Date().getFullYear(),
+            enrollmentYear: studentData.enrollmentYear
+              ? parseInt(studentData.enrollmentYear)
+              : new Date().getFullYear(),
             batch: studentData.batch || new Date().getFullYear().toString(),
-            status: "Active",
-          });
+            skills: skillsArray,
+            status: studentData.status || "Active",
+          };
+
+          // Only add optional fields if they have valid values
+          if (studentData.dob) {
+            studentObj.dob = new Date(studentData.dob);
+          }
+
+          if (isValidGender) {
+            studentObj.gender = genderValue;
+          }
+
+          if (studentData.gpa && !isNaN(parseFloat(studentData.gpa))) {
+            studentObj.gpa = parseFloat(studentData.gpa);
+          }
+
+          if (
+            studentData.attendance &&
+            !isNaN(parseFloat(studentData.attendance))
+          ) {
+            studentObj.attendance = parseFloat(studentData.attendance);
+          }
+
+          const newStudent = new Student(studentObj);
 
           // Save student
           const savedStudent = await newStudent.save();
@@ -173,7 +210,7 @@ router.post(
             studentId: savedStudent._id,
             name: `${savedStudent.name.first} ${savedStudent.name.last}`,
             email: savedStudent.email,
-            rollNumber: savedStudent.studentID,
+            studentID: savedStudent.studentID,
           });
         } catch (error) {
           console.error(`Error processing student at row ${rowNumber}:`, error);
@@ -215,33 +252,98 @@ router.post(
 // Download Excel template route
 router.get("/download-template", (req, res) => {
   try {
-    // Create a sample Excel template
+    // Create a comprehensive Excel template using exact Student model field names
     const templateData = [
       {
-        firstName: "John",
-        lastName: "Doe",
+        // Required fields
+        "name.first": "John",
+        "name.last": "Doe",
         email: "john.doe@example.com",
-        rollNumber: "ST001",
+        studentID: "STU001",
+
+        // Optional personal details
+        dob: "2000-01-15", // Date format: YYYY-MM-DD
+        gender: "Male", // Male, Female, Other
         contactNumber: "+91-9876543210",
-        dateOfBirth: "2000-01-15",
-        gender: "Male",
-        address: "123 Main Street, City",
-        year: 2,
-        semester: 3,
-        password: "ST001@123",
+
+        // Address fields (all optional)
+        "address.line1": "123 Main Street",
+        "address.line2": "Apartment 4B",
+        "address.city": "Mumbai",
+        "address.state": "Maharashtra",
+        "address.country": "India",
+        "address.pincode": "400001",
+
+        // Academic details (optional)
+        enrollmentYear: 2023,
+        batch: "2023-2027",
+        gpa: 8.5, // Number (0-10)
+        attendance: 85.5, // Percentage
+
+        // Skills (comma-separated)
+        skills: "JavaScript, Python, React, Node.js",
+
+        // System fields (optional)
+        password: "STU001@123", // If not provided, studentID@123 will be used
+        status: "Active", // Active, Inactive
       },
       {
-        firstName: "Jane",
-        lastName: "Smith",
+        // Required fields
+        "name.first": "Jane",
+        "name.last": "Smith",
         email: "jane.smith@example.com",
-        rollNumber: "ST002",
-        contactNumber: "+91-9876543211",
-        dateOfBirth: "2000-03-22",
+        studentID: "STU002",
+
+        // Optional personal details
+        dob: "2001-03-22",
         gender: "Female",
-        address: "456 Oak Avenue, City",
-        year: 2,
-        semester: 3,
-        password: "ST002@123",
+        contactNumber: "+91-9876543211",
+
+        // Address fields
+        "address.line1": "456 Oak Avenue",
+        "address.line2": "",
+        "address.city": "Delhi",
+        "address.state": "Delhi",
+        "address.country": "India",
+        "address.pincode": "110001",
+
+        // Academic details
+        enrollmentYear: 2023,
+        batch: "2023-2027",
+        gpa: 9.2,
+        attendance: 92.0,
+
+        // Skills
+        skills: "Java, Spring Boot, MySQL, Angular",
+
+        // System fields
+        password: "STU002@123",
+        status: "Active",
+      },
+      {
+        // Minimal required data example
+        "name.first": "Mike",
+        "name.last": "Johnson",
+        email: "mike.johnson@example.com",
+        studentID: "STU003",
+
+        // All other fields can be left empty and will use defaults
+        dob: "",
+        // gender: "", // Leave empty or use "Male", "Female", "Other"
+        contactNumber: "",
+        "address.line1": "",
+        "address.line2": "",
+        "address.city": "",
+        "address.state": "",
+        "address.country": "",
+        "address.pincode": "",
+        enrollmentYear: "",
+        batch: "",
+        gpa: "",
+        attendance: "",
+        skills: "",
+        password: "", // Will auto-generate STU003@123
+        status: "", // Will default to Active
       },
     ];
 
@@ -249,8 +351,184 @@ router.get("/download-template", (req, res) => {
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(templateData);
 
+    // Set column widths for better readability
+    const colWidths = [
+      { wch: 15 }, // name.first
+      { wch: 15 }, // name.last
+      { wch: 25 }, // email
+      { wch: 12 }, // studentID
+      { wch: 12 }, // dob
+      { wch: 10 }, // gender
+      { wch: 15 }, // contactNumber
+      { wch: 20 }, // address.line1
+      { wch: 15 }, // address.line2
+      { wch: 15 }, // address.city
+      { wch: 15 }, // address.state
+      { wch: 10 }, // address.country
+      { wch: 10 }, // address.pincode
+      { wch: 15 }, // enrollmentYear
+      { wch: 12 }, // batch
+      { wch: 8 }, // gpa
+      { wch: 12 }, // attendance
+      { wch: 30 }, // skills
+      { wch: 15 }, // password
+      { wch: 10 }, // status
+    ];
+    worksheet["!cols"] = colWidths;
+
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+
+    // Add instructions sheet
+    const instructionsData = [
+      {
+        Field: "REQUIRED FIELDS",
+        Description: "These fields must be filled",
+        "Example/Notes": "",
+      },
+      {
+        Field: "name.first",
+        Description: "Student's first name",
+        "Example/Notes": "John",
+      },
+      {
+        Field: "name.last",
+        Description: "Student's last name",
+        "Example/Notes": "Doe",
+      },
+      {
+        Field: "email",
+        Description: "Unique email address",
+        "Example/Notes": "john.doe@example.com",
+      },
+      {
+        Field: "studentID",
+        Description: "Unique student ID/Roll number",
+        "Example/Notes": "STU001",
+      },
+      { Field: "", Description: "", "Example/Notes": "" },
+      {
+        Field: "OPTIONAL FIELDS",
+        Description: "These fields can be empty",
+        "Example/Notes": "",
+      },
+      {
+        Field: "dob",
+        Description: "Date of birth",
+        "Example/Notes": "2000-01-15 (YYYY-MM-DD)",
+      },
+      {
+        Field: "gender",
+        Description: "Student's gender (leave empty if not specified)",
+        "Example/Notes": "Male, Female, Other (exact values only)",
+      },
+      {
+        Field: "contactNumber",
+        Description: "Phone number",
+        "Example/Notes": "+91-9876543210",
+      },
+      {
+        Field: "address.line1",
+        Description: "Address line 1",
+        "Example/Notes": "123 Main Street",
+      },
+      {
+        Field: "address.line2",
+        Description: "Address line 2",
+        "Example/Notes": "Apartment 4B",
+      },
+      { Field: "address.city", Description: "City", "Example/Notes": "Mumbai" },
+      {
+        Field: "address.state",
+        Description: "State",
+        "Example/Notes": "Maharashtra",
+      },
+      {
+        Field: "address.country",
+        Description: "Country",
+        "Example/Notes": "India",
+      },
+      {
+        Field: "address.pincode",
+        Description: "PIN/ZIP code",
+        "Example/Notes": "400001",
+      },
+      {
+        Field: "enrollmentYear",
+        Description: "Year of enrollment",
+        "Example/Notes": "2023",
+      },
+      {
+        Field: "batch",
+        Description: "Batch identifier",
+        "Example/Notes": "2023-2027",
+      },
+      {
+        Field: "gpa",
+        Description: "Grade Point Average",
+        "Example/Notes": "8.5 (0-10 scale)",
+      },
+      {
+        Field: "attendance",
+        Description: "Attendance percentage",
+        "Example/Notes": "85.5",
+      },
+      {
+        Field: "skills",
+        Description: "Comma-separated skills",
+        "Example/Notes": "JavaScript, Python, React",
+      },
+      {
+        Field: "password",
+        Description: "Login password",
+        "Example/Notes": "If empty, uses studentID@123",
+      },
+      {
+        Field: "status",
+        Description: "Student status",
+        "Example/Notes": "Active, Inactive (default: Active)",
+      },
+      { Field: "", Description: "", "Example/Notes": "" },
+      { Field: "IMPORTANT NOTES", Description: "", "Example/Notes": "" },
+      {
+        Field: "• Department and coordinator",
+        Description: "Automatically assigned from faculty",
+        "Example/Notes": "",
+      },
+      {
+        Field: "• Email and studentID",
+        Description: "Must be unique across all students",
+        "Example/Notes": "",
+      },
+      {
+        Field: "• Date format",
+        Description: "Use YYYY-MM-DD for dates",
+        "Example/Notes": "",
+      },
+      {
+        Field: "• Skills format",
+        Description: "Separate multiple skills with commas",
+        "Example/Notes": "",
+      },
+      {
+        Field: "• Gender values",
+        Description: "Must be exactly: Male, Female, or Other (or leave empty)",
+        "Example/Notes": "",
+      },
+      {
+        Field: "• File format",
+        Description: "Save as .xlsx or .xls format",
+        "Example/Notes": "",
+      },
+    ];
+
+    const instructionsSheet = XLSX.utils.json_to_sheet(instructionsData);
+    instructionsSheet["!cols"] = [
+      { wch: 25 }, // Field
+      { wch: 35 }, // Description
+      { wch: 40 }, // Example/Notes
+    ];
+    XLSX.utils.book_append_sheet(workbook, instructionsSheet, "Instructions");
 
     // Generate buffer
     const excelBuffer = XLSX.write(workbook, {
@@ -265,7 +543,7 @@ router.get("/download-template", (req, res) => {
     );
     res.setHeader(
       "Content-Disposition",
-      "attachment; filename=student_upload_template.xlsx"
+      "attachment; filename=student_bulk_upload_template.xlsx"
     );
 
     // Send the file
