@@ -120,6 +120,7 @@ router.get(
           studentCount: collegeStudents.length,
           establishedYear: college.establishedYear,
           location: college.location,
+          createdAt: college.createdAt,
         };
       });
 
@@ -185,6 +186,95 @@ router.get(
       });
     } catch (error) {
       console.error("Colleges fetch error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// Add new college
+router.post(
+  "/colleges",
+  requireAuth,
+  requireRole(["institute"]),
+  async (req, res) => {
+    try {
+      const {
+        institute,
+        name,
+        code,
+        email,
+        password,
+        contactNumber,
+        address,
+        website,
+        status,
+      } = req.body;
+
+      // Verify user is authorized for this institute
+      if (req.user._id.toString() !== institute) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Verify institute exists
+      const instituteDoc = await Institute.findById(institute);
+      if (!instituteDoc) {
+        return res.status(404).json({ error: "Institute not found" });
+      }
+
+      // Check if college code already exists
+      const existingCollege = await College.findOne({
+        code: code.toUpperCase(),
+      });
+      if (existingCollege) {
+        return res.status(400).json({ error: "College code already exists" });
+      }
+
+      // Check if email already exists
+      const existingEmail = await College.findOne({
+        email: email.toLowerCase(),
+      });
+      if (existingEmail) {
+        return res.status(400).json({ error: "Email already exists" });
+      }
+
+      // Create new college
+      const college = new College({
+        institute,
+        name: name.trim(),
+        code: code.toUpperCase(),
+        email: email.toLowerCase(),
+        password, // In production, this should be hashed
+        contactNumber,
+        address,
+        website,
+        status: status || "Active",
+      });
+
+      await college.save();
+
+      // Add college to institute's colleges array
+      await Institute.findByIdAndUpdate(institute, {
+        $push: { colleges: college._id },
+      });
+
+      res.status(201).json({
+        message: "College added successfully",
+        college: {
+          _id: college._id,
+          name: college.name,
+          code: college.code,
+          email: college.email,
+          status: college.status,
+        },
+      });
+    } catch (error) {
+      console.error("Add college error:", error);
+
+      if (error.name === "ValidationError") {
+        const errors = Object.values(error.errors).map((err) => err.message);
+        return res.status(400).json({ error: errors.join(", ") });
+      }
+
       res.status(500).json({ error: "Internal server error" });
     }
   }

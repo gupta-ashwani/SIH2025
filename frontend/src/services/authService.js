@@ -225,6 +225,10 @@ export const instituteService = {
     return api.get(`/institute/colleges/${id}`);
   },
 
+  addCollege: (collegeData) => {
+    return api.post(`/institute/colleges`, collegeData);
+  },
+
   getDepartments: (id) => {
     return api.get(`/institute/departments/${id}`);
   },

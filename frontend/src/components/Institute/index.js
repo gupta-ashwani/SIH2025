@@ -8,4 +8,3 @@ export { default as InstituteColleges } from "./Colleges/InstituteColleges";
 // export { default as InstituteFaculty } from './Faculty/InstituteFaculty';
 // export { default as InstituteStudents } from './Students/InstituteStudents';
 // export { default as InstituteAnalytics } from './Analytics/InstituteAnalytics';
-// export { default as InstituteEvents } from './Events/InstituteEvents';

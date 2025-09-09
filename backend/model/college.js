@@ -42,6 +42,19 @@ const collegeSchema = new mongoose.Schema(
     website: {
       type: String,
     },
+    type: {
+      type: String,
+      enum: [
+        "Engineering College",
+        "Medical College",
+        "Arts College",
+        "Science College",
+        "Commerce College",
+        "Law College",
+        "Other",
+      ],
+      default: "Other",
+    },
     // hierarchy
     departments: [
       {
