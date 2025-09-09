@@ -137,7 +137,7 @@ router.post(
           // Parse skills array if provided as comma-separated string
           let skillsObject = {
             technical: [],
-            soft: []
+            soft: [],
           };
           if (studentData.skills) {
             const skillsArray = studentData.skills
@@ -614,10 +614,12 @@ router.post("/single-student", requireAuth, async (req, res) => {
     // Parse skills array if provided as comma-separated string
     let skillsObject = {
       technical: [],
-      soft: []
+      soft: [],
     };
     if (studentData.skills && Array.isArray(studentData.skills)) {
-      const skillsArray = studentData.skills.filter((skill) => skill && skill.trim());
+      const skillsArray = studentData.skills.filter(
+        (skill) => skill && skill.trim()
+      );
       skillsObject.technical = skillsArray;
     }
 
