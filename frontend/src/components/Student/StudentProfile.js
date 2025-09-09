@@ -224,6 +224,13 @@ const StudentProfile = () => {
             <i className="fas fa-cogs"></i>
             Skills & Interests
           </button>
+          <button
+            className={`nav-tab ${activeTab === "additional" ? "active" : ""}`}
+            onClick={() => setActiveTab("additional")}
+          >
+            <i className="fas fa-graduation-cap"></i>
+            Education & Projects
+          </button>
         </div>
       </div>
 
@@ -385,35 +392,170 @@ const StudentProfile = () => {
                 {isEditing ? (
                   <input
                     type="tel"
-                    value={editedData?.contact?.phone || ""}
+                    value={editedData?.contactNumber || ""}
                     onChange={(e) =>
-                      handleInputChange("contact.phone", e.target.value)
+                      handleInputChange("contactNumber", e.target.value)
                     }
                     className="profile-input"
                   />
                 ) : (
                   <span className="profile-value">
-                    {student?.contact?.phone || "Not specified"}
+                    {student?.contactNumber || "Not specified"}
                   </span>
                 )}
               </div>
               <div className="profile-field full-width">
                 <label>Address</label>
                 {isEditing ? (
-                  <textarea
-                    value={editedData?.contact?.address || ""}
+                  <div className="address-grid">
+                    <input
+                      type="text"
+                      placeholder="Address Line 1"
+                      value={editedData?.address?.line1 || ""}
+                      onChange={(e) =>
+                        handleInputChange("address.line1", e.target.value)
+                      }
+                      className="profile-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Address Line 2"
+                      value={editedData?.address?.line2 || ""}
+                      onChange={(e) =>
+                        handleInputChange("address.line2", e.target.value)
+                      }
+                      className="profile-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="City"
+                      value={editedData?.address?.city || ""}
+                      onChange={(e) =>
+                        handleInputChange("address.city", e.target.value)
+                      }
+                      className="profile-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="State"
+                      value={editedData?.address?.state || ""}
+                      onChange={(e) =>
+                        handleInputChange("address.state", e.target.value)
+                      }
+                      className="profile-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Country"
+                      value={editedData?.address?.country || ""}
+                      onChange={(e) =>
+                        handleInputChange("address.country", e.target.value)
+                      }
+                      className="profile-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Pincode"
+                      value={editedData?.address?.pincode || ""}
+                      onChange={(e) =>
+                        handleInputChange("address.pincode", e.target.value)
+                      }
+                      className="profile-input"
+                    />
+                  </div>
+                ) : (
+                  <span className="profile-value">
+                    {student?.address
+                      ? `${student.address.line1 || ""} ${
+                          student.address.line2 || ""
+                        }, ${student.address.city || ""}, ${
+                          student.address.state || ""
+                        }, ${student.address.country || ""} - ${
+                          student.address.pincode || ""
+                        }`
+                          .replace(/\s+/g, " ")
+                          .trim()
+                      : "Not specified"}
+                  </span>
+                )}
+              </div>
+              <div className="profile-field">
+                <label>Emergency Contact Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedData?.emergencyContact?.name || ""}
                     onChange={(e) =>
-                      handleInputChange("contact.address", e.target.value)
+                      handleInputChange("emergencyContact.name", e.target.value)
                     }
-                    className="profile-textarea"
-                    placeholder="Enter your address..."
-                    rows="3"
+                    className="profile-input"
                   />
                 ) : (
                   <span className="profile-value">
-                    {student?.contact?.address || "Not specified"}
+                    {student?.emergencyContact?.name || "Not specified"}
                   </span>
                 )}
+              </div>
+              <div className="profile-field full-width">
+                <label>Social Media Links</label>
+                <div className="social-links-grid">
+                  <div className="social-field">
+                    <label>LinkedIn</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        placeholder="https://linkedin.com/in/username"
+                        value={editedData?.social?.linkedin || ""}
+                        onChange={(e) =>
+                          handleInputChange("social.linkedin", e.target.value)
+                        }
+                        className="profile-input"
+                      />
+                    ) : (
+                      <span className="profile-value">
+                        {student?.social?.linkedin ? (
+                          <a
+                            href={student.social.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {student.social.linkedin}
+                          </a>
+                        ) : (
+                          "Not specified"
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="social-field">
+                    <label>GitHub</label>
+                    {isEditing ? (
+                      <input
+                        type="url"
+                        placeholder="https://github.com/username"
+                        value={editedData?.social?.github || ""}
+                        onChange={(e) =>
+                          handleInputChange("social.github", e.target.value)
+                        }
+                        className="profile-input"
+                      />
+                    ) : (
+                      <span className="profile-value">
+                        {student?.social?.github ? (
+                          <a
+                            href={student.social.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {student.social.github}
+                          </a>
+                        ) : (
+                          "Not specified"
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="profile-field">
                 <label>Emergency Contact Name</label>
@@ -449,6 +591,27 @@ const StudentProfile = () => {
                 ) : (
                   <span className="profile-value">
                     {student?.emergencyContact?.phone || "Not specified"}
+                  </span>
+                )}
+              </div>
+              <div className="profile-field">
+                <label>Emergency Contact Relationship</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    placeholder="e.g., Father, Mother, Guardian"
+                    value={editedData?.emergencyContact?.relationship || ""}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "emergencyContact.relationship",
+                        e.target.value
+                      )
+                    }
+                    className="profile-input"
+                  />
+                ) : (
+                  <span className="profile-value">
+                    {student?.emergencyContact?.relationship || "Not specified"}
                   </span>
                 )}
               </div>
@@ -551,6 +714,77 @@ const StudentProfile = () => {
                           No interests added
                         </span>
                       )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "additional" && (
+          <div className="personal-info-section">
+            <h2 className="section-title">Education & Projects</h2>
+            <div className="additional-content">
+              <div className="education-section">
+                <h3>Education Background</h3>
+                <div className="education-list">
+                  {student?.education?.length > 0 ? (
+                    student.education.map((edu, index) => (
+                      <div key={index} className="education-item">
+                        <div className="education-info">
+                          <h4>{edu.degree || "Degree"}</h4>
+                          <p>{edu.institution || "Institution"}</p>
+                          <span className="education-meta">
+                            {edu.location || "Location"} • {edu.year || "Year"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">
+                      <p>No education background added yet</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="projects-section">
+                <h3>Projects</h3>
+                <div className="projects-list">
+                  {student?.projects?.length > 0 ? (
+                    student.projects.map((project, index) => (
+                      <div key={index} className="project-item">
+                        <div className="project-header">
+                          <h4>{project.title || "Project Title"}</h4>
+                          {project.link && (
+                            <a
+                              href={project.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="project-link"
+                            >
+                              <i className="fas fa-external-link-alt"></i>
+                            </a>
+                          )}
+                        </div>
+                        {project.tech && (
+                          <p className="project-tech">
+                            <strong>Technologies:</strong> {project.tech}
+                          </p>
+                        )}
+                        {project.description?.length > 0 && (
+                          <ul className="project-description">
+                            {project.description.map((desc, i) => (
+                              <li key={i}>{desc}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="empty-state">
+                      <p>No projects added yet</p>
                     </div>
                   )}
                 </div>

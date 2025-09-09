@@ -15,8 +15,11 @@ const StudentDashboard = () => {
   const [loadingEvents, setLoadingEvents] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
-    fetchUpcomingEvents();
+    const fetchData = async () => {
+      await fetchDashboardData();
+      await fetchUpcomingEvents();
+    };
+    fetchData();
   }, [id]);
 
   const fetchUpcomingEvents = async () => {
@@ -175,10 +178,8 @@ const StudentDashboard = () => {
     );
   }
 
-  const { student, stats, recentActivities, academicProgress } = dashboardData;
+  const { student, stats, recentActivities } = dashboardData;
   const studentFirstName = student?.name?.first || "Student";
-  const studentLastName = student?.name?.last || "";
-  const fullName = `${studentFirstName} ${studentLastName}`.trim();
 
   return (
     <div className="student-dashboard">
@@ -190,22 +191,44 @@ const StudentDashboard = () => {
               ? `${studentFirstName}'s Profile`
               : `Welcome back, ${studentFirstName}!`}
           </h1>
-          <p>
-            <span>
-              {student?.department?.name || "Department not specified"}
-            </span>
-            {" • "}
-            <span>{student?.batch || "Batch not specified"}</span>
-            {student?.studentID && (
-              <>
-                <br />
-                {" • "}
-                <span style={{ whiteSpace: "nowrap" }}>
-                  Roll&nbsp;No:&nbsp;{student.studentID}
-                </span>
-              </>
+          <div className="student-info-grid">
+            {student?.department?.name && (
+              <div className="info-item">
+                <i className="fas fa-building"></i>
+                <span>{student.department.name}</span>
+              </div>
             )}
-          </p>
+            {student?.course && (
+              <div className="info-item">
+                <i className="fas fa-graduation-cap"></i>
+                <span>{student.course}</span>
+              </div>
+            )}
+            {student?.year && (
+              <div className="info-item">
+                <i className="fas fa-calendar-alt"></i>
+                <span>{student.year}</span>
+              </div>
+            )}
+            {student?.batch && (
+              <div className="info-item">
+                <i className="fas fa-users"></i>
+                <span>Batch: {student.batch}</span>
+              </div>
+            )}
+            {student?.studentID && (
+              <div className="info-item">
+                <i className="fas fa-id-card"></i>
+                <span>Roll No: {student.studentID}</span>
+              </div>
+            )}
+            {student?.enrollmentYear && (
+              <div className="info-item">
+                <i className="fas fa-calendar-check"></i>
+                <span>Enrolled: {student.enrollmentYear}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -324,47 +347,45 @@ const StudentDashboard = () => {
               <h2>Academic Progress</h2>
               <div className="progress-item">
                 <div className="progress-header">
-                  <span>Overall CGPA</span>
+                  <span>Overall GPA</span>
                   <span className="progress-value">
-                    {academicProgress?.cgpa
-                      ? `${parseFloat(academicProgress.cgpa).toFixed(2)}/10`
+                    {student?.gpa
+                      ? `${parseFloat(student.gpa).toFixed(2)}/10`
                       : "Not Available"}
                   </span>
                 </div>
-                {academicProgress?.cgpa ? (
+                {student?.gpa ? (
                   <div className="progress-bar">
                     <div
                       className="progress-fill"
                       style={{
-                        width: `${(academicProgress.cgpa / 10) * 100}%`,
+                        width: `${(student.gpa / 10) * 100}%`,
                         backgroundColor: getProgressColor(
-                          (academicProgress.cgpa / 10) * 100
+                          (student.gpa / 10) * 100
                         ),
                       }}
                     ></div>
                   </div>
                 ) : (
-                  <div className="no-data-bar">No CGPA data available</div>
+                  <div className="no-data-bar">No GPA data available</div>
                 )}
               </div>
               <div className="progress-item">
                 <div className="progress-header">
                   <span>Attendance</span>
                   <span className="progress-value">
-                    {academicProgress?.attendance
-                      ? `${parseFloat(academicProgress.attendance).toFixed(2)}%`
+                    {student?.attendance
+                      ? `${parseFloat(student.attendance).toFixed(1)}%`
                       : "Not Available"}
                   </span>
                 </div>
-                {academicProgress?.attendance ? (
+                {student?.attendance ? (
                   <div className="progress-bar">
                     <div
                       className="progress-fill"
                       style={{
-                        width: `${academicProgress.attendance}%`,
-                        backgroundColor: getProgressColor(
-                          academicProgress.attendance
-                        ),
+                        width: `${student.attendance}%`,
+                        backgroundColor: getProgressColor(student.attendance),
                       }}
                     ></div>
                   </div>

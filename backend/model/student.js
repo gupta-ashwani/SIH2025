@@ -30,16 +30,11 @@ const studentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    dob: Date,
-    dateOfBirth: Date, // Alternative field name for consistency
+    dateOfBirth: Date,
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     contactNumber: String,
     bio: String,
     profilePicture: String,
-    contact: {
-      phone: String,
-      address: String,
-    },
     emergencyContact: {
       name: String,
       phone: String,
@@ -60,7 +55,7 @@ const studentSchema = new mongoose.Schema(
       country: String,
       pincode: String,
     },
-    enrollmentYear: Number,
+    enrollmentYear: { type: Number, required: true },
     batch: String,
     // certificates & achievements
     achievements: [
@@ -97,9 +92,8 @@ const studentSchema = new mongoose.Schema(
       },
     ],
     // academic performance
-    gpa: Number,
-    attendance: Number,
-    // Remove old skills field as we've updated it above
+    gpa: { type: Number, min: 0, max: 10 },
+    attendance: { type: Number, min: 0, max: 100 },
     resumeGenerated: {
       type: Boolean,
       default: false,
@@ -112,6 +106,26 @@ const studentSchema = new mongoose.Schema(
     resumePdfUrl: {
       type: String,
     },
+    social: {
+      linkedin: String,
+      github: String,
+    },
+    education: [
+      {
+        institution: String,
+        location: String,
+        year: String,
+        degree: String,
+      },
+    ],
+    projects: [
+      {
+        title: String,
+        link: String,
+        tech: String,
+        description: [String],
+      },
+    ],
   },
   { timestamps: true }
 );
