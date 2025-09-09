@@ -16,6 +16,9 @@ import FacultyReviews from "./components/Faculty/FacultyReviews";
 import FacultyStudents from "./components/Faculty/FacultyStudents";
 import FacultyAnalytics from "./components/Faculty/FacultyAnalytics";
 import AllEvents from "./components/Faculty/AllEvents";
+import DepartmentDashboard from "./components/Department/DepartmentDashboard";
+import DepartmentFaculty from "./components/Department/DepartmentFaculty";
+import DepartmentStudents from "./components/Department/DepartmentStudents";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import "./styles/animations.css";
@@ -161,6 +164,40 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <AllEvents />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Department Routes */}
+              <Route
+                path="/department/dashboard/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <DepartmentDashboard />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/department/faculty/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <DepartmentFaculty />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/department/students/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <DepartmentStudents />
                     </div>
                   </ProtectedRoute>
                 }

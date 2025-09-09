@@ -103,6 +103,35 @@ export const facultyService = {
   },
 };
 
+export const departmentService = {
+  getDepartmentDashboard: (id) => {
+    return api.get(`/department/dashboard/${id}`);
+  },
+
+  addFaculty: (departmentId, facultyData) => {
+    return api.post(`/department/${departmentId}/faculty`, facultyData);
+  },
+
+  getFaculty: (departmentId) => {
+    return api.get(`/department/${departmentId}/faculty`);
+  },
+
+  getStudents: (departmentId) => {
+    return api.get(`/department/${departmentId}/students`);
+  },
+
+  getAnalytics: (departmentId, period = "month") => {
+    return api.get(`/department/analytics/${departmentId}?period=${period}`);
+  },
+
+  generateReport: (departmentId, reportType, params) => {
+    return api.post(`/department/reports/${departmentId}`, {
+      reportType,
+      ...params,
+    });
+  },
+};
+
 export const eventService = {
   getCollegeEvents: (collegeId, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -111,6 +140,10 @@ export const eventService = {
 
   getFacultyEvents: (facultyId) => {
     return api.get(`/events/faculty/${facultyId}`);
+  },
+
+  getDepartmentEvents: (departmentId) => {
+    return api.get(`/events/department/${departmentId}`);
   },
 
   createEvent: (eventData) => {

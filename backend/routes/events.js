@@ -97,6 +97,39 @@ router.get("/faculty/:facultyId", requireAuth, async (req, res) => {
   }
 });
 
+// Get events for department dashboard
+router.get("/department/:departmentId", requireAuth, async (req, res) => {
+  try {
+    const { departmentId } = req.params;
+
+    // Get department to find their college
+    const Department = require("../model/department");
+    const department = await Department.findById(departmentId);
+    if (!department) {
+      return res.status(404).json({ error: "Department not found" });
+    }
+
+    // Get upcoming events for the department's college
+    const events = await Event.find({
+      $or: [
+        { department: departmentId }, // Events created by this department
+        { college: department.institute }, // All college events
+      ],
+      status: "Published",
+      eventDate: { $gte: new Date() },
+    })
+      .populate("department", "name")
+      .populate("createdBy", "name designation")
+      .sort({ eventDate: 1 })
+      .limit(10);
+
+    res.json({ events });
+  } catch (error) {
+    console.error("Get department events error:", error);
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
 // Get events for student dashboard
 router.get("/student/:studentId", requireAuth, async (req, res) => {
   try {

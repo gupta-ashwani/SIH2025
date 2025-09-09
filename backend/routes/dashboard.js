@@ -53,7 +53,7 @@ router.get("/college", requireAuth, requireRole(["college"]), (req, res) => {
 
 // Department Dashboard
 router.get(
-  "/department",
+  "/department/:id",
   requireAuth,
   requireRole(["department"]),
   (req, res) => {
