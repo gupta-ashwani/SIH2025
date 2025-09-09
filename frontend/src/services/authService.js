@@ -11,13 +11,57 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Add request interceptor to include token in headers
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid, remove it and redirect to login
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
-  login: (email, password) => {
-    return api.post("/auth/login", { email, password });
+  login: async (email, password) => {
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+      return response;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  logout: () => {
-    return api.post("/auth/logout");
+  logout: async () => {
+    try {
+      await api.post("/auth/logout");
+      localStorage.removeItem("token");
+    } catch (error) {
+      // Even if logout fails on server, remove token locally
+      localStorage.removeItem("token");
+      throw error;
+    }
   },
 
   checkStatus: () => {
@@ -164,6 +208,33 @@ export const eventService = {
 
   registerForEvent: (eventId) => {
     return api.post(`/events/${eventId}/register`);
+  },
+};
+
+export const instituteService = {
+  getInstituteDashboard: (id) => {
+    return api.get(`/institute/dashboard/${id}`);
+  },
+
+  getColleges: (id) => {
+    return api.get(`/institute/colleges/${id}`);
+  },
+
+  getDepartments: (id) => {
+    return api.get(`/institute/departments/${id}`);
+  },
+
+  getFaculty: (id) => {
+    return api.get(`/institute/faculty/${id}`);
+  },
+
+  getStudents: (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/institute/students/${id}?${queryString}`);
+  },
+
+  getAnalytics: (id) => {
+    return api.get(`/institute/analytics/${id}`);
   },
 };
 

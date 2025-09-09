@@ -4,9 +4,7 @@ const app = express();
 const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
-const session = require("express-session");
-const MongoStore = require("connect-mongo");
-const passport = require("./config/passport");
+const cookieParser = require("cookie-parser");
 
 // CORS configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -22,6 +20,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Serve uploaded files statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -39,35 +38,13 @@ async function main() {
   await mongoose.connect(dbUrl);
 }
 
-// Session configuration
-const sessionConfig = {
-  store: MongoStore.create({
-    mongoUrl: dbUrl,
-    touchAfter: 24 * 3600, // lazy session update
-  }),
-  name: "session",
-  secret: process.env.SECRET || "thisshouldbeabettersecret!",
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    httpOnly: true,
-    expires: Date.now() + 1000 * 60 * 60 * 24 * 7, // 1 week
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-  },
-};
-
-app.use(session(sessionConfig));
-
-// Passport configuration
-app.use(passport.initialize());
-app.use(passport.session());
-
 // Routes
 const authRoutes = require("./routes/auth");
 const dashboardRoutes = require("./routes/dashboard");
 const studentRoutes = require("./routes/students");
 const facultyRoutes = require("./routes/faculty");
 const departmentRoutes = require("./routes/department");
+const instituteRoutes = require("./routes/institute");
 const eventRoutes = require("./routes/events");
 const bulkStudentsRoutes = require("./routes/bulkStudents");
 
@@ -77,6 +54,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/faculty", facultyRoutes);
 app.use("/api/department", departmentRoutes);
+app.use("/api/institute", instituteRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/bulk-students", bulkStudentsRoutes);
 
@@ -376,6 +354,105 @@ app.post("/api/test/create-department", async (req, res) => {
       error: "Failed to create test department",
       details: error.message,
     });
+  }
+});
+
+// Test route to create a sample institute (for development only)
+app.post("/api/test/create-institute", async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const Institute = require("./model/institute");
+    const College = require("./model/college");
+    const Department = require("./model/department");
+
+    // Check if test institute already exists
+    let existingInstitute = await Institute.findOne({
+      email: "test@institute.com",
+    });
+
+    if (existingInstitute) {
+      return res.json({
+        message: "Test institute already exists",
+        email: "test@institute.com",
+        password: "password123",
+        instituteId: existingInstitute._id,
+        institute: existingInstitute,
+      });
+    }
+
+    // Create institute
+    const instituteData = {
+      name: "Test University",
+      code: "TU",
+      type: "University",
+      email: "test@institute.com",
+      password: await bcrypt.hash("password123", 12),
+      contactNumber: "+91-9876543215",
+      address: {
+        line1: "University Campus",
+        line2: "Main Road",
+        city: "Test City",
+        state: "Test State",
+        country: "India",
+        pincode: "123456",
+      },
+      website: "https://testuniversity.edu",
+      status: "Active",
+    };
+
+    const testInstitute = new Institute(instituteData);
+    await testInstitute.save();
+
+    // Create a test college under this institute
+    const collegeData = {
+      name: "College of Engineering",
+      code: "COE",
+      email: "coe@testuniversity.edu",
+      password: await bcrypt.hash("password123", 12),
+      contactNumber: "+91-9876543216",
+      institute: testInstitute._id,
+      status: "Active",
+    };
+
+    const testCollege = new College(collegeData);
+    await testCollege.save();
+
+    // Update institute with college reference
+    testInstitute.colleges = [testCollege._id];
+    await testInstitute.save();
+
+    // Create a test department under this college
+    const departmentData = {
+      name: "Computer Science Engineering",
+      code: "CSE",
+      email: "cse@testuniversity.edu",
+      password: await bcrypt.hash("password123", 12),
+      contactNumber: "+91-9876543217",
+      college: testCollege._id,
+      institute: testInstitute._id,
+      status: "Active",
+    };
+
+    const testDepartment = new Department(departmentData);
+    await testDepartment.save();
+
+    res.json({
+      message: "Test institute created successfully",
+      email: "test@institute.com",
+      password: "password123",
+      instituteId: testInstitute._id,
+      institute: testInstitute,
+      college: testCollege,
+      department: testDepartment,
+    });
+  } catch (error) {
+    console.error("Error creating test institute:", error);
+    res
+      .status(500)
+      .json({
+        error: "Failed to create test institute",
+        details: error.message,
+      });
   }
 });
 

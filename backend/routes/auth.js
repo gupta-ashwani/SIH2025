@@ -1,8 +1,9 @@
 const express = require("express");
 const passport = require("../config/passport");
+const jwt = require("jsonwebtoken");
 const router = express.Router();
 
-// Login route
+// Login route with JWT
 router.post("/login", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) {
@@ -16,65 +17,101 @@ router.post("/login", (req, res, next) => {
       });
     }
 
-    req.logIn(user, (err) => {
-      if (err) {
-        console.error("Login error:", err);
-        return res.status(500).json({ error: "Login failed" });
-      }
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        _id: user._id,
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      process.env.SECRET || "thisshouldbeabettersecret!",
+      { expiresIn: "7d" } // Token expires in 7 days
+    );
 
-      // Role-based redirect URLs for frontend
-      const redirectUrls = {
-        superadmin: "/dashboard/superadmin",
-        institute: "/dashboard/institute",
-        college: "/dashboard/college",
-        department: `/department/dashboard/${user._id}`,
-        faculty: `/faculty/dashboard/${user._id}`,
-        student: `/students/dashboard/${user._id}`,
-      };
+    // Role-based redirect URLs for frontend
+    const redirectUrls = {
+      superadmin: "/dashboard/superadmin",
+      institute: `/institute/dashboard/${user._id}`,
+      college: "/dashboard/college",
+      department: `/department/dashboard/${user._id}`,
+      faculty: `/faculty/dashboard/${user._id}`,
+      student: `/students/dashboard/${user._id}`,
+    };
 
-      const redirectUrl = redirectUrls[user.role] || "/dashboard";
+    const redirectUrl = redirectUrls[user.role] || "/dashboard";
 
-      // Return JSON response with user data and redirect URL
-      res.json({
-        success: true,
-        user: {
-          _id: user._id,
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-        redirectUrl,
-      });
+    // Set token in httpOnly cookie for browser security
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Only use secure in production
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: "lax",
+    });
+
+    // Return JSON response with user data and redirect URL
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      redirectUrl,
     });
   })(req, res, next);
 });
 
 // Logout route
 router.post("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      console.error("Logout error:", err);
-      return res.status(500).json({ error: "Logout failed" });
-    }
-    res.json({ success: true, message: "Logged out successfully" });
-  });
+  // Clear the token cookie
+  res.clearCookie("token");
+  res.json({ success: true, message: "Logged out successfully" });
 });
 
 // Check authentication status
 router.get("/status", (req, res) => {
-  if (req.isAuthenticated()) {
+  try {
+    let token;
+
+    // Check for token in Authorization header
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+    // Check for token in cookies
+    else if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
+      return res.json({ authenticated: false });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(
+      token,
+      process.env.SECRET || "thisshouldbeabettersecret!"
+    );
+
     res.json({
       authenticated: true,
       user: {
-        _id: req.user._id,
-        id: req.user._id,
-        email: req.user.email,
-        name: req.user.name,
-        role: req.user.role,
+        _id: decoded._id,
+        id: decoded._id,
+        email: decoded.email,
+        name: decoded.name,
+        role: decoded.role,
       },
     });
-  } else {
+  } catch (error) {
+    console.error("Status check error:", error);
     res.json({ authenticated: false });
   }
 });

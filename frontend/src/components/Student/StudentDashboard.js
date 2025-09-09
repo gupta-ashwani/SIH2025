@@ -198,6 +198,7 @@ const StudentDashboard = () => {
             <span>{student?.batch || "Batch not specified"}</span>
             {student?.studentID && (
               <>
+                <br />
                 {" • "}
                 <span style={{ whiteSpace: "nowrap" }}>
                   Roll&nbsp;No:&nbsp;{student.studentID}
