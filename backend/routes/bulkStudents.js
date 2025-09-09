@@ -135,12 +135,17 @@ router.post(
           const hashedPassword = await bcrypt.hash(password, 10);
 
           // Parse skills array if provided as comma-separated string
-          let skillsArray = [];
+          let skillsObject = {
+            technical: [],
+            soft: []
+          };
           if (studentData.skills) {
-            skillsArray = studentData.skills
+            const skillsArray = studentData.skills
               .split(",")
               .map((skill) => skill.trim())
               .filter((skill) => skill);
+            // Put all skills in technical by default, can be categorized later
+            skillsObject.technical = skillsArray;
           }
 
           // Validate gender field
@@ -173,7 +178,7 @@ router.post(
               ? parseInt(studentData.enrollmentYear)
               : new Date().getFullYear(),
             batch: studentData.batch || new Date().getFullYear().toString(),
-            skills: skillsArray,
+            skills: skillsObject,
             status: studentData.status || "Active",
           };
 
@@ -607,9 +612,13 @@ router.post("/single-student", requireAuth, async (req, res) => {
     const isValidGender = genderValue && validGenders.includes(genderValue);
 
     // Parse skills array if provided as comma-separated string
-    let skillsArray = [];
+    let skillsObject = {
+      technical: [],
+      soft: []
+    };
     if (studentData.skills && Array.isArray(studentData.skills)) {
-      skillsArray = studentData.skills.filter((skill) => skill && skill.trim());
+      const skillsArray = studentData.skills.filter((skill) => skill && skill.trim());
+      skillsObject.technical = skillsArray;
     }
 
     // Create student object using exact model field names
@@ -636,7 +645,7 @@ router.post("/single-student", requireAuth, async (req, res) => {
         ? parseInt(studentData.enrollmentYear)
         : new Date().getFullYear(),
       batch: studentData.batch || new Date().getFullYear().toString(),
-      skills: skillsArray,
+      skills: skillsObject,
       status: studentData.status || "Active",
     };
 
