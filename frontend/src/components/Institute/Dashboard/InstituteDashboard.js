@@ -51,8 +51,7 @@ const InstituteDashboard = () => {
     );
   }
 
-  const { institute, stats, recentStudents, recentEvents, departmentStats } =
-    dashboardData;
+  const { institute, stats, recentStudents, recentEvents } = dashboardData;
 
   return (
     <div className="institute-dashboard">
@@ -75,10 +74,7 @@ const InstituteDashboard = () => {
 
       {/* Quick Stats */}
       <div className="quick-stats">
-        <div
-          className="quick-stat-card"
-          onClick={() => handleNavigate("colleges")}
-        >
+        <div className="quick-stat-card static">
           <div className="quick-stat-icon">
             <i className="fas fa-building"></i>
           </div>
@@ -86,21 +82,7 @@ const InstituteDashboard = () => {
           <div className="quick-stat-label">Colleges</div>
         </div>
 
-        <div
-          className="quick-stat-card"
-          onClick={() => handleNavigate("departments")}
-        >
-          <div className="quick-stat-icon">
-            <i className="fas fa-graduation-cap"></i>
-          </div>
-          <div className="quick-stat-number">{stats.totalDepartments}</div>
-          <div className="quick-stat-label">Departments</div>
-        </div>
-
-        <div
-          className="quick-stat-card"
-          onClick={() => handleNavigate("faculty")}
-        >
+        <div className="quick-stat-card static">
           <div className="quick-stat-icon">
             <i className="fas fa-chalkboard-teacher"></i>
           </div>
@@ -108,10 +90,7 @@ const InstituteDashboard = () => {
           <div className="quick-stat-label">Faculty Members</div>
         </div>
 
-        <div
-          className="quick-stat-card"
-          onClick={() => handleNavigate("students")}
-        >
+        <div className="quick-stat-card static">
           <div className="quick-stat-icon">
             <i className="fas fa-users"></i>
           </div>
@@ -119,10 +98,7 @@ const InstituteDashboard = () => {
           <div className="quick-stat-label">Students</div>
         </div>
 
-        <div
-          className="quick-stat-card"
-          onClick={() => handleNavigate("events")}
-        >
+        <div className="quick-stat-card static">
           <div className="quick-stat-icon">
             <i className="fas fa-calendar-alt"></i>
           </div>
@@ -149,15 +125,6 @@ const InstituteDashboard = () => {
             </button>
 
             <button
-              className="management-btn departments"
-              onClick={() => handleNavigate("departments")}
-            >
-              <i className="fas fa-graduation-cap"></i>
-              <span>Manage Departments</span>
-              <small>{stats.totalDepartments} departments</small>
-            </button>
-
-            <button
               className="management-btn faculty"
               onClick={() => handleNavigate("faculty")}
             >
@@ -174,76 +141,63 @@ const InstituteDashboard = () => {
               <span>Manage Students</span>
               <small>{stats.activeStudents} active</small>
             </button>
+            <button
+              className="management-btn reports"
+              onClick={() => handleNavigate("reports")}
+            >
+              <i className="fas fa-file-alt"></i>
+              <span>Generate Report</span>
+            </button>
           </div>
         </div>
 
-        {/* Department Overview */}
+        {/* College Overview */}
         <div className="dashboard-card">
           <h3>
-            <i className="fas fa-chart-pie"></i>
-            Department Overview
+            <i className="fas fa-university"></i>
+            College Overview
           </h3>
-          <div className="department-overview">
-            {departmentStats.slice(0, 5).map((dept, index) => (
-              <div key={index} className="department-item">
-                <div className="department-info">
-                  <div className="department-name">{dept.name}</div>
-                  <div className="department-college">{dept.college}</div>
-                </div>
-                <div className="department-stats">
-                  <div className="stat">
-                    <span className="stat-value">{dept.facultyCount}</span>
-                    <span className="stat-label">Faculty</span>
+          <div className="college-overview">
+            {dashboardData.collegeStats &&
+              dashboardData.collegeStats.slice(0, 2).map((college, index) => (
+                <div key={index} className="college-item">
+                  <div className="college-info">
+                    <div className="college-name">{college.name}</div>
+                    <div className="college-type">
+                      {college.type || "Engineering College"}
+                    </div>
                   </div>
-                  <div className="stat">
-                    <span className="stat-value">{dept.studentCount}</span>
-                    <span className="stat-label">Students</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {departmentStats.length > 5 && (
-              <button
-                className="view-all-btn"
-                onClick={() => handleNavigate("departments")}
-              >
-                View All {departmentStats.length} Departments
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Students */}
-        <div className="dashboard-card">
-          <h3>
-            <i className="fas fa-user-plus"></i>
-            Recent Students
-          </h3>
-          <div className="recent-list">
-            {recentStudents.length > 0 ? (
-              recentStudents.map((student, index) => (
-                <div key={index} className="recent-item">
-                  <div className="recent-avatar">
-                    <i className="fas fa-user"></i>
-                  </div>
-                  <div className="recent-info">
-                    <div className="recent-name">{student.name}</div>
-                    <div className="recent-meta">
-                      {student.department} •{" "}
-                      {new Date(student.joinDate).toLocaleDateString()}
+                  <div className="college-stats">
+                    <div className="stat">
+                      <span className="stat-value">
+                        {college.departmentCount}
+                      </span>
+                      <span className="stat-label">Departments</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-value">{college.facultyCount}</span>
+                      <span className="stat-label">Faculty</span>
+                    </div>
+                    <div className="stat">
+                      <span className="stat-value">{college.studentCount}</span>
+                      <span className="stat-label">Students</span>
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="no-data">No recent students</p>
+              ))}
+            {dashboardData.collegeStats &&
+              dashboardData.collegeStats.length > 2 && (
+                <button
+                  className="view-all-btn"
+                  onClick={() => handleNavigate("colleges")}
+                >
+                  Show More Colleges ({dashboardData.collegeStats.length} total)
+                </button>
+              )}
+            {(!dashboardData.collegeStats ||
+              dashboardData.collegeStats.length === 0) && (
+              <p className="no-data">No colleges found</p>
             )}
-            <button
-              className="view-all-btn"
-              onClick={() => handleNavigate("students")}
-            >
-              View All Students
-            </button>
           </div>
         </div>
 
@@ -282,49 +236,6 @@ const InstituteDashboard = () => {
               View All Events
             </button>
           </div>
-        </div>
-
-        {/* Analytics Card */}
-        <div className="dashboard-card analytics-card">
-          <h3>
-            <i className="fas fa-chart-line"></i>
-            Institute Analytics
-          </h3>
-          <div className="analytics-preview">
-            <div className="analytics-stat">
-              <div className="analytics-value">{stats.activeStudents}</div>
-              <div className="analytics-label">Active Students</div>
-              <div className="analytics-change positive">
-                +
-                {Math.round((stats.activeStudents / stats.totalStudents) * 100)}
-                %
-              </div>
-            </div>
-
-            <div className="analytics-stat">
-              <div className="analytics-value">{stats.activeFaculty}</div>
-              <div className="analytics-label">Active Faculty</div>
-              <div className="analytics-change positive">
-                +{Math.round((stats.activeFaculty / stats.totalFaculty) * 100)}%
-              </div>
-            </div>
-
-            <div className="analytics-stat">
-              <div className="analytics-value">{stats.recentEvents}</div>
-              <div className="analytics-label">Upcoming Events</div>
-              <div className="analytics-change neutral">
-                {Math.round((stats.recentEvents / stats.totalEvents) * 100)}%
-              </div>
-            </div>
-          </div>
-
-          <button
-            className="analytics-btn"
-            onClick={() => handleNavigate("analytics")}
-          >
-            <i className="fas fa-chart-bar"></i>
-            View Detailed Analytics
-          </button>
         </div>
       </div>
     </div>

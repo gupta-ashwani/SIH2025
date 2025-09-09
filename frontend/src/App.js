@@ -19,7 +19,11 @@ import AllEvents from "./components/Faculty/AllEvents";
 import DepartmentDashboard from "./components/Department/DepartmentDashboard";
 import DepartmentFaculty from "./components/Department/DepartmentFaculty";
 import DepartmentStudents from "./components/Department/DepartmentStudents";
-import { InstituteDashboard } from "./components/Institute";
+import {
+  InstituteDashboard,
+  InstituteReports,
+  InstituteColleges,
+} from "./components/Institute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 import "./styles/animations.css";
@@ -211,6 +215,28 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <InstituteDashboard />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/institute/reports/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <InstituteReports />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/institute/colleges/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <InstituteColleges />
                     </div>
                   </ProtectedRoute>
                 }

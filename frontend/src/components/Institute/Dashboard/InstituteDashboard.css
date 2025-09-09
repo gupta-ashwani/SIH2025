@@ -9,7 +9,7 @@
 
 /* Welcome Section */
 .welcome-section {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #1e3a50 100%);
+  background: #284b63 !important;
   color: var(--primary-bg);
   padding: var(--spacing-xxl);
   border-radius: var(--border-radius-lg);
@@ -75,13 +75,20 @@
   box-shadow: var(--shadow-light);
   border: 1px solid var(--border-color);
   text-align: center;
-  transition: var(--transition);
-  cursor: pointer;
   position: relative;
   overflow: hidden;
 }
 
-.quick-stat-card:hover {
+.quick-stat-card.static {
+  cursor: default;
+}
+
+.quick-stat-card:not(.static) {
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.quick-stat-card:not(.static):hover {
   box-shadow: var(--shadow-medium);
   transform: translateY(-4px);
   border-color: var(--primary-color);
@@ -96,10 +103,13 @@
   height: 4px;
   background: var(--primary-color);
   transform: scaleX(0);
+}
+
+.quick-stat-card:not(.static)::before {
   transition: var(--transition);
 }
 
-.quick-stat-card:hover::before {
+.quick-stat-card:not(.static):hover::before {
   transform: scaleX(1);
 }
 
@@ -114,10 +124,13 @@
   margin: 0 auto var(--spacing-md);
   font-size: 1.5rem;
   color: var(--primary-color);
+}
+
+.quick-stat-card:not(.static) .quick-stat-icon {
   transition: var(--transition);
 }
 
-.quick-stat-card:hover .quick-stat-icon {
+.quick-stat-card:not(.static):hover .quick-stat-icon {
   background: var(--primary-color);
   color: var(--primary-bg);
   transform: scale(1.1);
@@ -142,8 +155,9 @@
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
 }
 
 .dashboard-card {
@@ -153,6 +167,7 @@
   box-shadow: var(--shadow-light);
   border: 1px solid var(--border-color);
   transition: var(--transition);
+  height: fit-content;
 }
 
 .dashboard-card:hover {
@@ -175,15 +190,44 @@
   font-size: 1.1rem;
 }
 
-/* Management Card */
-.management-card {
-  grid-column: span 2;
-}
-
+/* Management Buttons Grid */
 .management-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .management-buttons {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    gap: var(--spacing-md);
+  }
+
+  .dashboard-card {
+    padding: var(--spacing-lg);
+  }
+
+  .management-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Secondary Grid for remaining cards */
+.secondary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
 }
 
 .management-btn {
@@ -202,9 +246,22 @@
 }
 
 .management-btn:hover {
-  border-color: var(--primary-color);
+  background-color: white;
+  border-color: #1e3a50;
   box-shadow: var(--shadow-light);
   transform: translateY(-2px);
+}
+
+.management-btn:hover i {
+  color: #1e3a50;
+}
+
+.management-btn:hover span {
+  color: var(--text-primary);
+}
+
+.management-btn:hover small {
+  color: var(--text-secondary);
 }
 
 .management-btn i {
@@ -225,45 +282,55 @@
 }
 
 .management-btn.colleges:hover {
-  border-color: #e67e22;
+  border-color: #1e3a50;
 }
 
 .management-btn.colleges:hover i {
-  color: #e67e22;
+  color: #1e3a50;
 }
 
 .management-btn.departments:hover {
-  border-color: #3498db;
+  border-color: #1e3a50;
 }
 
 .management-btn.departments:hover i {
-  color: #3498db;
+  color: #1e3a50;
 }
 
 .management-btn.faculty:hover {
-  border-color: #9b59b6;
+  border-color: #1e3a50;
 }
 
 .management-btn.faculty:hover i {
-  color: #9b59b6;
+  color: #1e3a50;
 }
 
 .management-btn.students:hover {
-  border-color: #27ae60;
+  border-color: #1e3a50;
 }
 
 .management-btn.students:hover i {
-  color: #27ae60;
+  color: #1e3a50;
+}
+
+.management-btn.reports:hover {
+  border-color: #1e3a50;
+}
+
+.management-btn.reports:hover i {
+  color: #1e3a50;
 }
 
 /* Department Overview */
-.department-overview {
+.department-overview,
+.college-overview {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
 }
 
-.department-item {
+.department-item,
+.college-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -273,27 +340,32 @@
   transition: var(--transition);
 }
 
-.department-item:hover {
+.department-item:hover,
+.college-item:hover {
   background: #f0f0f0;
   transform: translateX(4px);
 }
 
-.department-info {
+.department-info,
+.college-info {
   flex: 1;
 }
 
-.department-name {
+.department-name,
+.college-name {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: var(--spacing-xs);
 }
 
-.department-college {
+.department-college,
+.college-type {
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
-.department-stats {
+.department-stats,
+.college-stats {
   display: flex;
   gap: var(--spacing-lg);
 }

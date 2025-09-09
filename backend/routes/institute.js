@@ -96,23 +96,30 @@ router.get(
           status: event.status,
         }));
 
-      // Department-wise breakdown
-      const departmentStats = departments.map((dept) => {
-        const deptFaculty = faculty.filter(
-          (f) => f.department?.toString() === dept._id.toString()
+      // College-wise breakdown
+      const collegeStats = colleges.map((college) => {
+        const collegeDepartments = departments.filter(
+          (d) => d.college?.toString() === college._id.toString()
         );
-        const deptStudents = students.filter(
-          (s) => s.department?.toString() === dept._id.toString()
+        const collegeDepartmentIds = collegeDepartments.map((d) => d._id);
+
+        const collegeFaculty = faculty.filter((f) =>
+          collegeDepartmentIds.includes(f.department)
+        );
+        const collegeStudents = students.filter((s) =>
+          collegeDepartmentIds.includes(s.department)
         );
 
         return {
-          name: dept.name,
-          code: dept.code,
-          facultyCount: deptFaculty.length,
-          studentCount: deptStudents.length,
-          college:
-            colleges.find((c) => c._id.toString() === dept.college?.toString())
-              ?.name || "Unknown",
+          id: college._id,
+          name: college.name,
+          code: college.code,
+          type: college.type || "Engineering College",
+          departmentCount: collegeDepartments.length,
+          facultyCount: collegeFaculty.length,
+          studentCount: collegeStudents.length,
+          establishedYear: college.establishedYear,
+          location: college.location,
         };
       });
 
@@ -121,7 +128,7 @@ router.get(
         stats,
         recentStudents,
         recentEvents,
-        departmentStats,
+        collegeStats,
         title: `${institute.name} - Institute Dashboard`,
       });
     } catch (error) {
@@ -387,6 +394,117 @@ router.get(
   }
 );
 
+// Get reports data
+router.get(
+  "/reports/:id",
+  requireAuth,
+  requireRole(["institute"]),
+  async (req, res) => {
+    try {
+      const instituteId = req.params.id;
+      const {
+        type = "overview",
+        department = "all",
+        dateRange = "month",
+      } = req.query;
+
+      // Verify access
+      if (req.user._id.toString() !== instituteId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Get base data
+      const institute = await Institute.findById(instituteId);
+      const departments = await Department.find({
+        institute: instituteId,
+      }).populate("college", "name");
+      const departmentIds = departments.map((d) => d._id);
+
+      let filter = { department: { $in: departmentIds } };
+
+      // Apply department filter if specific department selected
+      if (department !== "all") {
+        filter.department = department;
+      }
+
+      // Apply date range filter
+      const dateFilter = getDateRangeFilter(dateRange);
+      if (dateFilter) {
+        filter.createdAt = dateFilter;
+      }
+
+      const students = await Student.find(filter).populate(
+        "department",
+        "name code"
+      );
+      const faculty = await Faculty.find(filter).populate(
+        "department",
+        "name code"
+      );
+      const events = await Event.find({
+        institute: instituteId,
+        ...(dateFilter && { createdAt: dateFilter }),
+      });
+
+      // Generate report data based on type
+      let reportData = {};
+
+      switch (type) {
+        case "overview":
+          reportData = generateOverviewReport(
+            institute,
+            departments,
+            students,
+            faculty,
+            events
+          );
+          break;
+        case "department":
+          reportData = generateDepartmentReport(departments, students, faculty);
+          break;
+        case "faculty":
+          reportData = generateFacultyReport(faculty, students);
+          break;
+        case "student":
+          reportData = generateStudentReport(students);
+          break;
+        case "events":
+          reportData = generateEventsReport(events);
+          break;
+        default:
+          reportData = generateOverviewReport(
+            institute,
+            departments,
+            students,
+            faculty,
+            events
+          );
+      }
+
+      res.json({
+        reportData,
+        meta: {
+          institute: institute.name,
+          type,
+          department: department === "all" ? "All Departments" : department,
+          dateRange,
+          generatedAt: new Date(),
+          totalRecords: {
+            students: students.length,
+            faculty: faculty.length,
+            events: events.length,
+            departments: departments.length,
+          },
+        },
+        title: `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
+      });
+    } catch (error) {
+      console.error("Reports fetch error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // Helper functions for analytics
 function getEnrollmentTrends(students) {
   const trends = {};
@@ -500,6 +618,214 @@ function getGrowthStats(students, faculty, events) {
     newStudentsThisMonth: studentsThisMonth,
     newFacultyThisMonth: facultyThisMonth,
     newEventsThisMonth: eventsThisMonth,
+  };
+}
+
+// Helper functions for reports
+function getDateRangeFilter(dateRange) {
+  const now = new Date();
+
+  switch (dateRange) {
+    case "week":
+      return { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+    case "month":
+      return {
+        $gte: new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()),
+      };
+    case "quarter":
+      return {
+        $gte: new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
+      };
+    case "year":
+      return {
+        $gte: new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()),
+      };
+    default:
+      return null;
+  }
+}
+
+function generateOverviewReport(
+  institute,
+  departments,
+  students,
+  faculty,
+  events
+) {
+  return {
+    summary: {
+      institute: institute.name,
+      totalColleges: departments.reduce((acc, dept) => {
+        const collegeId = dept.college?._id?.toString();
+        if (collegeId && !acc.includes(collegeId)) {
+          acc.push(collegeId);
+        }
+        return acc;
+      }, []).length,
+      totalDepartments: departments.length,
+      totalFaculty: faculty.length,
+      totalStudents: students.length,
+      totalEvents: events.length,
+    },
+    departmentBreakdown: departments.map((dept) => {
+      const deptStudents = students.filter(
+        (s) => s.department?._id?.toString() === dept._id.toString()
+      );
+      const deptFaculty = faculty.filter(
+        (f) => f.department?._id?.toString() === dept._id.toString()
+      );
+
+      return {
+        name: dept.name,
+        code: dept.code,
+        college: dept.college?.name || "N/A",
+        students: deptStudents.length,
+        faculty: deptFaculty.length,
+        ratio:
+          deptFaculty.length > 0
+            ? (deptStudents.length / deptFaculty.length).toFixed(1)
+            : "N/A",
+      };
+    }),
+  };
+}
+
+function generateDepartmentReport(departments, students, faculty) {
+  return {
+    departments: departments.map((dept) => {
+      const deptStudents = students.filter(
+        (s) => s.department?._id?.toString() === dept._id.toString()
+      );
+      const deptFaculty = faculty.filter(
+        (f) => f.department?._id?.toString() === dept._id.toString()
+      );
+
+      const avgGPA =
+        deptStudents.length > 0
+          ? (
+              deptStudents.reduce((sum, s) => sum + (s.gpa || 0), 0) /
+              deptStudents.length
+            ).toFixed(2)
+          : "N/A";
+
+      const avgAttendance =
+        deptStudents.length > 0
+          ? (
+              deptStudents.reduce((sum, s) => sum + (s.attendance || 0), 0) /
+              deptStudents.length
+            ).toFixed(1)
+          : "N/A";
+
+      return {
+        name: dept.name,
+        code: dept.code,
+        college: dept.college?.name || "N/A",
+        students: deptStudents.length,
+        faculty: deptFaculty.length,
+        averageGPA: avgGPA,
+        averageAttendance: avgAttendance,
+        studentFacultyRatio:
+          deptFaculty.length > 0
+            ? (deptStudents.length / deptFaculty.length).toFixed(1)
+            : "N/A",
+      };
+    }),
+  };
+}
+
+function generateFacultyReport(faculty, students) {
+  return {
+    totalFaculty: faculty.length,
+    facultyByDepartment: faculty.reduce((acc, fac) => {
+      const deptName = fac.department?.name || "Unknown";
+      acc[deptName] = (acc[deptName] || 0) + 1;
+      return acc;
+    }, {}),
+    facultyList: faculty.map((fac) => {
+      const facultyStudents = students.filter(
+        (s) => s.coordinator?.toString() === fac._id.toString()
+      );
+
+      return {
+        name: `${fac.name?.first || ""} ${fac.name?.last || ""}`.trim(),
+        email: fac.email,
+        department: fac.department?.name || "Unknown",
+        designation: fac.designation || "N/A",
+        studentsAssigned: facultyStudents.length,
+        status: fac.status || "Active",
+      };
+    }),
+  };
+}
+
+function generateStudentReport(students) {
+  const studentsWithGPA = students.filter((s) => s.gpa && s.gpa > 0);
+  const studentsWithAttendance = students.filter(
+    (s) => s.attendance && s.attendance > 0
+  );
+
+  return {
+    totalStudents: students.length,
+    academicStats: {
+      averageGPA:
+        studentsWithGPA.length > 0
+          ? (
+              studentsWithGPA.reduce((sum, s) => sum + s.gpa, 0) /
+              studentsWithGPA.length
+            ).toFixed(2)
+          : "N/A",
+      averageAttendance:
+        studentsWithAttendance.length > 0
+          ? (
+              studentsWithAttendance.reduce((sum, s) => sum + s.attendance, 0) /
+              studentsWithAttendance.length
+            ).toFixed(1)
+          : "N/A",
+      studentsAbove8GPA: studentsWithGPA.filter((s) => s.gpa >= 8).length,
+      studentsAbove90Attendance: studentsWithAttendance.filter(
+        (s) => s.attendance >= 90
+      ).length,
+    },
+    departmentDistribution: students.reduce((acc, student) => {
+      const deptName = student.department?.name || "Unknown";
+      acc[deptName] = (acc[deptName] || 0) + 1;
+      return acc;
+    }, {}),
+    yearDistribution: students.reduce((acc, student) => {
+      const year = student.year || "Unknown";
+      acc[year] = (acc[year] || 0) + 1;
+      return acc;
+    }, {}),
+  };
+}
+
+function generateEventsReport(events) {
+  return {
+    totalEvents: events.length,
+    eventsByType: events.reduce((acc, event) => {
+      const type = event.eventType || "Unknown";
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {}),
+    eventsByStatus: events.reduce((acc, event) => {
+      const status = event.status || "Unknown";
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {}),
+    upcomingEvents: events.filter((e) => new Date(e.eventDate) > new Date())
+      .length,
+    pastEvents: events.filter((e) => new Date(e.eventDate) <= new Date())
+      .length,
+    recentEvents: events
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 10)
+      .map((event) => ({
+        title: event.title,
+        type: event.eventType,
+        date: event.eventDate,
+        status: event.status,
+        venue: event.venue || "N/A",
+      })),
   };
 }
 

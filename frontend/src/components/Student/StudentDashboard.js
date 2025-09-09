@@ -191,43 +191,12 @@ const StudentDashboard = () => {
               ? `${studentFirstName}'s Profile`
               : `Welcome back, ${studentFirstName}!`}
           </h1>
-          <div className="student-info-grid">
-            {student?.department?.name && (
-              <div className="info-item">
-                <i className="fas fa-building"></i>
-                <span>{student.department.name}</span>
-              </div>
-            )}
-            {student?.course && (
-              <div className="info-item">
-                <i className="fas fa-graduation-cap"></i>
-                <span>{student.course}</span>
-              </div>
-            )}
-            {student?.year && (
-              <div className="info-item">
-                <i className="fas fa-calendar-alt"></i>
-                <span>{student.year}</span>
-              </div>
-            )}
-            {student?.batch && (
-              <div className="info-item">
-                <i className="fas fa-users"></i>
-                <span>Batch: {student.batch}</span>
-              </div>
-            )}
-            {student?.studentID && (
-              <div className="info-item">
-                <i className="fas fa-id-card"></i>
-                <span>Roll No: {student.studentID}</span>
-              </div>
-            )}
-            {student?.enrollmentYear && (
-              <div className="info-item">
-                <i className="fas fa-calendar-check"></i>
-                <span>Enrolled: {student.enrollmentYear}</span>
-              </div>
-            )}
+          <div className="student-info-subtitle">
+            <span>
+              {student?.department?.name || "Department not specified"} •{" "}
+              {student?.year || new Date().getFullYear()} • Roll No:{" "}
+              {student?.studentID || "Not assigned"}
+            </span>
           </div>
         </div>
       </div>

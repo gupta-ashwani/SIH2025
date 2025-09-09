@@ -335,38 +335,6 @@
   }
 }
 
-/* Welcome Section - Full Width */
-.welcome-section {
-  background: linear-gradient(135deg, #284b63 0%, #1e3a50 100%);
-  color: white;
-  padding: 40px 24px;
-  text-align: center;
-  width: 60.75%;
-  margin: 5vh auto 2vh;
-}
-
-.welcome-section .welcome-content {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.welcome-section h1 {
-  color: white;
-  margin: 0 0 8px 0;
-  font-family: var(--font-heading);
-  font-size: 2.5rem;
-  font-weight: 600;
-}
-
-.welcome-section p {
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 400;
-  line-height: 1.4;
-  word-spacing: 0.1em;
-}
-
 /* Main Content Container */
 .dashboard-content {
   max-width: 1200px;
@@ -739,14 +707,6 @@
     padding: 24px 16px;
   }
 
-  .welcome-section {
-    padding: 32px 16px;
-  }
-
-  .welcome-section h1 {
-    font-size: 2rem;
-  }
-
   .stats-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
@@ -761,10 +721,6 @@
   .stats-container {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-
-  .welcome-section h1 {
-    font-size: 1.75rem;
   }
 }
 
@@ -2340,79 +2296,50 @@
 }
 
 /* Welcome Section for Student Dashboard */
-.welcome-section {
+.student-dashboard .welcome-section {
   background: linear-gradient(135deg, #284b63 0%, #1e3a50 100%);
   color: white;
   padding: 2rem 1.5rem;
   margin-bottom: 2rem;
+  width: 100%;
 }
 
-.welcome-content {
+.student-dashboard .welcome-content {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.welcome-content h1 {
-  margin: 0 0 1.5rem 0;
+.student-dashboard .welcome-content h1 {
+  margin: 0 0 0.75rem 0;
   font-size: 2.5rem;
   font-weight: 700;
   color: white;
   text-align: center;
 }
 
-.student-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
-}
-
-.info-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
-}
-
-.info-item i {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.8);
-  width: 16px;
+.student-dashboard .student-info-subtitle {
   text-align: center;
+  margin-top: 0.5rem;
 }
 
-.info-item span {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: white;
+.student-dashboard .student-info-subtitle span {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  letter-spacing: 0.5px;
 }
 
 /* Responsive Design for Welcome Section */
 @media (max-width: 768px) {
-  .welcome-section {
+  .student-dashboard .welcome-section {
     padding: 1.5rem 1rem;
   }
 
-  .welcome-content h1 {
+  .student-dashboard .welcome-content h1 {
     font-size: 2rem;
   }
 
-  .student-info-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .info-item {
-    padding: 0.75rem;
+  .student-dashboard .student-info-subtitle span {
+    font-size: 1rem;
   }
 }

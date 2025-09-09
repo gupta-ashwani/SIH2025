@@ -216,6 +216,11 @@ export const instituteService = {
     return api.get(`/institute/dashboard/${id}`);
   },
 
+  getInstituteReports: (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/institute/reports/${id}?${queryString}`);
+  },
+
   getColleges: (id) => {
     return api.get(`/institute/colleges/${id}`);
   },
