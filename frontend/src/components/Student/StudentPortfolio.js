@@ -12,6 +12,8 @@ const StudentPortfolio = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
 
   useEffect(() => {
     fetchPortfolioData();
@@ -69,9 +71,11 @@ const StudentPortfolio = () => {
 
       const data = await response.json();
       console.log("PDF response data:", data);
-      // Use pdf_url from response
+      
+      // Use pdf_url from response to show in viewer
       if (data.pdf_url) {
-        window.open(data.pdf_url, "_blank");
+        setPdfUrl(data.pdf_url);
+        setShowPdfViewer(true);
       } else {
         throw new Error("No PDF URL returned from server");
       }
@@ -83,6 +87,22 @@ const StudentPortfolio = () => {
       alert(`Failed to generate PDF: ${error.message}`);
     } finally {
       setPdfGenerating(false);
+    }
+  };
+
+  const handleClosePdfViewer = () => {
+    setShowPdfViewer(false);
+    setPdfUrl(null);
+  };
+
+  const handleDownloadPdfFile = () => {
+    if (pdfUrl) {
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `${studentName}_Portfolio.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -209,8 +229,8 @@ const StudentPortfolio = () => {
                   </>
                 ) : (
                   <>
-                    <i className="fas fa-download"></i>
-                    Download PDF
+                    <i className="fas fa-file-pdf"></i>
+                    View PDF
                   </>
                 )}
               </button>
@@ -424,6 +444,35 @@ const StudentPortfolio = () => {
             </div>
           )}
         </div>
+
+        {/* PDF Viewer Modal */}
+        {showPdfViewer && pdfUrl && (
+          <div className="pdf-viewer-overlay">
+            <div className="pdf-viewer-modal">
+              <div className="pdf-viewer-header">
+                <h3>Portfolio PDF - {studentName}</h3>
+                <div className="pdf-viewer-actions">
+                  <button 
+                    className="close-pdf-btn" 
+                    onClick={handleClosePdfViewer}
+                    title="Close PDF Viewer"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              <div className="pdf-viewer-content">
+                <iframe
+                  src={pdfUrl}
+                  title="Portfolio PDF"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
