@@ -1,12 +1,6 @@
-// Institute Components
-export { default as InstituteDashboard } from "./Dashboard/InstituteDashboard";
-export { default as InstituteReports } from "./Reports/InstituteReports";
-export { default as InstituteColleges } from "./Colleges/InstituteColleges";
-
-export { default as BulkCollegeUpload } from "./BulkCollegeUpload";
-
-// Future exports for other institute components
-// export { default as InstituteDepartments } from './Departments/InstituteDepartments';
-// export { default as InstituteFaculty } from './Faculty/InstituteFaculty';
-// export { default as InstituteStudents } from './Students/InstituteStudents';
-// export { default as InstituteAnalytics } from './Analytics/InstituteAnalytics';
+export { default as InstituteDashboard } from './Dashboard/InstituteDashboard';
+export { default as InstituteProfile } from './InstituteProfile';
+export { default as InstituteColleges } from './Colleges/InstituteColleges';
+export { default as InstituteDepartments } from './Departments/InstituteDepartments';
+export { default as InstituteReports } from './Reports/InstituteReports';
+export { default as BulkCollegeUpload } from './BulkCollegeUpload';

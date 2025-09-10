@@ -1,3 +1,4 @@
-export { default as DepartmentDashboard } from "./DepartmentDashboard";
-export { default as DepartmentFaculty } from "./DepartmentFaculty";
-export { default as DepartmentStudents } from "./DepartmentStudents";
+export { default as DepartmentDashboard } from './DepartmentDashboard';
+export { default as DepartmentProfile } from './DepartmentProfile';
+export { default as DepartmentFaculty } from './DepartmentFaculty';
+export { default as DepartmentStudents } from './DepartmentStudents';
