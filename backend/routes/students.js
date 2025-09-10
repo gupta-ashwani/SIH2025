@@ -1,5 +1,5 @@
 const express = require("express");
-const fetch = require('node-fetch');
+const fetch = require("node-fetch");
 const { requireAuth } = require("../middleware/auth");
 const { upload } = require("../config/cloudinary");
 const Student = require("../model/student");
@@ -44,14 +44,22 @@ router.get(
         });
       }
 
-      // Calculate achievement statistics
+      // Calculate achievement statistics (only Approved)
       const achievements = student.achievements || [];
+      const approvedAchievements = achievements.filter(
+        (a) => a.status === "Approved"
+      );
+
       const stats = {
-        certifications: achievements.filter((a) => a.type === "Course").length,
-        internships: achievements.filter((a) => a.type === "Internship").length,
-        competitions: achievements.filter((a) => a.type === "Competition")
+        certifications: approvedAchievements.filter((a) => a.type === "Course")
           .length,
-        workshops: achievements.filter((a) => a.type === "Workshop").length,
+        internships: approvedAchievements.filter((a) => a.type === "Internship")
+          .length,
+        competitions: approvedAchievements.filter(
+          (a) => a.type === "Competition"
+        ).length,
+        workshops: approvedAchievements.filter((a) => a.type === "Workshop")
+          .length,
       };
 
       // Get recent activities (last 5)
@@ -206,13 +214,14 @@ router.get(
         });
       }
 
-      // Group achievements by category
+      // Group achievements by category (only approved ones)
       const achievements = student.achievements || [];
+      const approvedAchievements = achievements.filter((a) => a.status === "Approved");
       const groupedAchievements = {
-        certifications: achievements.filter((a) => a.type === "Course"),
-        internships: achievements.filter((a) => a.type === "Internship"),
-        competitions: achievements.filter((a) => a.type === "Competition"),
-        workshops: achievements.filter((a) => a.type === "Workshop"),
+        certifications: approvedAchievements.filter((a) => a.type === "Course"),
+        internships: approvedAchievements.filter((a) => a.type === "Internship"),
+        competitions: approvedAchievements.filter((a) => a.type === "Competition"),
+        workshops: approvedAchievements.filter((a) => a.type === "Workshop"),
       };
 
       res.json({
@@ -544,9 +553,9 @@ router.post(
       // Store the PDF URL in MongoDB
       const updatedStudent = await Student.findByIdAndUpdate(
         studentId,
-        { 
+        {
           resumePdfUrl: pdfData.pdf_url,
-          resumeGenerated: true 
+          resumeGenerated: true,
         },
         { new: true }
       );
@@ -558,15 +567,16 @@ router.post(
       // Return your website's PDF URL instead of third-party URL
       res.json({
         success: true,
-        pdf_url: `${req.protocol}://${req.get('host')}/api/students/pdf/${studentId}`,
-        message: "PDF generated and stored successfully"
+        pdf_url: `${req.protocol}://${req.get(
+          "host"
+        )}/api/students/pdf/${studentId}`,
+        message: "PDF generated and stored successfully",
       });
-
     } catch (error) {
       console.error("Error generating PDF:", error);
       res.status(500).json({
         error: "Failed to generate PDF",
-        details: error.message
+        details: error.message,
       });
     }
   }
@@ -577,27 +587,28 @@ router.get("/pdf/:id", async (req, res) => {
   try {
     const studentId = req.params.id;
 
-    const student = await Student.findById(studentId).select('resumePdfUrl name');
+    const student = await Student.findById(studentId).select(
+      "resumePdfUrl name"
+    );
 
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
 
     if (!student.resumePdfUrl) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: "PDF not available",
-        message: "Portfolio PDF has not been generated yet" 
+        message: "Portfolio PDF has not been generated yet",
       });
     }
 
     // Redirect to the actual PDF URL
     res.redirect(student.resumePdfUrl);
-
   } catch (error) {
     console.error("Error serving PDF:", error);
     res.status(500).json({
       error: "Failed to serve PDF",
-      details: error.message
+      details: error.message,
     });
   }
 });
@@ -607,30 +618,31 @@ router.get("/pdf-url/:id", async (req, res) => {
   try {
     const studentId = req.params.id;
 
-    const student = await Student.findById(studentId).select('resumePdfUrl name');
+    const student = await Student.findById(studentId).select(
+      "resumePdfUrl name"
+    );
 
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
 
     if (!student.resumePdfUrl) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: "PDF not available",
-        message: "Portfolio PDF has not been generated yet" 
+        message: "Portfolio PDF has not been generated yet",
       });
     }
 
     // Return the stored PDF URL for iframe embedding
     res.json({
       pdf_url: student.resumePdfUrl,
-      student_name: `${student.name.first} ${student.name.last || ''}`.trim()
+      student_name: `${student.name.first} ${student.name.last || ""}`.trim(),
     });
-
   } catch (error) {
     console.error("Error getting PDF URL:", error);
     res.status(500).json({
       error: "Failed to get PDF URL",
-      details: error.message
+      details: error.message,
     });
   }
 });
