@@ -54,7 +54,7 @@ const StudentPortfolio = () => {
 
       // Make POST request to generate PDF
       const response = await fetch(
-        `https://cc3c1ct7-8000.inc1.devtunnels.ms/generate/${id}`,
+        `${process.env.REACT_APP_RESUME_API}/generate/${id}`,
         {
           method: "POST",
           headers: {
