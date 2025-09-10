@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { superAdminService } from "../../services/authService";
+import { profileService } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 import "./SuperAdmin.css";
 
 const SuperAdminProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [superAdmin, setSuperAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,28 +16,17 @@ const SuperAdminProfile = () => {
   const [editedData, setEditedData] = useState({});
 
   useEffect(() => {
-    fetchSuperAdminProfile();
-  }, [id]);
+    if (currentUser && currentUser.role === 'superadmin') {
+      fetchSuperAdminProfile();
+    }
+  }, [id, currentUser]);
 
   const fetchSuperAdminProfile = async () => {
     try {
       setLoading(true);
-      // Mock data for now - in real app, this would be an API call
-      const mockSuperAdmin = {
-        _id: id,
-        name: {
-          first: "Super",
-          last: "Admin"
-        },
-        email: "superadmin@platform.com",
-        contactNumber: "+91-9876543210",
-        permissions: ["full_access", "institution_management", "user_management", "analytics_access", "reports_access"],
-        status: "Active",
-        createdAt: "2023-01-15",
-        updatedAt: "2024-01-15"
-      };
-      setSuperAdmin(mockSuperAdmin);
-      setEditedData(mockSuperAdmin);
+      const response = await profileService.getCurrentProfile();
+      setSuperAdmin(response.data.profile);
+      setEditedData(response.data.profile);
     } catch (error) {
       console.error("Profile error:", error);
       setError(error.response?.data?.error || "Failed to load profile");
@@ -46,8 +37,7 @@ const SuperAdminProfile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // Mock API call - in real app, this would be an actual API call
-      // await superAdminService.updateProfile(id, editedData);
+      await profileService.updateCurrentProfile(editedData);
       setSuperAdmin(editedData);
       setIsEditing(false);
     } catch (error) {

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { collegeService } from "../../services/authService";
+import { profileService } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 import "./College.css";
 
 const CollegeProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [college, setCollege] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,57 +16,17 @@ const CollegeProfile = () => {
   const [editedData, setEditedData] = useState({});
 
   useEffect(() => {
-    fetchCollegeProfile();
-  }, [id]);
+    if (currentUser && currentUser.role === 'college') {
+      fetchCollegeProfile();
+    }
+  }, [id, currentUser]);
 
   const fetchCollegeProfile = async () => {
     try {
       setLoading(true);
-      // Mock data for now - in real app, this would be an API call
-      const mockCollege = {
-        _id: id,
-        institute: {
-          _id: "institute1",
-          name: "University of Technology",
-          code: "UT001"
-        },
-        name: "Engineering College",
-        code: "ENG001",
-        email: "engineering@university.edu",
-        contactNumber: "+91-9876543210",
-        address: {
-          line1: "123 Engineering Street",
-          line2: "Tech Campus",
-          city: "Mumbai",
-          state: "Maharashtra",
-          country: "India",
-          pincode: "400001"
-        },
-        website: "https://engineering.university.edu",
-        type: "Engineering College",
-        departments: [
-          {
-            _id: "dept1",
-            name: "Computer Science Engineering",
-            code: "CSE"
-          },
-          {
-            _id: "dept2",
-            name: "Mechanical Engineering",
-            code: "ME"
-          },
-          {
-            _id: "dept3",
-            name: "Electrical Engineering",
-            code: "EE"
-          }
-        ],
-        status: "Active",
-        createdAt: "2023-01-15",
-        updatedAt: "2024-01-15"
-      };
-      setCollege(mockCollege);
-      setEditedData(mockCollege);
+      const response = await profileService.getCurrentProfile();
+      setCollege(response.data.profile);
+      setEditedData(response.data.profile);
     } catch (error) {
       console.error("Profile error:", error);
       setError(error.response?.data?.error || "Failed to load profile");
@@ -75,8 +37,7 @@ const CollegeProfile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // Mock API call - in real app, this would be an actual API call
-      // await collegeService.updateProfile(id, editedData);
+      await profileService.updateCurrentProfile(editedData);
       setCollege(editedData);
       setIsEditing(false);
     } catch (error) {

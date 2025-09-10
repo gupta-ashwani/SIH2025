@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { instituteService } from "../../services/authService";
+import { profileService } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 import "./Institute.css";
 
 const InstituteProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [institute, setInstitute] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,70 +16,17 @@ const InstituteProfile = () => {
   const [editedData, setEditedData] = useState({});
 
   useEffect(() => {
-    fetchInstituteProfile();
-  }, [id]);
+    if (currentUser && currentUser.role === 'institute') {
+      fetchInstituteProfile();
+    }
+  }, [id, currentUser]);
 
   const fetchInstituteProfile = async () => {
     try {
       setLoading(true);
-      // Mock data for now - in real app, this would be an API call
-      const mockInstitute = {
-        _id: id,
-        name: "University of Technology",
-        code: "UT001",
-        type: "University",
-        email: "admin@university.edu",
-        contactNumber: "+91-9876543210",
-        address: {
-          line1: "123 University Street",
-          line2: "Main Campus",
-          city: "Mumbai",
-          state: "Maharashtra",
-          country: "India",
-          pincode: "400001"
-        },
-        website: "https://university.edu",
-        colleges: [
-          {
-            _id: "college1",
-            name: "Engineering College",
-            code: "ENG001",
-            type: "Engineering College"
-          },
-          {
-            _id: "college2",
-            name: "Medical College",
-            code: "MED001",
-            type: "Medical College"
-          },
-          {
-            _id: "college3",
-            name: "Arts College",
-            code: "ART001",
-            type: "Arts College"
-          }
-        ],
-        status: "Active",
-        approvalStatus: "Approved",
-        approvedBy: {
-          _id: "admin1",
-          name: {
-            first: "Super",
-            last: "Admin"
-          }
-        },
-        approvedAt: "2023-01-15",
-        studentCount: 5000,
-        location: {
-          city: "Mumbai",
-          state: "Maharashtra",
-          country: "India"
-        },
-        createdAt: "2023-01-15",
-        updatedAt: "2024-01-15"
-      };
-      setInstitute(mockInstitute);
-      setEditedData(mockInstitute);
+      const response = await profileService.getCurrentProfile();
+      setInstitute(response.data.profile);
+      setEditedData(response.data.profile);
     } catch (error) {
       console.error("Profile error:", error);
       setError(error.response?.data?.error || "Failed to load profile");
@@ -88,8 +37,7 @@ const InstituteProfile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // Mock API call - in real app, this would be an actual API call
-      // await instituteService.updateProfile(id, editedData);
+      await profileService.updateCurrentProfile(editedData);
       setInstitute(editedData);
       setIsEditing(false);
     } catch (error) {

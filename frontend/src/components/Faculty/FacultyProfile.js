@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { facultyService } from "../../services/authService";
+import { profileService } from "../../services/authService";
+import { useAuth } from "../../contexts/AuthContext";
 import "./Faculty.css";
 
 const FacultyProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [faculty, setFaculty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -14,45 +16,17 @@ const FacultyProfile = () => {
   const [editedData, setEditedData] = useState({});
 
   useEffect(() => {
-    fetchFacultyProfile();
-  }, [id]);
+    if (currentUser && currentUser.role === 'faculty') {
+      fetchFacultyProfile();
+    }
+  }, [id, currentUser]);
 
   const fetchFacultyProfile = async () => {
     try {
       setLoading(true);
-      // Mock data for now - in real app, this would be an API call
-      const mockFaculty = {
-        _id: id,
-        department: {
-          _id: "dept1",
-          name: "Computer Science Engineering",
-          code: "CSE"
-        },
-        name: {
-          first: "Dr. John",
-          last: "Smith"
-        },
-        facultyID: "FAC001",
-        email: "john.smith@university.edu",
-        designation: "Professor",
-        contactNumber: "+91-9876543210",
-        isCoordinator: true,
-        students: ["student1", "student2", "student3"],
-        achievementsReviewed: [
-          {
-            achievementId: "ach1",
-            studentId: "student1",
-            status: "Approved",
-            comment: "Excellent work",
-            reviewedAt: "2024-01-15"
-          }
-        ],
-        status: "Active",
-        createdAt: "2023-01-15",
-        updatedAt: "2024-01-15"
-      };
-      setFaculty(mockFaculty);
-      setEditedData(mockFaculty);
+      const response = await profileService.getCurrentProfile();
+      setFaculty(response.data.profile);
+      setEditedData(response.data.profile);
     } catch (error) {
       console.error("Profile error:", error);
       setError(error.response?.data?.error || "Failed to load profile");
@@ -63,8 +37,7 @@ const FacultyProfile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // Mock API call - in real app, this would be an actual API call
-      // await facultyService.updateProfile(id, editedData);
+      await profileService.updateCurrentProfile(editedData);
       setFaculty(editedData);
       setIsEditing(false);
     } catch (error) {

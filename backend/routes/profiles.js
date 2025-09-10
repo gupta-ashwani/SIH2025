@@ -336,22 +336,27 @@ router.get(
         case "faculty":
           profile = await Faculty.findById(user.id)
             .populate("department", "name code")
+            .populate("students", "name studentID")
             .select("-password");
           break;
         case "department":
           profile = await Department.findById(user.id)
             .populate("college", "name code")
             .populate("institute", "name code")
+            .populate("hod", "name facultyID designation")
+            .populate("faculties", "name facultyID designation")
             .select("-password");
           break;
         case "college":
           profile = await College.findById(user.id)
             .populate("institute", "name code")
+            .populate("departments", "name code")
             .select("-password");
           break;
         case "institute":
           profile = await Institute.findById(user.id)
             .populate("colleges", "name code type")
+            .populate("approvedBy", "name")
             .select("-password");
           break;
         case "superadmin":
