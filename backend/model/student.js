@@ -18,7 +18,7 @@ const studentSchema = new mongoose.Schema(
     studentID: {
       type: String,
       required: true,
-      unique: true, // e.g., Roll number
+      unique: true,
     },
     email: {
       type: String,
@@ -40,8 +40,8 @@ const studentSchema = new mongoose.Schema(
       phone: String,
       relationship: String,
     },
-    course: String, // e.g., "Computer Science", "Mechanical Engineering"
-    year: String, // e.g., "2nd Year", "Final Year"
+    course: String,
+    year: String,
     interests: [String],
     skills: {
       technical: [String],
@@ -57,7 +57,6 @@ const studentSchema = new mongoose.Schema(
     },
     enrollmentYear: { type: Number, required: true },
     batch: String,
-    // certificates & achievements
     achievements: [
       {
         title: String,
@@ -82,7 +81,7 @@ const studentSchema = new mongoose.Schema(
           default: "Pending",
         },
         comment: String,
-        rejectionComment: String, // For backward compatibility
+        rejectionComment: String,
         uploadedAt: { type: Date, default: Date.now },
         reviewedAt: Date,
         verifiedBy: {
@@ -91,7 +90,6 @@ const studentSchema = new mongoose.Schema(
         },
       },
     ],
-    // academic performance
     gpa: { type: Number, min: 0, max: 10 },
     attendance: { type: Number, min: 0, max: 100 },
     resumeGenerated: {
@@ -103,9 +101,7 @@ const studentSchema = new mongoose.Schema(
       enum: ["Active", "Inactive"],
       default: "Active",
     },
-    resumePdfUrl: {
-      type: String,
-    },
+    resumePdfUrl: String,
     social: {
       linkedin: String,
       github: String,
@@ -124,6 +120,13 @@ const studentSchema = new mongoose.Schema(
         link: String,
         tech: String,
         description: [String],
+      },
+    ],
+
+    ocrOutputs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OcrOutput",
       },
     ],
   },
