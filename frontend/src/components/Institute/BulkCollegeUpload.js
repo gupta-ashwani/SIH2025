@@ -9,8 +9,10 @@ const BulkCollegeUpload = ({ onClose }) => {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   const close = () => {
+    setVisible(false);
     if (onClose) onClose();
     else window.dispatchEvent(new Event("closeBulkCollegeModal"));
   };
@@ -107,6 +109,8 @@ const BulkCollegeUpload = ({ onClose }) => {
       setUploading(false);
     }
   };
+
+  if (!visible) return null;
 
   const modalContent = (
     <div className="bulk-college-overlay" onClick={onBackdrop}>
