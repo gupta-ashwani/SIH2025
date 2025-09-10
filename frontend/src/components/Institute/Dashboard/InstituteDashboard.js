@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { instituteService } from "../../../services/authService";
+import { instituteService, eventService } from "../../../services/authService";
 import "./InstituteDashboard.css";
 
 const InstituteDashboard = () => {
@@ -9,8 +9,24 @@ const InstituteDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [showEventForm, setShowEventForm] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
+  const [eventForm, setEventForm] = useState({
+    title: "",
+    description: "",
+    eventDate: "",
+    eventTime: "",
+    venue: "",
+    eventType: "Academic",
+    targetAudience: "All",
+    maxParticipants: "",
+    registrationRequired: false,
+    registrationDeadline: "",
+    tags: [],
+  });
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -43,9 +59,25 @@ const InstituteDashboard = () => {
     }
   }, [id]);
 
+  const fetchUpcomingEvents = useCallback(async () => {
+    try {
+      setLoadingEvents(true);
+      const response = await eventService.getInstituteEvents(id, {
+        limit: "10",
+      });
+      setUpcomingEvents(response.data.events || []);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      setUpcomingEvents([]);
+    } finally {
+      setLoadingEvents(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+    fetchUpcomingEvents();
+  }, [fetchDashboardData, fetchUpcomingEvents]);
 
   const handleNavigate = (route) => {
     navigate(`/institute/${route}/${id}`);
@@ -131,6 +163,66 @@ const InstituteDashboard = () => {
       website: "",
       status: "Active",
     });
+  };
+
+  // Event-related functions
+  const handleEventInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEventForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleCreateEvent = async (e) => {
+    e.preventDefault();
+    try {
+      const eventData = {
+        ...eventForm,
+        maxParticipants: eventForm.maxParticipants
+          ? parseInt(eventForm.maxParticipants)
+          : null,
+      };
+
+      const response = await eventService.createEvent(eventData);
+
+      if (response.status === 201) {
+        setShowEventForm(false);
+        setEventForm({
+          title: "",
+          description: "",
+          eventDate: "",
+          eventTime: "",
+          venue: "",
+          eventType: "Academic",
+          targetAudience: "All",
+          maxParticipants: "",
+          registrationRequired: false,
+          registrationDeadline: "",
+          tags: [],
+        });
+        fetchUpcomingEvents(); // Refresh events
+        alert("Event created successfully!");
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      const errorMessage =
+        error.response?.data?.error || "Failed to create event";
+      alert(errorMessage);
+    }
+  };
+
+  const formatEventDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "Date not available";
+    }
   };
 
   if (loading) {
@@ -322,32 +414,65 @@ const InstituteDashboard = () => {
 
         {/* Recent Events */}
         <div className="dashboard-card">
-          <h3>
-            <i className="fas fa-calendar"></i>
-            Recent Events
-          </h3>
-          <div className="recent-list">
-            {dashboardData.recentEvents &&
-            dashboardData.recentEvents.length > 0 ? (
-              dashboardData.recentEvents.map((event, index) => (
-                <div key={index} className="recent-item">
-                  <div className="recent-avatar event-avatar">
-                    <i className="fas fa-calendar-day"></i>
-                  </div>
-                  <div className="recent-info">
-                    <div className="recent-name">{event.title}</div>
-                    <div className="recent-meta">
-                      {event.eventType} •{" "}
-                      {new Date(event.eventDate).toLocaleDateString()}
+          <div className="card-header">
+            <h3>
+              <i className="fas fa-calendar"></i>
+              Upcoming Events
+            </h3>
+            <button
+              className="add-new-btn"
+              onClick={() => setShowEventForm(true)}
+            >
+              <i className="fas fa-plus"></i>
+              Add Event
+            </button>
+          </div>
+          <div className="events-list">
+            {loadingEvents ? (
+              <div className="loading-events">
+                <i className="fas fa-spinner fa-spin"></i>
+                <span>Loading events...</span>
+              </div>
+            ) : upcomingEvents && upcomingEvents.length > 0 ? (
+              <>
+                {upcomingEvents.slice(0, 2).map((event) => (
+                  <div key={event._id} className="event-item">
+                    <div className="event-indicator"></div>
+                    <div className="event-content">
+                      <h4>{event.title}</h4>
+                      <p>
+                        <i className="fas fa-calendar"></i>
+                        {formatEventDate(event.eventDate)}
+                        {event.eventTime && ` • ${event.eventTime}`}
+                      </p>
+                      <p>
+                        <i className="fas fa-map-marker-alt"></i>
+                        {event.venue}
+                      </p>
+                      <span className="event-type">{event.eventType}</span>
                     </div>
                   </div>
-                  <div className={`event-status ${event.status.toLowerCase()}`}>
-                    {event.status}
+                ))}
+                {upcomingEvents.length > 2 && (
+                  <div className="show-more-container">
+                    <button
+                      className="show-more-btn"
+                      onClick={() => navigate(`/institute/events/${id}`)}
+                    >
+                      <i className="fas fa-calendar-plus"></i>
+                      View All Events ({upcomingEvents.length} total)
+                    </button>
                   </div>
-                </div>
-              ))
+                )}
+              </>
             ) : (
-              <p className="no-data">No recent events</p>
+              <div className="empty-events">
+                <div className="event-indicator"></div>
+                <div className="event-content">
+                  <h4>No upcoming events</h4>
+                  <p>Create an event to get started</p>
+                </div>
+              </div>
             )}
           </div>
         </div>

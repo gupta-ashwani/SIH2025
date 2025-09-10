@@ -53,25 +53,25 @@ const StudentPortfolio = () => {
       setError("");
 
       // Make POST request to generate PDF
-      const response = await fetch(`http://127.0.0.1:8000/generate/${id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `https://cc3c1ct7-8000.inc1.devtunnels.ms/generate/${id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-
-      // Check if we got a PDF URL in the response
-      if (data.pdfUrl || data.url || data.pdf_url) {
-        const pdfUrl = data.pdfUrl || data.url || data.pdf_url;
-
-        // Open the PDF URL in a new tab/window
-        window.open(pdfUrl, "_blank");
+      console.log("PDF response data:", data);
+      // Use pdf_url from response
+      if (data.pdf_url) {
+        window.open(data.pdf_url, "_blank");
       } else {
         throw new Error("No PDF URL returned from server");
       }

@@ -182,6 +182,11 @@ export const eventService = {
     return api.get(`/events/college/${collegeId}?${queryString}`);
   },
 
+  getInstituteEvents: (instituteId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/events/institute/${instituteId}?${queryString}`);
+  },
+
   getFacultyEvents: (facultyId) => {
     return api.get(`/events/faculty/${facultyId}`);
   },
