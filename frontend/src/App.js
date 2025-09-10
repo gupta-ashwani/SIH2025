@@ -13,6 +13,7 @@ import StudentAllEvents from "./components/Student/StudentAllEvents";
 import StudentProfile from "./components/Student/StudentProfile";
 import PDFViewer from "./components/Student/PDFViewer";
 import FacultyDashboard from "./components/Faculty/FacultyDashboard";
+import FacultyProfile from "./components/Faculty/FacultyProfile";
 import FacultyReviews from "./components/Faculty/FacultyReviews";
 import FacultyStudents from "./components/Faculty/FacultyStudents";
 import FacultyAnalytics from "./components/Faculty/FacultyAnalytics";
@@ -185,6 +186,17 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <FacultyAnalytics />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/faculty/profile/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <FacultyProfile />
                     </div>
                   </ProtectedRoute>
                 }

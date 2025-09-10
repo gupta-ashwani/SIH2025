@@ -632,4 +632,70 @@ router.get("/analytics/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Faculty Profile Routes
+router.get('/profile/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Security check: Faculty can only access their own profile
+    if (req.user.role === 'faculty' && req.user._id !== id) {
+      return res.status(403).json({ error: 'Access denied. You can only access your own profile.' });
+    }
+
+    const faculty = await Faculty.findById(id)
+      .populate('department', 'name code')
+      .select('-password');
+
+    if (!faculty) {
+      return res.status(404).json({ error: 'Faculty not found' });
+    }
+
+    res.json({
+      success: true,
+      data: { faculty }
+    });
+  } catch (error) {
+    console.error('Get faculty profile error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/profile/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Security check: Faculty can only update their own profile
+    if (req.user.role === 'faculty' && req.user._id !== id) {
+      return res.status(403).json({ error: 'Access denied. You can only update your own profile.' });
+    }
+
+    // Remove sensitive fields from update
+    const { password, role, _id, __v, ...updateData } = req.body;
+
+    const faculty = await Faculty.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    )
+      .populate('department', 'name code')
+      .select('-password');
+
+    if (!faculty) {
+      return res.status(404).json({ error: 'Faculty not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { faculty }
+    });
+  } catch (error) {
+    console.error('Update faculty profile error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;

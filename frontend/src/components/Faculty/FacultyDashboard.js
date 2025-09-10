@@ -464,6 +464,13 @@ const FacultyDashboard = () => {
         {/* Quick Actions */}
         <div className="quick-actions">
           <button
+            className="action-btn profile-btn"
+            onClick={() => navigate(`/faculty/profile/${id}`)}
+          >
+            <i className="fas fa-user"></i>
+            View Profile
+          </button>
+          <button
             className="action-btn add-student"
             onClick={() => setShowAddStudent(true)}
           >

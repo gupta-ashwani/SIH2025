@@ -35,10 +35,28 @@ const facultySchema = new mongoose.Schema(
         "Lecturer",
         "Coordinator",
         "HOD",
+        "Dean",
       ],
       default: "Assistant Professor",
     },
     contactNumber: String,
+    dob: Date,
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+    },
+    address: {
+      line1: String,
+      line2: String,
+      city: String,
+      state: String,
+      country: String,
+      pincode: String,
+    },
+    joiningDate: Date,
+    experience: Number, // Years of experience
+    qualifications: String, // Comma-separated qualifications
+    specialization: String, // Areas of specialization
     isCoordinator: {
       type: Boolean,
       default: false,
