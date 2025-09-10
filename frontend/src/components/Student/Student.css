@@ -1050,6 +1050,18 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+.download-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.download-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+}
+
 .share-btn {
   background: rgba(255, 255, 255, 0.9);
   color: #284b63;

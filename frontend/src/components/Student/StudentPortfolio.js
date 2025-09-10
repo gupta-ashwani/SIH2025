@@ -11,6 +11,7 @@ const StudentPortfolio = () => {
   const [portfolioData, setPortfolioData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
   useEffect(() => {
     fetchPortfolioData();
@@ -46,10 +47,43 @@ const StudentPortfolio = () => {
   // Check if current user is faculty viewing student portfolio
   const isFacultyViewing = currentUser && currentUser.role === "faculty";
 
-  const handleDownloadPDF = () => {
-    // Implementation for PDF download
-    console.log("Downloading PDF...");
-    // You can implement PDF generation here
+  const handleDownloadPDF = async () => {
+    try {
+      setPdfGenerating(true);
+      setError("");
+
+      // Make POST request to generate PDF
+      const response = await fetch(`http://127.0.0.1:8000/generate/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Check if we got a PDF URL in the response
+      if (data.pdfUrl || data.url || data.pdf_url) {
+        const pdfUrl = data.pdfUrl || data.url || data.pdf_url;
+
+        // Open the PDF URL in a new tab/window
+        window.open(pdfUrl, "_blank");
+      } else {
+        throw new Error("No PDF URL returned from server");
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      setError(`Failed to generate PDF: ${error.message}`);
+
+      // Show user-friendly error message
+      alert(`Failed to generate PDF: ${error.message}`);
+    } finally {
+      setPdfGenerating(false);
+    }
   };
 
   const handleShareLink = () => {
@@ -163,9 +197,22 @@ const StudentPortfolio = () => {
               </div>
             </div>
             <div className="portfolio-actions">
-              <button className="download-btn" onClick={handleDownloadPDF}>
-                <i className="fas fa-download"></i>
-                Download PDF
+              <button
+                className="download-btn"
+                onClick={handleDownloadPDF}
+                disabled={pdfGenerating}
+              >
+                {pdfGenerating ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-download"></i>
+                    Download PDF
+                  </>
+                )}
               </button>
               <button className="share-btn" onClick={handleShareLink}>
                 <i className="fas fa-share"></i>
