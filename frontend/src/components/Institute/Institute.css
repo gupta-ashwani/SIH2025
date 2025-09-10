@@ -1,75 +1,125 @@
-/* Bulk College Upload Modal Styles */
-.bulk-college-modal-overlay {
+/* Theme */
+:root {
+  --bg: #ffffff;
+  --muted: #d9d9d9;
+  --primary: #284b63;
+}
+
+/* Modal shell */
+.bulk-college-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  inset: 0;
+  background: rgba(0,0,0,0.15);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
 }
 
-.bulk-college-modal-content {
-  background: #fff;
-  padding: 2em;
-  border-radius: 8px;
-  max-width: 500px;
-  width: 100%;
-  position: relative;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
+.bulk-college-modal {
+  background: var(--bg);
+  color: #1a1a1a;
+  width: min(540px, 90vw);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  border: 1px solid var(--muted);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
 }
 
-.bulk-college-modal-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
+.bulk-college-header {
+  background: var(--primary);
+  color: #fff;
+  padding: 16px 20px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bulk-college-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.bulk-close {
+  background: transparent;
   border: none;
-  font-size: 1.5em;
+  color: #fff;
+  font-size: 24px;
   cursor: pointer;
 }
 
-.bulk-college-upload-instructions {
-  margin-bottom: 1em;
+.bulk-college-body {
+  padding: 20px;
+  overflow: auto;
 }
 
-.bulk-college-upload-dropzone {
-  border: 2px dashed #b0b0b0;
+.bulk-instructions {
+  background: #f7f9fb;
+  border: 1px dashed var(--muted);
   border-radius: 8px;
-  padding: 2em;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.bulk-instructions h3 { margin: 0 0 8px 0; color: var(--primary); }
+.bulk-instructions ul { margin: 8px 0 0 18px; }
+.bulk-download-row { margin-top: 12px; display: flex; justify-content: center; }
+
+.dropzone {
+  border: 2px dashed var(--muted);
+  border-radius: 10px;
+  padding: 28px;
   text-align: center;
-  margin-bottom: 1em;
-  background: #f8f9fa;
-  transition: border-color 0.2s;
+  background: #fff;
+  transition: all .15s ease;
+  cursor: pointer;
+}
+.dropzone.over {
+  border-color: var(--primary);
+  background: #f1f6fa;
+}
+.dropzone:hover {
+  border-color: var(--primary);
+  background: #f7fbfe;
+  box-shadow: 0 4px 14px rgba(40,75,99,0.15);
+  transform: translateY(-1px);
+}
+.dropzone-label { display: block; cursor: pointer; }
+.dz-icon { font-size: 28px; color: var(--primary); margin-bottom: 6px; }
+.dz-text { color: #4a4a4a; }
+
+.bulk-message {
+  padding: 10px 16px;
+  color: var(--primary);
 }
 
-.bulk-college-upload-dropzone:hover,
-.bulk-college-upload-dropzone-label:hover {
-  border-color: #007bff;
-}
-
-.bulk-college-upload-icon {
-  margin-bottom: 0.5em;
-}
-
-.bulk-college-upload-btns {
+.bulk-college-footer {
   display: flex;
-  gap: 1em;
+  gap: 12px;
   justify-content: flex-end;
-  margin-top: 1em;
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--muted);
+  background: #f9fafb;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
-.bulk-college-upload-message {
-  margin-top: 1em;
-  color: #007bff;
-  font-weight: 500;
+.btn {
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn.primary:disabled { opacity: .7; cursor: not-allowed; }
+.btn.secondary {
+  background: var(--muted);
+  color: #1a1a1a;
 }
 
-.bulk-college-upload-download {
-  margin-bottom: 1em;
-  display: flex;
-  justify-content: center;
-}
