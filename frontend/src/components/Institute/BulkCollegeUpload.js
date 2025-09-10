@@ -41,6 +41,18 @@ const BulkCollegeUpload = () => {
     }
   };
 
+  // Drag and drop logic
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+      setMessage("");
+    }
+  };
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
   return (
     <div className="bulk-college-upload-modal">
       <div className="bulk-college-upload-instructions">
@@ -68,6 +80,7 @@ const BulkCollegeUpload = () => {
           </li>
           <li>Maximum file size: 5MB</li>
         </ul>
+        <br />
         <div className="bulk-college-upload-download">
           <a
             href="/templates/college_bulk_template.xlsx"
@@ -78,7 +91,11 @@ const BulkCollegeUpload = () => {
           </a>
         </div>
       </div>
-      <div className="bulk-college-upload-dropzone">
+      <div
+        className="bulk-college-upload-dropzone"
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+      >
         <input
           type="file"
           accept=".xlsx,.xls,.csv"
@@ -99,15 +116,6 @@ const BulkCollegeUpload = () => {
         </label>
       </div>
       <div className="bulk-college-upload-btns">
-        <a
-          href="/templates/college_bulk_template.csv"
-          download
-          className="btn btn-primary"
-          style={{ marginRight: "1em" }}
-        >
-          <i className="fas fa-file-csv" style={{ marginRight: "0.5em" }}></i>
-          Download Sample CSV Template
-        </a>
         <button
           className="btn btn-secondary"
           type="button"
