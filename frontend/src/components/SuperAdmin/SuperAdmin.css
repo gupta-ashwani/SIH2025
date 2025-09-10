@@ -1,0 +1,85 @@
+.sa-hero {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #1e3a50 100%);
+  color: var(--primary-bg);
+}
+
+.sa-hero .sa-hero-content h1 {
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.sa-card {
+  background: var(--primary-bg);
+  border: 1px solid var(--border-color);
+}
+
+.action-btn-secondary {
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+}
+
+.sa-stats {
+  background: var(--primary-bg);
+}
+
+/* Quick Stats */
+.sa-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.sa-metric-card {
+  background: var(--primary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-light);
+  padding: var(--spacing-xl);
+}
+
+.sa-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.sa-metric-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sa-metric-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--secondary-bg);
+  color: var(--text-primary);
+  border-radius: 10px;
+}
+
+.sa-metric-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.sa-metric-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.sa-metric-trend.up {
+  color: #16a34a;
+}
+
+.sa-metric-trend.warn {
+  color: #ea580c;
+}
+
+

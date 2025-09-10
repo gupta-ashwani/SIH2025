@@ -189,7 +189,19 @@ const Navbar = () => {
                   )}
 
                 {/* Other Roles Navigation */}
-                {currentUser.role !== "student" &&
+                {currentUser.role === "superadmin" ? (
+                  <Link
+                    to={`/dashboard/superadmin`}
+                    className="nav-link"
+                    onClick={closeMenu}
+                  >
+                    <span className="nav-icon">
+                      <i className="fas fa-shield-alt"></i>
+                    </span>
+                    Super Admin
+                  </Link>
+                ) : (
+                  currentUser.role !== "student" &&
                   currentUser.role !== "faculty" && (
                     <Link
                       to={`/dashboard/${currentUser.role}`}
@@ -201,7 +213,8 @@ const Navbar = () => {
                       </span>
                       Dashboard
                     </Link>
-                  )}
+                  )
+                )}
               </>
             )}
           </div>

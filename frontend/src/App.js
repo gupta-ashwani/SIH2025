@@ -26,6 +26,7 @@ import {
   InstituteColleges,
 } from "./components/Institute";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SuperAdminDashboard from "./components/SuperAdmin/SuperAdminDashboard";
 import "./App.css";
 import "./styles/animations.css";
 import "./styles/utilities.css";
@@ -57,6 +58,16 @@ function App() {
                     <Route path="/" element={<Login />} />
 
                     {/* Protected Routes */}
+              <Route
+                path="/dashboard/superadmin"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <SuperAdminDashboard />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/dashboard/:role"
                 element={

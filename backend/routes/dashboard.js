@@ -1,5 +1,8 @@
 const express = require("express");
 const { requireAuth, requireRole } = require("../middleware/auth");
+const Institute = require("../model/institute");
+const Student = require("../model/student");
+const OcrOutput = require("../model/ocrOutput");
 const router = express.Router();
 
 // Super Admin Dashboard
@@ -7,16 +10,41 @@ router.get(
   "/superadmin",
   requireAuth,
   requireRole(["superadmin"]),
-  (req, res) => {
-    res.json({
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        email: req.user.email,
-        role: req.user.role,
-      },
-      dashboardType: "superadmin",
-    });
+  async (req, res) => {
+    try {
+      const [institutesCount, activeStudentsCount, activitiesCount, pendingApprovalsAgg] =
+        await Promise.all([
+          Institute.countDocuments({}),
+          Student.countDocuments({ status: "Active" }),
+          OcrOutput.countDocuments({}),
+          Student.aggregate([
+            { $unwind: "$achievements" },
+            { $match: { "achievements.status": "Pending" } },
+            { $count: "count" },
+          ]),
+        ]);
+
+      const pendingApprovals = pendingApprovalsAgg?.[0]?.count || 0;
+
+      res.json({
+        user: {
+          id: req.user._id,
+          name: req.user.name,
+          email: req.user.email,
+          role: req.user.role,
+        },
+        dashboardType: "superadmin",
+        metrics: {
+          institutes: institutesCount,
+          activeStudents: activeStudentsCount,
+          activitiesLogged: activitiesCount,
+          pendingApprovals,
+        },
+      });
+    } catch (error) {
+      console.error("Superadmin dashboard metrics error:", error);
+      res.status(500).json({ error: "Failed to load dashboard metrics" });
+    }
   }
 );
 
