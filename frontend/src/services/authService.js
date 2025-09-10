@@ -73,6 +73,31 @@ export const dashboardService = {
   getDashboard: (role) => {
     return api.get(`/dashboard/${role}`);
   },
+
+  // Super Admin specific endpoints
+  getPendingInstitutions: () => {
+    return api.get("/dashboard/superadmin/pending-institutions");
+  },
+
+  approveInstitution: (institutionId) => {
+    return api.post(`/dashboard/superadmin/approve-institution/${institutionId}`);
+  },
+
+  rejectInstitution: (institutionId, reason) => {
+    return api.post(`/dashboard/superadmin/reject-institution/${institutionId}`, { reason });
+  },
+
+  getPlatformHealth: () => {
+    return api.get("/dashboard/superadmin/platform-health");
+  },
+
+  getRecentActivity: () => {
+    return api.get("/dashboard/superadmin/recent-activity");
+  },
+
+  createTestInstitutions: () => {
+    return api.post("/dashboard/superadmin/create-test-institutions");
+  },
 };
 
 export const studentService = {

@@ -52,8 +52,37 @@ const instituteSchema = new mongoose.Schema(
     // tracking
     status: {
       type: String,
-      enum: ["Active", "Inactive"],
-      default: "Active",
+      enum: ["Active", "Inactive", "Pending", "Rejected"],
+      default: "Pending",
+    },
+    // approval workflow
+    approvalStatus: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SuperAdmin",
+    },
+    approvedAt: {
+      type: Date,
+    },
+    rejectionReason: {
+      type: String,
+    },
+    // additional fields for approval workflow
+    studentCount: {
+      type: Number,
+      default: 0,
+    },
+    location: {
+      city: String,
+      state: String,
+      country: {
+        type: String,
+        default: "India",
+      },
     },
   },
   { timestamps: true }
