@@ -18,6 +18,7 @@ import FacultyReviews from "./components/Faculty/FacultyReviews";
 import FacultyStudents from "./components/Faculty/FacultyStudents";
 import FacultyAnalytics from "./components/Faculty/FacultyAnalytics";
 import AllEvents from "./components/Faculty/AllEvents";
+import CollegeProfile from "./components/College/CollegeProfile";
 import DepartmentDashboard from "./components/Department/DepartmentDashboard";
 import DepartmentFaculty from "./components/Department/DepartmentFaculty";
 import DepartmentStudents from "./components/Department/DepartmentStudents";
@@ -276,6 +277,18 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <InstituteColleges />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* College Routes */}
+              <Route
+                path="/college/dashboard/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <CollegeProfile />
                     </div>
                   </ProtectedRoute>
                 }
