@@ -1,0 +1,65 @@
+/* Bulk College Upload Modal Styles */
+.bulk-college-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bulk-college-modal-content {
+  background: #fff;
+  padding: 2em;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
+}
+
+.bulk-college-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.bulk-college-upload-instructions {
+  margin-bottom: 1em;
+}
+
+.bulk-college-upload-dropzone {
+  border: 2px dashed #b0b0b0;
+  border-radius: 8px;
+  padding: 2em;
+  text-align: center;
+  margin-bottom: 1em;
+  background: #f8f9fa;
+}
+
+.bulk-college-upload-btns {
+  display: flex;
+  gap: 1em;
+  justify-content: flex-end;
+  margin-top: 1em;
+}
+
+.bulk-college-upload-message {
+  margin-top: 1em;
+  color: #007bff;
+  font-weight: 500;
+}
+
+.bulk-college-upload-download {
+  margin-bottom: 1em;
+  display: flex;
+  justify-content: center;
+}

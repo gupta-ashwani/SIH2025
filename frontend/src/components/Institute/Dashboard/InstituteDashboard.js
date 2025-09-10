@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { BulkCollegeUpload } from "../";
 import { useParams, useNavigate } from "react-router-dom";
 import { instituteService, eventService } from "../../../services/authService";
 import "./InstituteDashboard.css";
@@ -13,6 +14,7 @@ const InstituteDashboard = () => {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkCollegeModal, setShowBulkCollegeModal] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [eventForm, setEventForm] = useState({
     title: "",
@@ -319,6 +321,14 @@ const InstituteDashboard = () => {
             </button>
 
             <button
+              className="management-btn bulk-college-upload"
+              style={{ background: "white", color: "#fff" }}
+              onClick={() => setShowBulkCollegeModal(true)}
+            >
+              <i className="fas fa-file-upload"></i>
+              <span>Bulk Upload Colleges</span>
+            </button>
+            <button
               className="management-btn add-college"
               onClick={() => setShowAddModal(true)}
             >
@@ -479,6 +489,21 @@ const InstituteDashboard = () => {
       </div>
 
       {/* Add College Modal */}
+      {/* Bulk College Upload Modal */}
+      {showBulkCollegeModal && (
+        <div className="bulk-college-modal-overlay">
+          <div className="bulk-college-modal-content">
+            <button
+              className="bulk-college-modal-close"
+              onClick={() => setShowBulkCollegeModal(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <BulkCollegeUpload />
+          </div>
+        </div>
+      )}
       {showAddModal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

@@ -47,6 +47,7 @@ const departmentRoutes = require("./routes/department");
 const instituteRoutes = require("./routes/institute");
 const eventRoutes = require("./routes/events");
 const bulkStudentsRoutes = require("./routes/bulkStudents");
+const bulkCollegesRoutes = require("./routes/bulkColleges");
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -57,6 +58,7 @@ app.use("/api/department", departmentRoutes);
 app.use("/api/institute", instituteRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/bulk-students", bulkStudentsRoutes);
+app.use("/api/bulk-colleges", bulkCollegesRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -447,12 +449,10 @@ app.post("/api/test/create-institute", async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating test institute:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to create test institute",
-        details: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to create test institute",
+      details: error.message,
+    });
   }
 });
 
