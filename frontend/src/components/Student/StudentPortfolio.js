@@ -54,13 +54,14 @@ const StudentPortfolio = () => {
       setPdfGenerating(true);
       setError("");
 
-      // Make POST request to generate PDF
+      // Make POST request to your backend to generate and store PDF
       const response = await fetch(
-        `${process.env.REACT_APP_RESUME_API}/generate/${id}`,
+        `${process.env.REACT_APP_API_URL}/students/generate-pdf/${id}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );
@@ -72,12 +73,22 @@ const StudentPortfolio = () => {
       const data = await response.json();
       console.log("PDF response data:", data);
       
-      // Use pdf_url from response to show in viewer
-      if (data.pdf_url) {
-        setPdfUrl(data.pdf_url);
+      // Now get the actual PDF URL for embedding in iframe
+      const pdfUrlResponse = await fetch(
+        `${process.env.REACT_APP_API_URL}/students/pdf-url/${id}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      if (pdfUrlResponse.ok) {
+        const pdfUrlData = await pdfUrlResponse.json();
+        setPdfUrl(pdfUrlData.pdf_url);
         setShowPdfViewer(true);
       } else {
-        throw new Error("No PDF URL returned from server");
+        throw new Error("Failed to get PDF URL for viewing");
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -107,14 +118,28 @@ const StudentPortfolio = () => {
   };
 
   const handleShareLink = () => {
-    const shareUrl = `${window.location.origin}/students/portfolio/${id}`;
+    // Create a shareable PDF link that directly shows the PDF
+    const pdfShareUrl = `${window.location.origin}/pdf/${id}`;
     navigator.clipboard
-      .writeText(shareUrl)
+      .writeText(pdfShareUrl)
       .then(() => {
-        alert("Portfolio link copied to clipboard!");
+        alert("PDF share link copied to clipboard! Anyone with this link can view the portfolio PDF.");
       })
       .catch(() => {
-        alert(`Share this link: ${shareUrl}`);
+        alert(`Share this PDF link: ${pdfShareUrl}`);
+      });
+  };
+
+  const handleSharePdfLink = () => {
+    // Share direct PDF link from your website
+    const pdfShareUrl = `${window.location.origin.replace('3000', '3030')}/api/students/pdf/${id}`;
+    navigator.clipboard
+      .writeText(pdfShareUrl)
+      .then(() => {
+        alert("PDF link copied to clipboard! Anyone can access this PDF directly.");
+      })
+      .catch(() => {
+        alert(`Share this PDF link: ${pdfShareUrl}`);
       });
   };
 

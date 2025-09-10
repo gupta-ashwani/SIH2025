@@ -1,4 +1,5 @@
 const express = require("express");
+const fetch = require('node-fetch');
 const { requireAuth } = require("../middleware/auth");
 const { upload } = require("../config/cloudinary");
 const Student = require("../model/student");
@@ -509,5 +510,129 @@ function generateInsights(student, achievements) {
 
   return insights;
 }
+
+// Generate and store PDF route
+router.post(
+  "/generate-pdf/:id",
+  requireAuth,
+  checkStudentAccess,
+  async (req, res) => {
+    try {
+      const studentId = req.params.id;
+
+      // Make request to third-party PDF generation service
+      const pdfResponse = await fetch(
+        `${process.env.RESUME_API}/generate/${studentId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!pdfResponse.ok) {
+        throw new Error(`PDF generation failed: ${pdfResponse.status}`);
+      }
+
+      const pdfData = await pdfResponse.json();
+
+      if (!pdfData.pdf_url) {
+        throw new Error("No PDF URL returned from generation service");
+      }
+
+      // Store the PDF URL in MongoDB
+      const updatedStudent = await Student.findByIdAndUpdate(
+        studentId,
+        { 
+          resumePdfUrl: pdfData.pdf_url,
+          resumeGenerated: true 
+        },
+        { new: true }
+      );
+
+      if (!updatedStudent) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      // Return your website's PDF URL instead of third-party URL
+      res.json({
+        success: true,
+        pdf_url: `${req.protocol}://${req.get('host')}/api/students/pdf/${studentId}`,
+        message: "PDF generated and stored successfully"
+      });
+
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).json({
+        error: "Failed to generate PDF",
+        details: error.message
+      });
+    }
+  }
+);
+
+// Serve PDF route - redirects to actual PDF URL
+router.get("/pdf/:id", async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    const student = await Student.findById(studentId).select('resumePdfUrl name');
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (!student.resumePdfUrl) {
+      return res.status(404).json({ 
+        error: "PDF not available",
+        message: "Portfolio PDF has not been generated yet" 
+      });
+    }
+
+    // Redirect to the actual PDF URL
+    res.redirect(student.resumePdfUrl);
+
+  } catch (error) {
+    console.error("Error serving PDF:", error);
+    res.status(500).json({
+      error: "Failed to serve PDF",
+      details: error.message
+    });
+  }
+});
+
+// Get PDF URL route (for iframe embedding) - Public access for sharing
+router.get("/pdf-url/:id", async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    const student = await Student.findById(studentId).select('resumePdfUrl name');
+
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (!student.resumePdfUrl) {
+      return res.status(404).json({ 
+        error: "PDF not available",
+        message: "Portfolio PDF has not been generated yet" 
+      });
+    }
+
+    // Return the stored PDF URL for iframe embedding
+    res.json({
+      pdf_url: student.resumePdfUrl,
+      student_name: `${student.name.first} ${student.name.last || ''}`.trim()
+    });
+
+  } catch (error) {
+    console.error("Error getting PDF URL:", error);
+    res.status(500).json({
+      error: "Failed to get PDF URL",
+      details: error.message
+    });
+  }
+});
 
 module.exports = router;

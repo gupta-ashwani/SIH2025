@@ -11,6 +11,7 @@ import StudentPortfolio from "./components/Student/StudentPortfolio";
 import StudentAnalytics from "./components/Student/StudentAnalytics";
 import StudentAllEvents from "./components/Student/StudentAllEvents";
 import StudentProfile from "./components/Student/StudentProfile";
+import PDFViewer from "./components/Student/PDFViewer";
 import FacultyDashboard from "./components/Faculty/FacultyDashboard";
 import FacultyReviews from "./components/Faculty/FacultyReviews";
 import FacultyStudents from "./components/Faculty/FacultyStudents";
@@ -34,13 +35,28 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
-          <Layout>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/" element={<Login />} />
+          <Routes>
+            {/* Standalone PDF Viewer Route - No Layout (no navbar/footer) */}
+            <Route
+              path="/pdf/:id"
+              element={
+                <div className="page-transition">
+                  <PDFViewer />
+                </div>
+              }
+            />
+            
+            {/* All other routes with Layout */}
+            <Route
+              path="/*"
+              element={
+                <Layout>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/" element={<Login />} />
 
-              {/* Protected Routes */}
+                    {/* Protected Routes */}
               <Route
                 path="/dashboard/:role"
                 element={
@@ -241,8 +257,11 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-            </Routes>
-          </Layout>
+                  </Routes>
+                </Layout>
+              }
+            />
+          </Routes>
         </div>
       </Router>
     </AuthProvider>
