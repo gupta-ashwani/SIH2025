@@ -320,7 +320,10 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
       <div className="table-row">
         <div className="table-cell student-col">
           <div className="student-info">
-            <div className="student-avatar">
+            <div 
+              className="student-avatar" 
+              data-letter={review.student?.name?.first?.charAt(0) || "S"}
+            >
               {review.student?.name?.first?.charAt(0) || "S"}
               {review.student?.name?.last?.charAt(0) || ""}
             </div>

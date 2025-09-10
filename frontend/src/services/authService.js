@@ -277,53 +277,5 @@ export const instituteService = {
   },
 };
 
-// Profile Services
-export const profileService = {
-  // Get profile by ID and role
-  getProfile: (role, id) => {
-    return api.get(`/profiles/${role}/${id}`);
-  },
-  
-  // Update profile by ID and role
-  updateProfile: (role, id, data) => {
-    return api.put(`/profiles/${role}/${id}`, data);
-  },
-  
-  // Get current user's profile
-  getCurrentProfile: () => {
-    return api.get("/profiles/me");
-  },
-  
-  // Update current user's profile
-  updateCurrentProfile: (data) => {
-    return api.put("/profiles/me", data);
-  },
-  
-  // Role-specific services
-  facultyService: {
-    getProfile: (id) => api.get(`/profiles/faculty/${id}`),
-    updateProfile: (id, data) => api.put(`/profiles/faculty/${id}`, data),
-  },
-  
-  departmentService: {
-    getProfile: (id) => api.get(`/profiles/department/${id}`),
-    updateProfile: (id, data) => api.put(`/profiles/department/${id}`, data),
-  },
-  
-  collegeService: {
-    getProfile: (id) => api.get(`/profiles/college/${id}`),
-    updateProfile: (id, data) => api.put(`/profiles/college/${id}`, data),
-  },
-  
-  instituteService: {
-    getProfile: (id) => api.get(`/profiles/institute/${id}`),
-    updateProfile: (id, data) => api.put(`/profiles/institute/${id}`, data),
-  },
-  
-  superAdminService: {
-    getProfile: (id) => api.get(`/profiles/superadmin/${id}`),
-    updateProfile: (id, data) => api.put(`/profiles/superadmin/${id}`, data),
-  },
-};
 
 export default api;
