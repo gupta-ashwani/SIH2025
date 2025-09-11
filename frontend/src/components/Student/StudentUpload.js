@@ -14,12 +14,7 @@ const StudentUpload = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
-    category: "",
-    dateCompleted: "",
-    title: "",
-    organization: "",
     description: "",
-    instituteEmail: "",
     file: null,
   });
 
@@ -105,12 +100,7 @@ const StudentUpload = () => {
     try {
       // Create FormData for file upload
       const uploadData = new FormData();
-      uploadData.append("category", formData.category);
-      uploadData.append("title", formData.title);
-      uploadData.append("organization", formData.organization);
-      uploadData.append("description", formData.description);
-      uploadData.append("instituteEmail", formData.instituteEmail);
-      uploadData.append("dateCompleted", formData.dateCompleted);
+  uploadData.append("description", formData.description);
 
       if (formData.file) {
         uploadData.append("certificate", formData.file);
@@ -122,12 +112,7 @@ const StudentUpload = () => {
 
       // Reset form
       setFormData({
-        category: "",
-        dateCompleted: "",
-        title: "",
-        organization: "",
         description: "",
-        instituteEmail: "",
         file: null,
       });
 
@@ -227,91 +212,7 @@ const StudentUpload = () => {
             )}
 
             <form onSubmit={handleSubmit} className="upload-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="category">ACTIVITY CATEGORY *</label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    required
-                    disabled={submitting}
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Course">Certification/Course</option>
-                    <option value="Internship">Internship</option>
-                    <option value="Competition">Competition</option>
-                    <option value="Hackathon">Hackathon</option>
-                    <option value="Workshop">Workshop</option>
-                    <option value="Conference">Conference</option>
-                    <option value="CommunityService">Community Service</option>
-                    <option value="Leadership">Leadership</option>
-                    <option value="Clubs">Clubs</option>
-                    <option value="Volunteering">Volunteering</option>
-                    <option value="Others">Others</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="dateCompleted">DATE COMPLETED *</label>
-                  <input
-                    type="date"
-                    id="dateCompleted"
-                    name="dateCompleted"
-                    value={formData.dateCompleted}
-                    onChange={handleInputChange}
-                    max={new Date().toISOString().split("T")[0]} // Prevent future dates
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="title">ACTIVITY TITLE *</label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  placeholder="e.g. AWS Cloud Practitioner Certification"
-                  required
-                  disabled={submitting}
-                  maxLength={200}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="organization">ORGANIZATION/INSTITUTION *</label>
-                <input
-                  type="text"
-                  id="organization"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleInputChange}
-                  placeholder="e.g. Amazon Web Services"
-                  required
-                  disabled={submitting}
-                  maxLength={200}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="instituteEmail">INSTITUTE/ADMIN EMAIL *</label>
-                <input
-                  type="email"
-                  id="instituteEmail"
-                  name="instituteEmail"
-                  value={formData.instituteEmail}
-                  onChange={handleInputChange}
-                  placeholder="e.g. admin@organization.com"
-                  required
-                  disabled={submitting}
-                  maxLength={100}
-                />
-              </div>
+              {/* Removed: ACTIVITY CATEGORY, DATE COMPLETED, ACTIVITY TITLE, ORGANIZATION/INSTITUTION, INSTITUTE/ADMIN EMAIL */}
 
               <div className="form-group">
                 <label htmlFor="description">DESCRIPTION *</label>
