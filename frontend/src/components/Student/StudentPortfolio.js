@@ -144,8 +144,7 @@ const StudentPortfolio = () => {
   };
 
   const handleGoToRoadmap = () => {
-    navigate(`/student/roadmap/${student._id}`); 
-    // or student.studentID depending on what you use in DB
+    navigate(`/student/roadmap/${id}`); 
   };
 
   if (loading) {

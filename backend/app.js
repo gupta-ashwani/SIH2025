@@ -56,10 +56,10 @@ const collegeRoutes = require("./routes/college");
 const departmentRoutes = require("./routes/department");
 const instituteRoutes = require("./routes/institute");
 const eventRoutes = require("./routes/events");
+const roadmapRoutes = require("./routes/roadmap");
 const bulkStudentsRoutes = require("./routes/bulkStudents");
 const bulkCollegesRoutes = require("./routes/bulkColleges");
 const bulkUploadRoutes = require("./routes/bulkUpload");
-const roadmapRoutes = require("./routes/roadmap");
 const instituteRequestRoutes = require("./routes/instituteRequests");
 
 // API routes
@@ -71,10 +71,10 @@ app.use("/api/college", collegeRoutes);
 app.use("/api/department", departmentRoutes);
 app.use("/api/institute", instituteRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/roadmap", roadmapRoutes);
 app.use("/api/bulk-students", bulkStudentsRoutes);
 app.use("/api/bulk-colleges", bulkCollegesRoutes);
 app.use("/api/bulk-upload", bulkUploadRoutes);
-app.use("/api/roadmap", roadmapRoutes);
 app.use("/api/institute-requests", instituteRequestRoutes);
 
 // Health check endpoint

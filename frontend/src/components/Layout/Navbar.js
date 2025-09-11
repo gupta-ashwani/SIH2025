@@ -130,6 +130,18 @@ const Navbar = () => {
                         </span>
                         Analytics
                       </Link>
+                      <Link
+                        to={`/student/roadmap/${
+                          currentUser._id || currentUser.id
+                        }`}
+                        className="nav-link"
+                        onClick={closeMenu}
+                      >
+                        <span className="nav-icon">
+                          <i className="fas fa-map-location-dot"></i>
+                        </span>
+                        Roadmap
+                      </Link>
                     </>
                   )}
 
