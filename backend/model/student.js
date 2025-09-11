@@ -88,7 +88,8 @@ const studentSchema = new mongoose.Schema(
           }
         },
         dateCompleted: Date,
-        fileUrl: String,
+        fileUrl: String, // UploadCare CDN URL
+        fileId: String, // UploadCare file UUID for deletion
         status: {
           type: String,
           enum: ["Pending", "Approved", "Rejected"],

@@ -1,7 +1,8 @@
 const express = require("express");
 const fetch = require("node-fetch");
 const { requireAuth } = require("../middleware/auth");
-const { upload } = require("../config/cloudinary");
+const { upload, uploadToUploadCare, deleteFromUploadCare, convertUploadCareUrl } = require("../config/uploadCare");
+const { convertAchievementArrayUrls } = require("../utils/uploadCareUtils");
 const Student = require("../model/student");
 const Department = require("../model/department");
 const College = require("../model/college");
@@ -62,10 +63,12 @@ router.get(
           .length,
       };
 
-      // Get recent activities (last 5)
-      const recentActivities = achievements
-        .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
-        .slice(0, 5);
+      // Get recent activities (last 5) and convert UploadCare URLs
+      const recentActivities = convertAchievementArrayUrls(
+        achievements
+          .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
+          .slice(0, 5)
+      );
 
       // Calculate academic progress
       const academicProgress = {
@@ -173,6 +176,33 @@ router.post(
       const { category, title, organization, description, dateCompleted, instituteEmail } =
         req.body;
 
+      let fileUrl = null;
+      let fileId = null;
+
+      // Upload file to UploadCare if file is present
+      if (req.file) {
+        try {
+          const uploadResult = await uploadToUploadCare(
+            req.file.buffer,
+            req.file.originalname,
+            req.file.mimetype
+          );
+          
+          if (uploadResult.success) {
+            fileUrl = uploadResult.fileUrl;
+            fileId = uploadResult.fileId;
+          } else {
+            throw new Error('Failed to upload file to UploadCare');
+          }
+        } catch (uploadError) {
+          console.error("UploadCare upload error:", uploadError);
+          return res.status(500).json({ 
+            error: "File upload failed", 
+            details: uploadError.message 
+          });
+        }
+      }
+
       const newAchievement = {
         title,
         type: category,
@@ -180,7 +210,8 @@ router.post(
         organization,
         instituteEmail,
         dateCompleted: dateCompleted ? new Date(dateCompleted) : null,
-        fileUrl: req.file ? req.file.path : null,
+        fileUrl: fileUrl,
+        fileId: fileId, // Store UploadCare file ID for deletion later
         uploadedAt: new Date(),
         status: "Pending",
       };
@@ -217,14 +248,15 @@ router.get(
         });
       }
 
-      // Group achievements by category (only approved ones)
+      // Group achievements by category (only approved ones) and convert URLs
       const achievements = student.achievements || [];
       const approvedAchievements = achievements.filter((a) => a.status === "Approved");
+      
       const groupedAchievements = {
-        certifications: approvedAchievements.filter((a) => a.type === "Course"),
-        internships: approvedAchievements.filter((a) => a.type === "Internship"),
-        competitions: approvedAchievements.filter((a) => a.type === "Competition"),
-        workshops: approvedAchievements.filter((a) => a.type === "Workshop"),
+        certifications: convertAchievementArrayUrls(approvedAchievements.filter((a) => a.type === "Course")),
+        internships: convertAchievementArrayUrls(approvedAchievements.filter((a) => a.type === "Internship")),
+        competitions: convertAchievementArrayUrls(approvedAchievements.filter((a) => a.type === "Competition")),
+        workshops: convertAchievementArrayUrls(approvedAchievements.filter((a) => a.type === "Workshop")),
       };
 
       res.json({
@@ -653,5 +685,62 @@ router.get("/pdf-url/:id", async (req, res) => {
     });
   }
 });
+
+// Delete achievement route
+router.delete(
+  "/:studentId/achievement/:achievementId",
+  requireAuth,
+  checkStudentAccess,
+  async (req, res) => {
+    try {
+      const { studentId, achievementId } = req.params;
+      
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      // Find the achievement to delete
+      const achievementIndex = student.achievements.findIndex(
+        (achievement) => achievement._id.toString() === achievementId
+      );
+
+      if (achievementIndex === -1) {
+        return res.status(404).json({ error: "Achievement not found" });
+      }
+
+      const achievement = student.achievements[achievementIndex];
+
+      // Delete file from UploadCare if it exists
+      if (achievement.fileId) {
+        try {
+          const deleteResult = await deleteFromUploadCare(achievement.fileId);
+          if (!deleteResult.success) {
+            console.warn(`Failed to delete file from UploadCare: ${deleteResult.message}`);
+            // Continue with achievement deletion even if file deletion fails
+          }
+        } catch (error) {
+          console.error("Error deleting file from UploadCare:", error);
+          // Continue with achievement deletion even if file deletion fails
+        }
+      }
+
+      // Remove achievement from array
+      student.achievements.splice(achievementIndex, 1);
+      await student.save();
+
+      res.json({
+        success: true,
+        message: "Achievement deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete achievement error:", error);
+      res.status(500).json({ 
+        error: "Failed to delete achievement",
+        details: error.message 
+      });
+    }
+  }
+);
 
 module.exports = router;

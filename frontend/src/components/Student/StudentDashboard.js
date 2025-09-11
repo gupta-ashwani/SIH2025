@@ -15,6 +15,7 @@ const StudentDashboard = () =>{
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [deletingAchievement, setDeletingAchievement] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projectForm, setProjectForm] = useState({
     title: '',
@@ -170,6 +171,44 @@ const StudentDashboard = () =>{
     } catch (error) {
       console.error('Error adding project:', error);
       alert(error.response?.data?.error || 'Failed to add project');
+    }
+  };
+
+  // Delete achievement function
+  const handleDeleteAchievement = async (achievementId) => {
+    if (!window.confirm('Are you sure you want to delete this achievement? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingAchievement(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/students/${id}/achievement/${achievementId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        // Refresh dashboard data to reflect the deletion
+        await fetchDashboardData();
+        setShowActivityModal(false);
+        setSelectedActivity(null);
+        alert('Achievement deleted successfully');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete achievement');
+      }
+    } catch (error) {
+      console.error('Error deleting achievement:', error);
+      alert(error.message || 'Failed to delete achievement');
+    } finally {
+      setDeletingAchievement(false);
     }
   };
 
@@ -774,6 +813,35 @@ const StudentDashboard = () =>{
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+              
+              {/* Modal Footer with Actions */}
+              {isOwnDashboard && (
+                <div className="activity-modal-footer">
+                  <button 
+                    className="btn-danger delete-achievement-btn"
+                    onClick={() => handleDeleteAchievement(selectedActivity._id)}
+                    disabled={deletingAchievement}
+                  >
+                    {deletingAchievement ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-trash"></i>
+                        Delete Achievement
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    className="btn-secondary"
+                    onClick={() => setShowActivityModal(false)}
+                  >
+                    Close
+                  </button>
                 </div>
               )}
             </div>
