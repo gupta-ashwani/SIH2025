@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { studentService } from "../../services/authService";
 import "./Student.css";
 
-const StudentDashboard = () => {
+const StudentDashboard = () =>{
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -13,6 +13,8 @@ const StudentDashboard = () => {
   const [error, setError] = useState("");
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,6 +118,16 @@ const StudentDashboard = () => {
 
   const handleNavigate = (path) => {
     navigate(`/students/${path}/${id}`);
+  };
+
+  const handleActivityClick = (activity) => {
+    setSelectedActivity(activity);
+    setShowActivityModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowActivityModal(false);
+    setSelectedActivity(null);
   };
 
   // Check if current user is viewing their own dashboard
@@ -264,7 +276,11 @@ const StudentDashboard = () => {
             <div className="activities-list">
               {recentActivities && recentActivities.length > 0 ? (
                 recentActivities.map((activity, index) => (
-                  <div key={index} className="activity-item">
+                  <div 
+                    key={index} 
+                    className="activity-item clickable-activity"
+                    onClick={() => handleActivityClick(activity)}
+                  >
                     <div className="activity-icon">
                       <i className={getActivityIcon(activity.type)}></i>
                     </div>
@@ -427,6 +443,136 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Activity Preview Modal */}
+      {showActivityModal && selectedActivity && (
+        <div className="activity-modal-overlay" onClick={handleCloseModal}>
+          <div className="activity-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="activity-modal-header">
+              <h2 className="activity-modal-title">Activity Details</h2>
+              <button className="activity-modal-close" onClick={handleCloseModal}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="activity-modal-body">
+              <div className="activity-modal-main">
+                <div className="activity-modal-icon">
+                  <i className={getActivityIcon(selectedActivity.type)}></i>
+                </div>
+                <div className="activity-modal-info">
+                  <h3 className="activity-title">{selectedActivity.title || "Untitled Activity"}</h3>
+                  <div className="activity-meta">
+                    <span className="activity-type">
+                      <i className="fas fa-tag"></i>
+                      {selectedActivity.type || "General"}
+                    </span>
+                    <span className="activity-date">
+                      <i className="fas fa-calendar"></i>
+                      {formatDate(selectedActivity.uploadedAt)}
+                    </span>
+                    <span className={`activity-status-badge status-${(selectedActivity.status || "pending")?.toLowerCase()}`}>
+                      <i className="fas fa-circle"></i>
+                      {selectedActivity.status || "Pending"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="activity-details-grid">
+                {selectedActivity.description && (
+                  <div className="activity-detail-item">
+                    <label>Description</label>
+                    <p>{selectedActivity.description}</p>
+                  </div>
+                )}
+                
+                {selectedActivity.organization && (
+                  <div className="activity-detail-item">
+                    <label>Organization</label>
+                    <p>{selectedActivity.organization}</p>
+                  </div>
+                )}
+                
+                {selectedActivity.duration && (
+                  <div className="activity-detail-item">
+                    <label>Duration</label>
+                    <p>{selectedActivity.duration}</p>
+                  </div>
+                )}
+                
+                {selectedActivity.skills && selectedActivity.skills.length > 0 && (
+                  <div className="activity-detail-item">
+                    <label>Skills</label>
+                    <div className="skills-tags">
+                      {selectedActivity.skills.map((skill, index) => (
+                        <span key={index} className="skill-tag">{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {selectedActivity.achievements && selectedActivity.achievements.length > 0 && (
+                  <div className="activity-detail-item">
+                    <label>Achievements</label>
+                    <ul className="achievements-list">
+                      {selectedActivity.achievements.map((achievement, index) => (
+                        <li key={index}>{achievement}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {selectedActivity.fileUrl && (
+                  <div className="activity-detail-item">
+                    <label>Certificate / Achievement Image</label>
+                    <div className="certificate-section">
+                      <div className="certificate-image-preview">
+                        <img 
+                          src={selectedActivity.fileUrl} 
+                          alt="Achievement File"
+                          className="certificate-image"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div className="certificate-fallback" style={{display: 'none'}}>
+                          <i className="fas fa-file-image"></i>
+                          <span>Image not available</span>
+                        </div>
+                      </div>
+                      <a 
+                        href={selectedActivity.fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="certificate-link"
+                      >
+                        <i className="fas fa-external-link-alt"></i>
+                        View Full Size
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedActivity.feedback && (
+                <div className="activity-feedback">
+                  <h4>Faculty Feedback</h4>
+                  <div className="feedback-content">
+                    <p>{selectedActivity.feedback}</p>
+                    {selectedActivity.feedbackBy && (
+                      <div className="feedback-author">
+                        - {selectedActivity.feedbackBy.name || "Faculty"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        </div>
+      )}
     </div>
   );
 };
