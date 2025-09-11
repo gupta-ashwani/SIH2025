@@ -4,7 +4,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
 import LandingPage from "./components/LandingPage/LandingPage";
 import Login from "./components/Auth/Login";
-import Signup from "./components/Auth/Signup";
+import InstituteRegistration from "./components/Institute/InstituteRegistration";
 import Dashboard from "./components/Dashboard/Dashboard";
 import StudentDashboard from "./components/Student/StudentDashboard";
 import StudentUpload from "./components/Student/StudentUpload";
@@ -55,8 +55,7 @@ function App() {
                 <Layout>
                   <Routes>
                     <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/register" element={<Signup />} />
+                    <Route path="/institute-registration" element={<InstituteRegistration />} />
                     <Route path="/" element={<LandingPage />} />
 
                     {/* Protected Routes */}

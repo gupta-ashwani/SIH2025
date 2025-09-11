@@ -6,7 +6,7 @@ import "./Layout.css";
 const Layout = ({ children }) => {
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/institute-registration';
 
   return (
     <div className="app-layout">

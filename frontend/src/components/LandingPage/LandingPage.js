@@ -10,7 +10,7 @@ const LandingPage = () => {
   };
 
   const handleRegisterInstitute = () => {
-    navigate('/register');
+    navigate('/institute-registration');
   };
 
   const handleContactClick = () => {

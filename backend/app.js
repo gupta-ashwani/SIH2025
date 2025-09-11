@@ -51,6 +51,7 @@ const bulkStudentsRoutes = require("./routes/bulkStudents");
 const bulkCollegesRoutes = require("./routes/bulkColleges");
 const bulkUploadRoutes = require("./routes/bulkUpload");
 const roadmapRoutes = require("./routes/roadmap");
+const instituteRequestRoutes = require("./routes/instituteRequests");
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -65,6 +66,7 @@ app.use("/api/bulk-students", bulkStudentsRoutes);
 app.use("/api/bulk-colleges", bulkCollegesRoutes);
 app.use("/api/bulk-upload", bulkUploadRoutes);
 app.use("/api/roadmap", roadmapRoutes);
+app.use("/api/institute-requests", instituteRequestRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
