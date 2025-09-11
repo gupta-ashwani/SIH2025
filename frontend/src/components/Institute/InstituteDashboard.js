@@ -168,7 +168,7 @@ const handleSubmitCollege = async (e) => {
   return (
     <div className="institute-dashboard-container">
       {/* Header Section */}
-      <div className="institute-dashboard-header" onClick={handleInstituteHeaderClick} style={{ cursor: 'pointer' }}>
+      <div className="institute-dashboard-header" >
         <div className="institute-header-content">
           <h1 className="institute-dashboard-title">
             {institute.name || 'Tech Institute of Excellence'}

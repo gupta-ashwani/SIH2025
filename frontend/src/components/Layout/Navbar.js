@@ -188,6 +188,23 @@ const Navbar = () => {
                     </>
                   )}
 
+                {/* Institute Navigation */}
+                {currentUser.role === "institute" &&
+                  (currentUser._id || currentUser.id) && (
+                    <Link
+                      to={`/institute/dashboard/${
+                        currentUser._id || currentUser.id
+                      }`}
+                      className="nav-link"
+                      onClick={closeMenu}
+                    >
+                      <span className="nav-icon">
+                        <i className="fas fa-tachometer-alt"></i>
+                      </span>
+                      Dashboard
+                    </Link>
+                  )}
+
                 {/* Other Roles Navigation */}
                 {currentUser.role === "superadmin" ? (
                   <Link
@@ -202,7 +219,8 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   currentUser.role !== "student" &&
-                  currentUser.role !== "faculty" && (
+                  currentUser.role !== "faculty" &&
+                  currentUser.role !== "institute" && (
                     <Link
                       to={`/dashboard/${currentUser.role}`}
                       className="nav-link"
@@ -229,7 +247,7 @@ const Navbar = () => {
                     : currentUser.role === "faculty"
                     ? `/faculty/profile/${currentUser._id || currentUser.id}`
                     : currentUser.role === "institute"
-                    ? `/institute/dashboard/${currentUser._id || currentUser.id}`
+                    ? `/institute/profile/${currentUser._id || currentUser.id}`
                     : "#"
                 }
                 className="user-info-link"
