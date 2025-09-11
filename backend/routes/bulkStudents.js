@@ -6,6 +6,7 @@ const Student = require("../model/student");
 const Faculty = require("../model/faculty");
 const bcrypt = require("bcryptjs");
 const { requireAuth } = require("../middleware/auth");
+const emailService = require("../services/emailService");
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
@@ -89,6 +90,11 @@ router.post(
         success: [],
         errors: [],
         duplicates: [],
+        emailResults: {
+          sent: 0,
+          failed: 0,
+          details: []
+        }
       };
 
       // Process each student
@@ -217,6 +223,52 @@ router.post(
             email: savedStudent.email,
             studentID: savedStudent.studentID,
           });
+
+          // Send welcome email
+          console.log(`📧 Attempting to send email to: ${savedStudent.email}`);
+          try {
+            const emailResult = await emailService.sendEmail(
+              savedStudent.email,
+              'student',
+              {
+                name: `${savedStudent.name.first} ${savedStudent.name.last}`,
+                email: savedStudent.email,
+                password: password // Send original password in email
+              },
+              {
+                uploadedBy: faculty.email || 'faculty',
+                uploadType: 'bulk_students',
+                facultyId: faculty._id,
+                studentId: savedStudent._id
+              }
+            );
+
+            if (emailResult.success) {
+              results.emailResults.sent++;
+              console.log(`✅ Email sent successfully to ${savedStudent.email}`);
+            } else {
+              results.emailResults.failed++;
+              console.log(`❌ Email failed for ${savedStudent.email}:`, emailResult.error);
+            }
+
+            results.emailResults.details.push({
+              email: savedStudent.email,
+              name: `${savedStudent.name.first} ${savedStudent.name.last}`,
+              success: emailResult.success,
+              messageId: emailResult.messageId,
+              error: emailResult.error
+            });
+
+          } catch (emailError) {
+            console.error(`❌ Email sending failed for ${savedStudent.email}:`, emailError);
+            results.emailResults.failed++;
+            results.emailResults.details.push({
+              email: savedStudent.email,
+              name: `${savedStudent.name.first} ${savedStudent.name.last}`,
+              success: false,
+              error: emailError.message
+            });
+          }
         } catch (error) {
           console.error(`Error processing student at row ${rowNumber}:`, error);
           results.errors.push({
@@ -228,26 +280,30 @@ router.post(
       }
 
       // Save faculty with updated students array
-      if (results.success.length > 0) {
-        await faculty.save();
-      }
+      await faculty.save();
 
-      console.log("Bulk upload results:", results);
+      console.log(`📊 Bulk upload completed. Email summary:`, {
+        totalEmails: results.success.length,
+        emailsSent: results.emailResults.sent,
+        emailsFailed: results.emailResults.failed
+      });
 
       res.json({
         message: "Bulk upload completed",
+        results: results,
         summary: {
-          total: data.length,
+          totalProcessed: data.length,
           successful: results.success.length,
           errors: results.errors.length,
           duplicates: results.duplicates.length,
+          emailsSent: results.emailResults.sent,
+          emailsFailed: results.emailResults.failed,
         },
-        results,
       });
     } catch (error) {
-      console.error("Bulk upload error:", error);
+      console.error("Error in bulk upload:", error);
       res.status(500).json({
-        error: "Server error during bulk upload",
+        error: "Internal server error during bulk upload",
         details: error.message,
       });
     }
