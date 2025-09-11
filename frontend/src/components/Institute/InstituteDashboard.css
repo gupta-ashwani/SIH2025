@@ -133,10 +133,11 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .institute-modal-content {
@@ -147,6 +148,13 @@
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .institute-modal-overlay {
+    margin: 20px;
+  }
 }
 
 .institute-modal-header {

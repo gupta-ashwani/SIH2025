@@ -270,4 +270,159 @@ router.post("/colleges", requireAuth, async (req, res) => {
   }
 });
 
+// Bulk upload colleges from Excel file
+router.post("/colleges/bulk-upload", requireAuth, async (req, res) => {
+  try {
+    const multer = require('multer');
+    const xlsx = require('xlsx');
+    const bcrypt = require('bcryptjs');
+    
+    // Configure multer for file upload
+    const storage = multer.memoryStorage();
+    const upload = multer({ 
+      storage: storage,
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+            file.mimetype === 'application/vnd.ms-excel') {
+          cb(null, true);
+        } else {
+          cb(new Error('Only Excel files are allowed'), false);
+        }
+      }
+    }).single('file');
+
+    upload(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const instituteId = req.body.institute;
+
+      // Verify the user has access to this institute
+      if (req.user.role !== "institute" && req.user.role !== "superadmin") {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (req.user.role === "institute" && req.user._id.toString() !== instituteId) {
+        return res.status(403).json({ error: "Access denied to this institute" });
+      }
+
+      try {
+        // Parse Excel file
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(worksheet);
+
+        if (data.length === 0) {
+          return res.status(400).json({ error: 'Excel file is empty' });
+        }
+
+        const results = {
+          successful: [],
+          failed: [],
+          total: data.length
+        };
+
+        // Process each row
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
+          
+          try {
+            // Validate required fields
+            if (!row.Name || !row.Code || !row.Email || !row.Password) {
+              results.failed.push({
+                row: i + 2, // +2 because Excel rows start at 1 and we have header
+                data: row,
+                error: 'Missing required fields (Name, Code, Email, Password)'
+              });
+              continue;
+            }
+
+            // Check if college code already exists
+            const existingCollege = await College.findOne({ code: row.Code.toString().toUpperCase() });
+            if (existingCollege) {
+              results.failed.push({
+                row: i + 2,
+                data: row,
+                error: `College code '${row.Code}' already exists`
+              });
+              continue;
+            }
+
+            // Check if email already exists
+            const existingEmail = await College.findOne({ email: row.Email.toString().toLowerCase() });
+            if (existingEmail) {
+              results.failed.push({
+                row: i + 2,
+                data: row,
+                error: `Email '${row.Email}' already exists`
+              });
+              continue;
+            }
+
+            // Hash password
+            const hashedPassword = await bcrypt.hash(row.Password.toString(), 10);
+
+            // Create college object
+            const collegeData = {
+              institute: instituteId,
+              name: row.Name.toString().trim(),
+              code: row.Code.toString().toUpperCase(),
+              email: row.Email.toString().toLowerCase(),
+              password: hashedPassword,
+              contactNumber: row['Contact Number'] ? row['Contact Number'].toString() : '',
+              address: {
+                line1: row['Address Line 1'] ? row['Address Line 1'].toString() : '',
+                line2: row['Address Line 2'] ? row['Address Line 2'].toString() : '',
+                city: row.City ? row.City.toString() : '',
+                state: row.State ? row.State.toString() : '',
+                country: row.Country ? row.Country.toString() : '',
+                pincode: row.Pincode ? row.Pincode.toString() : ''
+              },
+              website: row.Website ? row.Website.toString() : '',
+              type: row.Type || 'Other'
+            };
+
+            // Create and save college
+            const college = new College(collegeData);
+            await college.save();
+
+            results.successful.push({
+              row: i + 2,
+              name: college.name,
+              code: college.code,
+              email: college.email
+            });
+
+          } catch (error) {
+            results.failed.push({
+              row: i + 2,
+              data: row,
+              error: error.message
+            });
+          }
+        }
+
+        res.status(200).json({
+          message: `Bulk upload completed. ${results.successful.length} colleges created, ${results.failed.length} failed.`,
+          results
+        });
+
+      } catch (error) {
+        console.error("Excel parsing error:", error);
+        res.status(500).json({ error: "Failed to parse Excel file" });
+      }
+    });
+
+  } catch (error) {
+    console.error("Bulk upload error:", error);
+    res.status(500).json({ error: "Failed to process bulk upload" });
+  }
+});
+
 module.exports = router;

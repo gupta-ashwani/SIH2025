@@ -10,6 +10,7 @@ const InstituteDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddCollegeModal, setShowAddCollegeModal] = useState(false);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [collegeFormData, setCollegeFormData] = useState({
     name: '',
     code: '',
@@ -36,7 +37,11 @@ const InstituteDashboard = () => {
     setShowAddCollegeModal(true);
   };
 
-  const handleCloseModal = () => {
+  const handleBulkUploadClick = () => {
+    setShowBulkUploadModal(true);
+  };
+
+const handleCloseModal = () => {
     setShowAddCollegeModal(false);
     setCollegeFormData({
       name: '',
@@ -57,7 +62,7 @@ const InstituteDashboard = () => {
     });
   };
 
-  const handleFormChange = (e) => {
+const handleFormChange = (e) => {
     const { name, value } = e.target;
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
@@ -76,7 +81,7 @@ const InstituteDashboard = () => {
     }
   };
 
-  const handleSubmitCollege = async (e) => {
+const handleSubmitCollege = async (e) => {
     e.preventDefault();
     try {
       console.log('Submitting college data:', {
@@ -265,19 +270,6 @@ const InstituteDashboard = () => {
               </div>
             </div>
             
-            <div className="institute-management-card">
-              <div className="institute-management-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V10C21 8.89543 20.1046 8 19 8H13L11 6H5C3.89543 6 3 6.89543 3 8V7Z" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  <path d="M12 11L12 16M9.5 13.5L14.5 13.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div className="institute-management-content">
-                <h3 className="institute-management-title">Bulk Upload Colleges</h3>
-                <p className="institute-management-subtitle">Import multiple</p>
-              </div>
-            </div>
-            
             <div className="institute-management-card" onClick={handleAddCollegeClick}>
               <div className="institute-management-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -289,6 +281,19 @@ const InstituteDashboard = () => {
               <div className="institute-management-content">
                 <h3 className="institute-management-title">Add College</h3>
                 <p className="institute-management-subtitle">Create new college</p>
+              </div>
+            </div>
+            
+            <div className="institute-management-card" onClick={handleBulkUploadClick}>
+              <div className="institute-management-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V10C21 8.89543 20.1046 8 19 8H13L11 6H5C3.89543 6 3 6.89543 3 8V7Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+                  <path d="M12 11L12 16M9.5 13.5L14.5 13.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="institute-management-content">
+                <h3 className="institute-management-title">Bulk Upload</h3>
+                <p className="institute-management-subtitle">Upload multiple colleges</p>
               </div>
             </div>
             
@@ -642,6 +647,88 @@ const InstituteDashboard = () => {
               </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Upload Modal */}
+      {showBulkUploadModal && (
+        <div className="institute-modal-overlay" onClick={() => setShowBulkUploadModal(false)}>
+          <div className="institute-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="institute-modal-header">
+              <h2 className="institute-modal-title">Bulk Upload Colleges</h2>
+              <button className="institute-modal-close" onClick={() => setShowBulkUploadModal(false)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ marginTop: 0, color: '#284B63' }}>Bulk Upload Instructions</h3>
+                <p>To upload multiple colleges at once, please prepare an Excel file with the following columns:</p>
+                <ul style={{ paddingLeft: '24px', margin: '12px 0' }}>
+                  <li>Name (required)</li>
+                  <li>Code (required, unique)</li>
+                  <li>Email (required, unique)</li>
+                  <li>Password (required)</li>
+                  <li>Contact Number</li>
+                  <li>Address</li>
+                  <li>Type</li>
+                </ul>
+              </div>
+              
+              <div style={{ 
+                border: '2px dashed #D1D5DB', 
+                borderRadius: '8px', 
+                padding: '32px', 
+                textAlign: 'center',
+                backgroundColor: '#F9FAFB',
+                marginBottom: '24px'
+              }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px' }}>
+                  <path d="M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 8L12 3L7 8" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 3L12 15" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <p style={{ margin: '8px 0', color: '#4B5563' }}>Drag and drop your Excel file here, or <span style={{ color: '#3B82F6', cursor: 'pointer' }}>browse</span></p>
+                <p style={{ margin: 0, fontSize: '14px', color: '#6B7280' }}>Supports .xlsx, .xls (Max 5MB)</p>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button 
+                  onClick={() => setShowBulkUploadModal(false)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '6px',
+                    border: '1px solid #D1D5DB',
+                    backgroundColor: 'white',
+                    color: '#4B5563',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: '#284B63',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Upload File
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

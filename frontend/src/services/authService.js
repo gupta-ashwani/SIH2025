@@ -217,6 +217,14 @@ export const instituteService = {
   addCollege: (collegeData) => {
     return api.post('/institute/colleges', collegeData);
   },
+
+  bulkUploadColleges: (formData) => {
+    return api.post('/institute/colleges/bulk-upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export const eventService = {
