@@ -12,6 +12,7 @@ import StudentPortfolio from "./components/Student/StudentPortfolio";
 import StudentAnalytics from "./components/Student/StudentAnalytics";
 import StudentAllEvents from "./components/Student/StudentAllEvents";
 import StudentProfile from "./components/Student/StudentProfile";
+import StudentRoadmap from "./components/Student/StudentRoadmap";
 import PDFViewer from "./components/Student/PDFViewer";
 import FacultyDashboard from "./components/Faculty/FacultyDashboard";
 import FacultyProfile from "./components/Faculty/FacultyProfile";
@@ -141,6 +142,17 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <StudentAllEvents />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/student/roadmap/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <StudentRoadmap />
                     </div>
                   </ProtectedRoute>
                 }

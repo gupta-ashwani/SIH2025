@@ -143,6 +143,11 @@ const StudentPortfolio = () => {
       });
   };
 
+  const handleGoToRoadmap = () => {
+    navigate(`/student/roadmap/${student._id}`); 
+    // or student.studentID depending on what you use in DB
+  };
+
   if (loading) {
     return (
       <div className="student-dashboard">
@@ -262,6 +267,10 @@ const StudentPortfolio = () => {
               <button className="share-btn" onClick={handleShareLink}>
                 <i className="fas fa-share"></i>
                 Share Link
+              </button>
+              <button className="roadmap-btn" onClick={handleGoToRoadmap}>
+              <i class="fa-solid fa-map-location-dot"></i>
+                Generate Roadmap
               </button>
             </div>
           </div>

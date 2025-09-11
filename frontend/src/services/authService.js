@@ -147,6 +147,16 @@ export const studentService = {
   },
 };
 
+export const roadmapService = {
+  getRoadmap: (id) => {
+    return api.get(`/roadmap/${id}`);
+  },
+
+  getStudentRoadmaps: (studentId) => {
+    return api.get(`/roadmap/student/${studentId}`);
+  },
+};
+
 export const facultyService = {
   getFacultyDashboard: (id) => {
     return api.get(`/faculty/dashboard/${id}`);
