@@ -9,11 +9,20 @@ const cookieParser = require("cookie-parser");
 // CORS configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",")
-  : ["http://localhost:3000", "http://localhost:3001"];
+  : ["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"];
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
@@ -457,6 +466,185 @@ app.post("/api/test/create-institute", async (req, res) => {
   }
 });
 
+// Test route to create a sample SuperAdmin (for development only)
+app.post("/api/test/create-superadmin", async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const SuperAdmin = require("./model/superadmin");
+
+    // Check if test superadmin already exists
+    const existingSuperAdmin = await SuperAdmin.findOne({
+      email: "admin@sih2025.com",
+    });
+    if (existingSuperAdmin) {
+      return res.json({
+        message: "Test SuperAdmin already exists",
+        email: "admin@sih2025.com",
+        password: "admin123",
+        superAdminId: existingSuperAdmin._id,
+      });
+    }
+
+    const superAdminData = {
+      name: { first: "Super", last: "Admin" },
+      email: "admin@sih2025.com",
+      password: await bcrypt.hash("admin123", 12),
+      contactNumber: "+91-9999999999",
+      permissions: ["full_access"],
+      status: "Active",
+    };
+
+    const testSuperAdmin = new SuperAdmin(superAdminData);
+    await testSuperAdmin.save();
+
+    res.json({
+      message: "Test SuperAdmin created successfully",
+      email: "admin@sih2025.com",
+      password: "admin123",
+      superAdminId: testSuperAdmin._id,
+    });
+  } catch (error) {
+    console.error("Error creating test SuperAdmin:", error);
+    res.status(500).json({
+      error: "Failed to create test SuperAdmin",
+      details: error.message,
+    });
+  }
+});
+
+// Test route to create sample institute requests (for development only)
+app.post("/api/test/create-institute-requests", async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const crypto = require("crypto");
+    const Institute = require("./model/institute");
+
+    // Check if test requests already exist
+    const existingRequests = await Institute.find({
+      email: { $in: ["test1@university.edu", "test2@college.edu", "test3@institute.edu"] },
+    });
+    
+    if (existingRequests.length > 0) {
+      return res.json({
+        message: "Test institute requests already exist",
+        count: existingRequests.length,
+        requests: existingRequests,
+      });
+    }
+
+    const sampleRequests = [
+      {
+        name: "Test University of Technology",
+        code: "TESU1234",
+        aisheCode: "U-12345",
+        type: "Government",
+        email: "test1@university.edu",
+        password: await bcrypt.hash(crypto.randomBytes(8).toString("hex"), 12),
+        address: {
+          line1: "123 University Road",
+          city: "Mumbai",
+          state: "Maharashtra",
+          district: "Mumbai",
+          country: "India",
+          pincode: "400001",
+        },
+        headOfInstitute: {
+          name: "Dr. Rajesh Kumar",
+          email: "rajesh.kumar@university.edu",
+          contact: "+91-9876543210",
+          alternateContact: "+91-9876543211",
+        },
+        modalOfficer: {
+          name: "Prof. Priya Sharma",
+          email: "priya.sharma@university.edu",
+          contact: "+91-9876543212",
+          alternateContact: "+91-9876543213",
+        },
+        naacGrading: true,
+        naacGrade: "A+",
+        status: "Pending",
+        approvalStatus: "Pending",
+      },
+      {
+        name: "Test Engineering College",
+        code: "TEEC5678",
+        aisheCode: "C-67890",
+        type: "Private",
+        email: "test2@college.edu",
+        password: await bcrypt.hash(crypto.randomBytes(8).toString("hex"), 12),
+        address: {
+          line1: "456 College Street",
+          city: "Bangalore",
+          state: "Karnataka",
+          district: "Bangalore",
+          country: "India",
+          pincode: "560001",
+        },
+        headOfInstitute: {
+          name: "Dr. Amit Verma",
+          email: "amit.verma@college.edu",
+          contact: "+91-9876543220",
+          alternateContact: "+91-9876543221",
+        },
+        modalOfficer: {
+          name: "Dr. Sunita Patel",
+          email: "sunita.patel@college.edu",
+          contact: "+91-9876543222",
+          alternateContact: "+91-9876543223",
+        },
+        naacGrading: false,
+        naacGrade: "",
+        status: "Pending",
+        approvalStatus: "Pending",
+      },
+      {
+        name: "Test Autonomous Institute",
+        code: "TEAI9999",
+        aisheCode: "A-11111",
+        type: "Autonomous",
+        email: "test3@institute.edu",
+        password: await bcrypt.hash(crypto.randomBytes(8).toString("hex"), 12),
+        address: {
+          line1: "789 Institute Avenue",
+          city: "Chennai",
+          state: "Tamil Nadu",
+          district: "Chennai",
+          country: "India",
+          pincode: "600001",
+        },
+        headOfInstitute: {
+          name: "Dr. Meera Nair",
+          email: "meera.nair@institute.edu",
+          contact: "+91-9876543230",
+        },
+        modalOfficer: {
+          name: "Prof. Ravi Krishnan",
+          email: "ravi.krishnan@institute.edu",
+          contact: "+91-9876543231",
+        },
+        naacGrading: true,
+        naacGrade: "A++",
+        status: "Active",
+        approvalStatus: "Approved",
+      },
+    ];
+
+    const createdRequests = await Institute.insertMany(sampleRequests);
+
+    res.json({
+      message: "Test institute requests created successfully",
+      count: createdRequests.length,
+      requests: createdRequests,
+    });
+  } catch (error) {
+    console.error("Error creating test institute requests:", error);
+    res.status(500).json({
+      error: "Failed to create test institute requests",
+      details: error.message,
+    });
+  }
+});
+
 // Test route to create a sample department (for development only)
 app.post("/api/test/create-department", async (req, res) => {
   try {
@@ -656,7 +844,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).json({ error: message });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3030;
 app.listen(PORT, () => {
   console.log(`Backend server listening on port ${PORT}`);
 });

@@ -374,6 +374,33 @@ router.get("/students/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Get Department Coordinator
+router.get("/:id/coordinator", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const department = await Department.findById(id)
+      .populate("hod", "name email designation contactNumber")
+      .select("hod name");
+
+    if (!department) {
+      return res.status(404).json({ error: "Department not found" });
+    }
+
+    // Return the HOD as the coordinator
+    res.json({
+      coordinator: department.hod,
+      department: {
+        name: department.name,
+        _id: department._id
+      }
+    });
+  } catch (error) {
+    console.error("Get coordinator error:", error);
+    res.status(500).json({ error: "Failed to get coordinator" });
+  }
+});
+
 // Get Department Analytics
 router.get("/analytics/:id", requireAuth, async (req, res) => {
   try {

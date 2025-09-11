@@ -13,6 +13,7 @@ const StudentProfile = () => {
   const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [coordinator, setCoordinator] = useState(null);
 
   useEffect(() => {
     fetchStudentProfile();
@@ -25,6 +26,17 @@ const StudentProfile = () => {
       const response = await studentService.getStudentProfile(id);
       setStudent(response.data.student);
       setEditForm(response.data.student);
+      
+      // Fetch coordinator information if department exists
+      if (response.data.student.department) {
+        try {
+          const coordResponse = await studentService.getCoordinator(response.data.student.department._id || response.data.student.department);
+          setCoordinator(coordResponse.data.coordinator);
+        } catch (coordError) {
+          console.error("Coordinator fetch error:", coordError);
+          // Don't set error for coordinator fetch failure
+        }
+      }
     } catch (error) {
       console.error("Profile error:", error);
       setError(error.response?.data?.error || "Failed to load profile");
@@ -156,18 +168,32 @@ const StudentProfile = () => {
       {/* Header Section */}
       <div className="profile-header">
         <div className="header-content">
-          <button onClick={() => navigate(-1)} className="back-button">
-            <i className="fas fa-arrow-left"></i>
-            Back
-          </button>
-          <div className="student-profile-title">
-            <h1>Student Profile</h1>
+          <div className="header-left">
+            <button onClick={() => navigate(-1)} className="back-button">
+              <i className="fas fa-arrow-left"></i>
+              Back
+            </button>
           </div>
-          <div className="edit-btn">
+          
+          <div className="header-center">
+            <div className="student-profile-title">
+              <h1>Student Profile</h1>
+              {coordinator && (
+                <div className="coordinator-info">
+                  <span className="coordinator-label">Coordinator:</span>
+                  <span className="coordinator-name">
+                    {coordinator.name?.first} {coordinator.name?.last}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="header-right">
             {canEdit && (
               <button
                 onClick={handleEditToggle}
-                className={`edit-btn ${isEditing ? "editing" : ""}`}
+                className={`edit-profile-btn ${isEditing ? "editing" : ""}`}
               >
                 <i className={`fas ${isEditing ? "fa-times" : "fa-edit"}`}></i>
                 {isEditing ? "Cancel" : "Edit Profile"}

@@ -52,15 +52,18 @@ const instituteSchema = new mongoose.Schema(
     headOfInstitute: {
       name: {
         type: String,
+        required: true,
         trim: true,
       },
       email: {
         type: String,
+        required: true,
         lowercase: true,
         trim: true,
       },
       contact: {
         type: String,
+        required: true,
         trim: true,
       },
       alternateContact: {
@@ -73,15 +76,18 @@ const instituteSchema = new mongoose.Schema(
     modalOfficer: {
       name: {
         type: String,
+        required: true,
         trim: true,
       },
       email: {
         type: String,
+        required: true,
         lowercase: true,
         trim: true,
       },
       contact: {
         type: String,
+        required: true,
         trim: true,
       },
       alternateContact: {
@@ -128,6 +134,17 @@ const instituteSchema = new mongoose.Schema(
     },
     rejectionReason: {
       type: String,
+    },
+    reviewComment: {
+      type: String,
+      trim: true,
+    },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SuperAdmin",
+    },
+    reviewedAt: {
+      type: Date,
     },
     // additional fields for approval workflow
     studentCount: {

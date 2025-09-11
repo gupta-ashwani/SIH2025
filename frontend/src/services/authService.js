@@ -145,6 +145,10 @@ export const studentService = {
   addProject: (id, projectData) => {
     return api.post(`/students/profile/${id}/projects`, projectData);
   },
+
+  getCoordinator: (departmentId) => {
+    return api.get(`/department/${departmentId}/coordinator`);
+  },
 };
 
 export const roadmapService = {
