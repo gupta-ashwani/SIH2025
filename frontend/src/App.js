@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Layout } from "./components/Layout";
+import LandingPage from "./components/LandingPage/LandingPage";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
 import Dashboard from "./components/Dashboard/Dashboard";
@@ -54,7 +55,8 @@ function App() {
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
-                    <Route path="/" element={<Login />} />
+                    <Route path="/register" element={<Signup />} />
+                    <Route path="/" element={<LandingPage />} />
 
                     {/* Protected Routes */}
               <Route
