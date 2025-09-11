@@ -148,12 +148,35 @@ export const studentService = {
 };
 
 export const roadmapService = {
+  testConnection: () => {
+    return api.get(`/roadmap/test`);
+  },
+
   getRoadmap: (id) => {
     return api.get(`/roadmap/${id}`);
   },
 
   getStudentRoadmaps: (studentId) => {
     return api.get(`/roadmap/student/${studentId}`);
+  },
+
+  generateRoadmap: (studentId, portfolioData) => {
+    return api.post(`/roadmap`, { 
+      student_id: studentId, 
+      portfolioData 
+    });
+  },
+
+  createRoadmap: (roadmapData) => {
+    return api.post(`/roadmap`, roadmapData);
+  },
+
+  updateRoadmap: (roadmapId, updateData) => {
+    return api.put(`/roadmap/${roadmapId}`, updateData);
+  },
+
+  deleteRoadmap: (roadmapId) => {
+    return api.delete(`/roadmap/${roadmapId}`);
   },
 };
 
