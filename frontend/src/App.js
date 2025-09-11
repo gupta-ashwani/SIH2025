@@ -22,11 +22,7 @@ import CollegeProfile from "./components/College/CollegeProfile";
 import DepartmentDashboard from "./components/Department/DepartmentDashboard";
 import DepartmentFaculty from "./components/Department/DepartmentFaculty";
 import DepartmentStudents from "./components/Department/DepartmentStudents";
-import {
-  InstituteDashboard,
-  InstituteReports,
-  InstituteColleges,
-} from "./components/Institute";
+import InstituteDashboard from "./components/Institute/InstituteDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SuperAdminDashboard from "./components/SuperAdmin/SuperAdminDashboard";
 import "./App.css";
@@ -248,6 +244,7 @@ function App() {
                 }
               />
 
+
               {/* Institute Routes */}
               <Route
                 path="/institute/dashboard/:id"
@@ -255,28 +252,6 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <InstituteDashboard />
-                    </div>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/institute/reports/:id"
-                element={
-                  <ProtectedRoute>
-                    <div className="page-transition">
-                      <InstituteReports />
-                    </div>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/institute/colleges/:id"
-                element={
-                  <ProtectedRoute>
-                    <div className="page-transition">
-                      <InstituteColleges />
                     </div>
                   </ProtectedRoute>
                 }

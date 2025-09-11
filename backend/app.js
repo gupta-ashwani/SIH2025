@@ -176,6 +176,281 @@ app.post("/api/test/create-faculty", async (req, res) => {
   }
 });
 
+// Test route to create a sample institute (for development only)
+app.post("/api/test/create-institute", async (req, res) => {
+  try {
+    const bcrypt = require("bcryptjs");
+    const Institute = require("./model/institute");
+    const College = require("./model/college");
+    const Department = require("./model/department");
+    const Faculty = require("./model/faculty");
+    const Student = require("./model/student");
+    const Event = require("./model/event");
+
+    // Check if test institute already exists
+    const existingInstitute = await Institute.findOne({
+      email: "test@institute.com",
+    });
+    if (existingInstitute) {
+      return res.json({
+        message: "Test institute already exists",
+        email: "test@institute.com",
+        password: "password123",
+        instituteId: existingInstitute._id,
+        institute: existingInstitute,
+      });
+    }
+
+    // Create institute
+    const instituteData = {
+      name: "Test University",
+      code: "TU001",
+      type: "University",
+      email: "test@institute.com",
+      password: await bcrypt.hash("password123", 12),
+      contactNumber: "+91-9876543200",
+      address: {
+        line1: "123 University Road",
+        city: "Test City",
+        state: "Test State",
+        country: "India",
+        pincode: "123456",
+      },
+      website: "https://testuniversity.edu",
+      status: "Active",
+      approvalStatus: "Approved",
+    };
+
+    const testInstitute = new Institute(instituteData);
+    await testInstitute.save();
+
+    // Create sample colleges under this institute
+    const collegeData = [
+      {
+        institute: testInstitute._id,
+        name: "College of Engineering",
+        code: "COE",
+        type: "Engineering College",
+        email: "coe@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        contactNumber: "+91-9876543201",
+        address: {
+          line1: "Engineering Block",
+          city: "Test City",
+          state: "Test State",
+          country: "India",
+          pincode: "123456",
+        },
+        status: "Active",
+      },
+      {
+        institute: testInstitute._id,
+        name: "Medical Sciences College",
+        code: "MSC",
+        type: "Medical College",
+        email: "msc@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        contactNumber: "+91-9876543202",
+        address: {
+          line1: "Medical Block",
+          city: "Test City",
+          state: "Test State",
+          country: "India",
+          pincode: "123456",
+        },
+        status: "Active",
+      },
+    ];
+
+    const createdColleges = await College.insertMany(collegeData);
+
+    // Create departments for each college
+    const departmentData = [
+      // Engineering College Departments
+      {
+        college: createdColleges[0]._id,
+        institute: testInstitute._id,
+        name: "Computer Science Engineering",
+        code: "CSE",
+        email: "cse@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        contactNumber: "+91-9876543210",
+        status: "Active",
+      },
+      {
+        college: createdColleges[0]._id,
+        institute: testInstitute._id,
+        name: "Mechanical Engineering",
+        code: "ME",
+        email: "me@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        contactNumber: "+91-9876543211",
+        status: "Active",
+      },
+      // Medical College Departments
+      {
+        college: createdColleges[1]._id,
+        institute: testInstitute._id,
+        name: "General Medicine",
+        code: "GM",
+        email: "gm@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        contactNumber: "+91-9876543212",
+        status: "Active",
+      },
+    ];
+
+    const createdDepartments = await Department.insertMany(departmentData);
+
+    // Create faculty for departments
+    const facultyData = [
+      {
+        department: createdDepartments[0]._id,
+        name: { first: "Dr. Rajesh", last: "Kumar" },
+        facultyID: "FAC001",
+        email: "rajesh.kumar@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        designation: "Professor",
+        contactNumber: "+91-9876543220",
+        status: "Active",
+      },
+      {
+        department: createdDepartments[0]._id,
+        name: { first: "Dr. Priya", last: "Sharma" },
+        facultyID: "FAC002",
+        email: "priya.sharma@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        designation: "Associate Professor",
+        contactNumber: "+91-9876543221",
+        status: "Active",
+      },
+      {
+        department: createdDepartments[1]._id,
+        name: { first: "Dr. Amit", last: "Verma" },
+        facultyID: "FAC003",
+        email: "amit.verma@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        designation: "Professor",
+        contactNumber: "+91-9876543222",
+        status: "Active",
+      },
+    ];
+
+    const createdFaculty = await Faculty.insertMany(facultyData);
+
+    // Create students
+    const studentData = [
+      {
+        department: createdDepartments[0]._id,
+        name: { first: "Student", last: "One" },
+        studentID: "STU001",
+        email: "student1@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        batch: "2021-2025",
+        enrollmentYear: 2021,
+        gpa: 8.5,
+        attendance: 85,
+        status: "Active",
+      },
+      {
+        department: createdDepartments[0]._id,
+        name: { first: "Student", last: "Two" },
+        studentID: "STU002",
+        email: "student2@testuniversity.edu",
+        password: await bcrypt.hash("password123", 12),
+        batch: "2022-2026",
+        enrollmentYear: 2022,
+        gpa: 9.0,
+        attendance: 90,
+        status: "Active",
+      },
+    ];
+
+    await Student.insertMany(studentData);
+
+    // Create sample events
+    const now = new Date();
+    const eventData = [
+      {
+        title: "University Tech Fest 2024",
+        description: "Annual technical festival",
+        type: "Festival",
+        date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        duration: 8,
+        location: "Main Auditorium",
+        isOnline: false,
+        maxParticipants: 500,
+        organizer: createdFaculty[0]._id,
+        department: createdDepartments[0]._id,
+        college: createdColleges[0]._id,
+        institute: testInstitute._id,
+        status: "Active",
+      },
+      {
+        title: "Medical Symposium",
+        description: "Medical research symposium",
+        type: "Symposium",
+        date: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+        duration: 6,
+        location: "Medical Block",
+        isOnline: false,
+        maxParticipants: 200,
+        organizer: createdFaculty[2]._id,
+        department: createdDepartments[2]._id,
+        college: createdColleges[1]._id,
+        institute: testInstitute._id,
+        status: "Active",
+      },
+    ];
+
+    await Event.insertMany(eventData);
+
+    // Update institute with college references
+    testInstitute.colleges = createdColleges.map(c => c._id);
+    await testInstitute.save();
+
+    // Update colleges with department references
+    for (let i = 0; i < createdColleges.length; i++) {
+      const collegeDepts = createdDepartments.filter(d => 
+        d.college.toString() === createdColleges[i]._id.toString()
+      );
+      createdColleges[i].departments = collegeDepts.map(d => d._id);
+      await createdColleges[i].save();
+    }
+
+    // Update departments with faculty references
+    for (let i = 0; i < createdDepartments.length; i++) {
+      const deptFaculty = createdFaculty.filter(f => 
+        f.department.toString() === createdDepartments[i]._id.toString()
+      );
+      createdDepartments[i].faculties = deptFaculty.map(f => f._id);
+      if (deptFaculty.length > 0) {
+        createdDepartments[i].hod = deptFaculty[0]._id;
+      }
+      await createdDepartments[i].save();
+    }
+
+    res.json({
+      message: "Test institute with complete hierarchy created successfully",
+      email: "test@institute.com",
+      password: "password123",
+      instituteId: testInstitute._id,
+      collegesCreated: createdColleges.length,
+      departmentsCreated: createdDepartments.length,
+      facultyCreated: createdFaculty.length,
+      studentsCreated: studentData.length,
+      eventsCreated: eventData.length,
+      institute: testInstitute,
+    });
+  } catch (error) {
+    console.error("Error creating test institute:", error);
+    res.status(500).json({
+      error: "Failed to create test institute",
+      details: error.message,
+    });
+  }
+});
+
 // Test route to create a sample department (for development only)
 app.post("/api/test/create-department", async (req, res) => {
   try {
@@ -361,102 +636,6 @@ app.post("/api/test/create-department", async (req, res) => {
   }
 });
 
-// Test route to create a sample institute (for development only)
-app.post("/api/test/create-institute", async (req, res) => {
-  try {
-    const bcrypt = require("bcryptjs");
-    const Institute = require("./model/institute");
-    const College = require("./model/college");
-    const Department = require("./model/department");
-
-    // Check if test institute already exists
-    let existingInstitute = await Institute.findOne({
-      email: "test@institute.com",
-    });
-
-    if (existingInstitute) {
-      return res.json({
-        message: "Test institute already exists",
-        email: "test@institute.com",
-        password: "password123",
-        instituteId: existingInstitute._id,
-        institute: existingInstitute,
-      });
-    }
-
-    // Create institute
-    const instituteData = {
-      name: "Test University",
-      code: "TU",
-      type: "University",
-      email: "test@institute.com",
-      password: await bcrypt.hash("password123", 12),
-      contactNumber: "+91-9876543215",
-      address: {
-        line1: "University Campus",
-        line2: "Main Road",
-        city: "Test City",
-        state: "Test State",
-        country: "India",
-        pincode: "123456",
-      },
-      website: "https://testuniversity.edu",
-      status: "Active",
-    };
-
-    const testInstitute = new Institute(instituteData);
-    await testInstitute.save();
-
-    // Create a test college under this institute
-    const collegeData = {
-      name: "College of Engineering",
-      code: "COE",
-      email: "coe@testuniversity.edu",
-      password: await bcrypt.hash("password123", 12),
-      contactNumber: "+91-9876543216",
-      institute: testInstitute._id,
-      status: "Active",
-    };
-
-    const testCollege = new College(collegeData);
-    await testCollege.save();
-
-    // Update institute with college reference
-    testInstitute.colleges = [testCollege._id];
-    await testInstitute.save();
-
-    // Create a test department under this college
-    const departmentData = {
-      name: "Computer Science Engineering",
-      code: "CSE",
-      email: "cse@testuniversity.edu",
-      password: await bcrypt.hash("password123", 12),
-      contactNumber: "+91-9876543217",
-      college: testCollege._id,
-      institute: testInstitute._id,
-      status: "Active",
-    };
-
-    const testDepartment = new Department(departmentData);
-    await testDepartment.save();
-
-    res.json({
-      message: "Test institute created successfully",
-      email: "test@institute.com",
-      password: "password123",
-      instituteId: testInstitute._id,
-      institute: testInstitute,
-      college: testCollege,
-      department: testDepartment,
-    });
-  } catch (error) {
-    console.error("Error creating test institute:", error);
-    res.status(500).json({
-      error: "Failed to create test institute",
-      details: error.message,
-    });
-  }
-});
 
 // Serve React app (for production)
 app.use(express.static(path.join(__dirname, "../frontend/build")));

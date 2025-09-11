@@ -2,12 +2,12 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const College = require("../model/college");
-const auth = require("../middleware/auth");
+const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
 // Get college profile by ID
-router.get("/profile/:id", auth, async (req, res) => {
+router.get("/profile/:id", requireAuth, async (req, res) => {
   try {
     const college = await College.findById(req.params.id)
       .populate("institute", "name")
@@ -42,7 +42,7 @@ router.get("/profile/:id", auth, async (req, res) => {
 });
 
 // Update college profile
-router.put("/profile/:id", auth, async (req, res) => {
+router.put("/profile/:id", requireAuth, async (req, res) => {
   try {
     const {
       name,

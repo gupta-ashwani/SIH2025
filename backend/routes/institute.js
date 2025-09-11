@@ -1,922 +1,200 @@
 const express = require("express");
-const { requireAuth } = require("../middleware/auth");
+const router = express.Router();
 const Institute = require("../model/institute");
 const College = require("../model/college");
 const Department = require("../model/department");
 const Faculty = require("../model/faculty");
 const Student = require("../model/student");
 const Event = require("../model/event");
-const router = express.Router();
+const { requireAuth } = require("../middleware/auth");
 
-// Middleware to check institute access
-const requireRole = (roles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
+// Get institute dashboard data
+router.get("/dashboard/:id", requireAuth, async (req, res) => {
+  try {
+    const instituteId = req.params.id;
 
-    if (!roles.includes(req.user.role)) {
+    // Verify the user has access to this institute
+    if (req.user.role !== "institute" && req.user.role !== "superadmin") {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    next();
-  };
-};
-
-// Institute Dashboard
-router.get(
-  "/dashboard/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-
-      // Verify institute exists and user has access
-      const institute = await Institute.findById(instituteId);
-      if (!institute) {
-        return res.status(404).json({ error: "Institute not found" });
-      }
-
-      // Verify user is authorized for this institute
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      // Get institute statistics
-      const colleges = await College.find({ institute: instituteId });
-      const collegeIds = colleges.map((c) => c._id);
-
-      const departments = await Department.find({ institute: instituteId });
-      const departmentIds = departments.map((d) => d._id);
-
-      const faculty = await Faculty.find({
-        department: { $in: departmentIds },
-      });
-      const students = await Student.find({
-        department: { $in: departmentIds },
-      });
-      const events = await Event.find({ institute: instituteId });
-
-      // Calculate statistics
-      const stats = {
-        totalColleges: colleges.length,
-        totalDepartments: departments.length,
-        totalFaculty: faculty.length,
-        totalStudents: students.length,
-        totalEvents: events.length,
-        activeStudents: students.filter((s) => s.status === "Active").length,
-        activeFaculty: faculty.filter((f) => f.status === "Active").length,
-        recentEvents: events.filter((e) => e.eventDate >= new Date()).length,
-      };
-
-      // Get recent activities (last 10)
-      const recentStudents = students
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5)
-        .map((student) => ({
-          id: student._id,
-          name: `${student.name.first} ${student.name.last}`,
-          email: student.email,
-          department:
-            departments.find(
-              (d) => d._id.toString() === student.department?.toString()
-            )?.name || "Unknown",
-          joinDate: student.createdAt,
-        }));
-
-      const recentEvents = events
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5)
-        .map((event) => ({
-          id: event._id,
-          title: event.title,
-          eventDate: event.eventDate,
-          eventType: event.eventType,
-          status: event.status,
-        }));
-
-      // College-wise breakdown
-      const collegeStats = colleges.map((college) => {
-        const collegeDepartments = departments.filter(
-          (d) => d.college?.toString() === college._id.toString()
-        );
-        const collegeDepartmentIds = collegeDepartments.map((d) => d._id);
-
-        const collegeFaculty = faculty.filter((f) =>
-          collegeDepartmentIds.includes(f.department)
-        );
-        const collegeStudents = students.filter((s) =>
-          collegeDepartmentIds.includes(s.department)
-        );
-
-        return {
-          id: college._id,
-          name: college.name,
-          code: college.code,
-          type: college.type || "Engineering College",
-          departmentCount: collegeDepartments.length,
-          facultyCount: collegeFaculty.length,
-          studentCount: collegeStudents.length,
-          establishedYear: college.establishedYear,
-          location: college.location,
-          createdAt: college.createdAt,
-        };
-      });
-
-      res.json({
-        institute,
-        stats,
-        recentStudents,
-        recentEvents,
-        collegeStats,
-        title: `${institute.name} - Institute Dashboard`,
-      });
-    } catch (error) {
-      console.error("Institute dashboard error:", error);
-      res.status(500).json({ error: "Internal server error" });
+    if (req.user.role === "institute" && req.user._id.toString() !== instituteId) {
+      return res.status(403).json({ error: "Access denied to this institute" });
     }
-  }
-);
 
-// Get all colleges under institute
-router.get(
-  "/colleges/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-
-      // Verify access
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const colleges = await College.find({ institute: instituteId }).sort({
-        name: 1,
-      });
-
-      // Get department counts for each college
-      const collegesWithStats = await Promise.all(
-        colleges.map(async (college) => {
-          const departments = await Department.find({ college: college._id });
-          const departmentIds = departments.map((d) => d._id);
-
-          const facultyCount = await Faculty.countDocuments({
-            department: { $in: departmentIds },
-          });
-
-          const studentCount = await Student.countDocuments({
-            department: { $in: departmentIds },
-          });
-
-          return {
-            ...college.toObject(),
-            departmentCount: departments.length,
-            facultyCount,
-            studentCount,
-          };
-        })
-      );
-
-      res.json({
-        colleges: collegesWithStats,
-        title: "Colleges Management",
-      });
-    } catch (error) {
-      console.error("Colleges fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
+    // Get institute basic info
+    const institute = await Institute.findById(instituteId).select("-password");
+    if (!institute) {
+      return res.status(404).json({ error: "Institute not found" });
     }
-  }
-);
 
-// Add new college
-router.post(
-  "/colleges",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const {
-        institute,
-        name,
-        code,
-        email,
-        password,
-        contactNumber,
-        address,
-        website,
-        status,
-      } = req.body;
+    // Get colleges under this institute
+    const colleges = await College.find({ institute: instituteId })
+      .populate("departments", "name code")
+      .select("name code type status departments");
 
-      // Verify user is authorized for this institute
-      if (req.user._id.toString() !== institute) {
-        return res.status(403).json({ error: "Access denied" });
-      }
+    // Get all departments under this institute
+    const departments = await Department.find({ institute: instituteId })
+      .populate("hod", "name designation")
+      .populate("college", "name")
+      .select("name code college hod faculties status");
 
-      // Verify institute exists
-      const instituteDoc = await Institute.findById(institute);
-      if (!instituteDoc) {
-        return res.status(404).json({ error: "Institute not found" });
-      }
-
-      // Check if college code already exists
-      const existingCollege = await College.findOne({
-        code: code.toUpperCase(),
-      });
-      if (existingCollege) {
-        return res.status(400).json({ error: "College code already exists" });
-      }
-
-      // Check if email already exists
-      const existingEmail = await College.findOne({
-        email: email.toLowerCase(),
-      });
-      if (existingEmail) {
-        return res.status(400).json({ error: "Email already exists" });
-      }
-
-      // Create new college
-      const college = new College({
-        institute,
-        name: name.trim(),
-        code: code.toUpperCase(),
-        email: email.toLowerCase(),
-        password, // In production, this should be hashed
-        contactNumber,
-        address,
-        website,
-        status: status || "Active",
-      });
-
-      await college.save();
-
-      // Add college to institute's colleges array
-      await Institute.findByIdAndUpdate(institute, {
-        $push: { colleges: college._id },
-      });
-
-      res.status(201).json({
-        message: "College added successfully",
-        college: {
-          _id: college._id,
-          name: college.name,
-          code: college.code,
-          email: college.email,
-          status: college.status,
-        },
-      });
-    } catch (error) {
-      console.error("Add college error:", error);
-
-      if (error.name === "ValidationError") {
-        const errors = Object.values(error.errors).map((err) => err.message);
-        return res.status(400).json({ error: errors.join(", ") });
-      }
-
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-// Get all departments under institute
-router.get(
-  "/departments/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-
-      // Verify access
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const departments = await Department.find({ institute: instituteId })
-        .populate("college", "name code")
-        .populate("hod", "name designation")
-        .sort({ name: 1 });
-
-      // Get stats for each department
-      const departmentsWithStats = await Promise.all(
-        departments.map(async (dept) => {
-          const facultyCount = await Faculty.countDocuments({
-            department: dept._id,
-          });
-
-          const studentCount = await Student.countDocuments({
-            department: dept._id,
-          });
-
-          return {
-            ...dept.toObject(),
-            facultyCount,
-            studentCount,
-          };
-        })
-      );
-
-      res.json({
-        departments: departmentsWithStats,
-        title: "Departments Management",
-      });
-    } catch (error) {
-      console.error("Departments fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-// Get all faculty under institute
-router.get(
-  "/faculty/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-
-      // Verify access
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const faculty = await Faculty.find({ institute: instituteId })
-        .populate("department", "name code")
-        .populate("students", "name")
-        .sort({ "name.first": 1 });
-
-      const facultyWithStats = faculty.map((fac) => ({
-        ...fac.toObject(),
-        studentCount: fac.students?.length || 0,
-      }));
-
-      res.json({
-        faculty: facultyWithStats,
-        title: "Faculty Management",
-      });
-    } catch (error) {
-      console.error("Faculty fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-// Get all students under institute
-router.get(
-  "/students/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-      const { page = 1, limit = 20, department, college, status } = req.query;
-
-      // Verify access
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      // Build filter
-      let filter = { institute: instituteId };
-
-      if (department) {
-        filter.department = department;
-      }
-
-      if (college) {
-        // Get departments of this college
-        const collegeDepartments = await Department.find({ college }).select(
-          "_id"
-        );
-        filter.department = { $in: collegeDepartments.map((d) => d._id) };
-      }
-
-      if (status) {
-        filter.status = status;
-      }
-
-      const skip = (page - 1) * limit;
-
-      const students = await Student.find(filter)
-        .populate("department", "name code")
-        .populate("coordinator", "name designation")
-        .sort({ "name.first": 1 })
-        .skip(skip)
-        .limit(parseInt(limit));
-
-      const totalStudents = await Student.countDocuments(filter);
-
-      res.json({
-        students,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages: Math.ceil(totalStudents / limit),
-          totalStudents,
-          limit: parseInt(limit),
-        },
-        title: "Students Management",
-      });
-    } catch (error) {
-      console.error("Students fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-// Get analytics data
-router.get(
-  "/analytics/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-
-      // Verify access
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      const departments = await Department.find({ institute: instituteId });
-      const departmentIds = departments.map((d) => d._id);
-
-      const students = await Student.find({
-        department: { $in: departmentIds },
-      });
-      const faculty = await Faculty.find({
-        department: { $in: departmentIds },
-      });
-      const events = await Event.find({ institute: instituteId });
-
-      // Calculate various analytics
-      const analytics = {
-        // Enrollment trends (last 6 months)
-        enrollmentTrends: getEnrollmentTrends(students),
-
-        // Department-wise distribution
-        departmentDistribution: getDepartmentDistribution(
-          departments,
-          students,
-          faculty
-        ),
-
-        // Student performance metrics
-        performanceMetrics: getPerformanceMetrics(students),
-
-        // Event participation
-        eventMetrics: getEventMetrics(events),
-
-        // Growth statistics
-        growthStats: getGrowthStats(students, faculty, events),
-      };
-
-      res.json({
-        analytics,
-        title: "Institute Analytics",
-      });
-    } catch (error) {
-      console.error("Analytics fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-// Get reports data
-router.get(
-  "/reports/:id",
-  requireAuth,
-  requireRole(["institute"]),
-  async (req, res) => {
-    try {
-      const instituteId = req.params.id;
-      const {
-        type = "overview",
-        department = "all",
-        dateRange = "month",
-      } = req.query;
-
-      // Verify access
-      if (req.user._id.toString() !== instituteId) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-
-      // Get base data
-      const institute = await Institute.findById(instituteId);
-      const departments = await Department.find({
-        institute: instituteId,
-      }).populate("college", "name");
-      const departmentIds = departments.map((d) => d._id);
-
-      let filter = { department: { $in: departmentIds } };
-
-      // Apply department filter if specific department selected
-      if (department !== "all") {
-        filter.department = department;
-      }
-
-      // Apply date range filter
-      const dateFilter = getDateRangeFilter(dateRange);
-      if (dateFilter) {
-        filter.createdAt = dateFilter;
-      }
-
-      const students = await Student.find(filter).populate(
-        "department",
-        "name code"
-      );
-      const faculty = await Faculty.find(filter).populate(
-        "department",
-        "name code"
-      );
-      const events = await Event.find({
-        institute: instituteId,
-        ...(dateFilter && { createdAt: dateFilter }),
-      });
-
-      // Generate report data based on type
-      let reportData = {};
-
-      switch (type) {
-        case "overview":
-          reportData = generateOverviewReport(
-            institute,
-            departments,
-            students,
-            faculty,
-            events
-          );
-          break;
-        case "department":
-          reportData = generateDepartmentReport(departments, students, faculty);
-          break;
-        case "faculty":
-          reportData = generateFacultyReport(faculty, students);
-          break;
-        case "student":
-          reportData = generateStudentReport(students);
-          break;
-        case "events":
-          reportData = generateEventsReport(events);
-          break;
-        default:
-          reportData = generateOverviewReport(
-            institute,
-            departments,
-            students,
-            faculty,
-            events
-          );
-      }
-
-      res.json({
-        reportData,
-        meta: {
-          institute: institute.name,
-          type,
-          department: department === "all" ? "All Departments" : department,
-          dateRange,
-          generatedAt: new Date(),
-          totalRecords: {
-            students: students.length,
-            faculty: faculty.length,
-            events: events.length,
-            departments: departments.length,
-          },
-        },
-        title: `${type.charAt(0).toUpperCase() + type.slice(1)} Report`,
-      });
-    } catch (error) {
-      console.error("Reports fetch error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-// Helper functions for analytics
-function getEnrollmentTrends(students) {
-  const trends = {};
-  const now = new Date();
-
-  for (let i = 5; i >= 0; i--) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthKey = date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
+    // Get faculty count
+    const facultyCount = await Faculty.countDocuments({
+      department: { $in: departments.map(d => d._id) }
     });
 
-    const count = students.filter((student) => {
-      const studentDate = new Date(student.createdAt);
-      return (
-        studentDate.getFullYear() === date.getFullYear() &&
-        studentDate.getMonth() === date.getMonth()
-      );
-    }).length;
+    // Get student count
+    const studentCount = await Student.countDocuments({
+      department: { $in: departments.map(d => d._id) }
+    });
 
-    trends[monthKey] = count;
-  }
+    // Get recent events
+    const recentEvents = await Event.find({ institute: instituteId })
+      .populate("organizer", "name")
+      .populate("department", "name")
+      .populate("college", "name")
+      .sort({ date: -1 })
+      .limit(5)
+      .select("title type date location status organizer department college");
 
-  return trends;
-}
+    // Get upcoming events
+    const upcomingEvents = await Event.find({
+      institute: instituteId,
+      date: { $gte: new Date() },
+      status: "Active"
+    })
+      .populate("organizer", "name")
+      .populate("department", "name")
+      .populate("college", "name")
+      .sort({ date: 1 })
+      .limit(10)
+      .select("title type date location organizer department college maxParticipants");
 
-function getDepartmentDistribution(departments, students, faculty) {
-  return departments.map((dept) => {
-    const deptStudents = students.filter(
-      (s) => s.department?.toString() === dept._id.toString()
+    // Calculate college-wise statistics
+    const collegeStats = await Promise.all(
+      colleges.map(async (college) => {
+        const collegeDepartments = await Department.find({ college: college._id });
+        const departmentIds = collegeDepartments.map(d => d._id);
+        
+        const facultyCount = await Faculty.countDocuments({
+          department: { $in: departmentIds }
+        });
+        
+        const studentCount = await Student.countDocuments({
+          department: { $in: departmentIds }
+        });
+
+        return {
+          _id: college._id,
+          name: college.name,
+          type: college.type,
+          departmentCount: collegeDepartments.length,
+          facultyCount,
+          studentCount,
+          status: college.status
+        };
+      })
     );
-    const deptFaculty = faculty.filter(
-      (f) => f.department?.toString() === dept._id.toString()
+
+    // Get department-wise faculty and student counts
+    const departmentStats = await Promise.all(
+      departments.map(async (dept) => {
+        const facultyCount = await Faculty.countDocuments({ department: dept._id });
+        const studentCount = await Student.countDocuments({ department: dept._id });
+        
+        return {
+          _id: dept._id,
+          name: dept.name,
+          code: dept.code,
+          college: dept.college,
+          hod: dept.hod,
+          facultyCount,
+          studentCount,
+          status: dept.status
+        };
+      })
     );
 
-    return {
-      name: dept.name,
-      code: dept.code,
-      students: deptStudents.length,
-      faculty: deptFaculty.length,
-      ratio:
-        deptFaculty.length > 0
-          ? Math.round(deptStudents.length / deptFaculty.length)
-          : 0,
-    };
-  });
-}
-
-function getPerformanceMetrics(students) {
-  const studentsWithGPA = students.filter((s) => s.gpa);
-  const avgGPA =
-    studentsWithGPA.length > 0
-      ? studentsWithGPA.reduce((sum, s) => sum + s.gpa, 0) /
-        studentsWithGPA.length
-      : 0;
-
-  const studentsWithAttendance = students.filter((s) => s.attendance);
-  const avgAttendance =
-    studentsWithAttendance.length > 0
-      ? studentsWithAttendance.reduce((sum, s) => sum + s.attendance, 0) /
-        studentsWithAttendance.length
-      : 0;
-
-  return {
-    averageGPA: parseFloat(avgGPA.toFixed(2)),
-    averageAttendance: parseFloat(avgAttendance.toFixed(2)),
-    totalStudentsWithGPA: studentsWithGPA.length,
-    studentsAbove8GPA: studentsWithGPA.filter((s) => s.gpa >= 8).length,
-    studentsAbove90Attendance: studentsWithAttendance.filter(
-      (s) => s.attendance >= 90
-    ).length,
-  };
-}
-
-function getEventMetrics(events) {
-  const now = new Date();
-  const thisMonth = events.filter((e) => {
-    const eventDate = new Date(e.createdAt);
-    return (
-      eventDate.getMonth() === now.getMonth() &&
-      eventDate.getFullYear() === now.getFullYear()
-    );
-  });
-
-  return {
-    totalEvents: events.length,
-    eventsThisMonth: thisMonth.length,
-    upcomingEvents: events.filter((e) => new Date(e.eventDate) > now).length,
-    eventsByType: events.reduce((acc, event) => {
-      acc[event.eventType] = (acc[event.eventType] || 0) + 1;
-      return acc;
-    }, {}),
-  };
-}
-
-function getGrowthStats(students, faculty, events) {
-  const now = new Date();
-  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
-
-  const studentsThisMonth = students.filter(
-    (s) => new Date(s.createdAt) >= lastMonth
-  ).length;
-  const facultyThisMonth = faculty.filter(
-    (f) => new Date(f.createdAt) >= lastMonth
-  ).length;
-  const eventsThisMonth = events.filter(
-    (e) => new Date(e.createdAt) >= lastMonth
-  ).length;
-
-  return {
-    newStudentsThisMonth: studentsThisMonth,
-    newFacultyThisMonth: facultyThisMonth,
-    newEventsThisMonth: eventsThisMonth,
-  };
-}
-
-// Helper functions for reports
-function getDateRangeFilter(dateRange) {
-  const now = new Date();
-
-  switch (dateRange) {
-    case "week":
-      return { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
-    case "month":
-      return {
-        $gte: new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()),
-      };
-    case "quarter":
-      return {
-        $gte: new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
-      };
-    case "year":
-      return {
-        $gte: new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()),
-      };
-    default:
-      return null;
-  }
-}
-
-function generateOverviewReport(
-  institute,
-  departments,
-  students,
-  faculty,
-  events
-) {
-  return {
-    summary: {
-      institute: institute.name,
-      totalColleges: departments.reduce((acc, dept) => {
-        const collegeId = dept.college?._id?.toString();
-        if (collegeId && !acc.includes(collegeId)) {
-          acc.push(collegeId);
+    // Get achievement statistics
+    const achievementStats = await Student.aggregate([
+      {
+        $match: {
+          department: { $in: departments.map(d => d._id) }
         }
+      },
+      {
+        $unwind: "$achievements"
+      },
+      {
+        $group: {
+          _id: "$achievements.status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const dashboardData = {
+      institute: {
+        _id: institute._id,
+        name: institute.name,
+        code: institute.code,
+        type: institute.type,
+        email: institute.email,
+        contactNumber: institute.contactNumber,
+        website: institute.website,
+        address: institute.address,
+        status: institute.status,
+        approvalStatus: institute.approvalStatus
+      },
+      statistics: {
+        totalColleges: colleges.length,
+        totalDepartments: departments.length,
+        totalFaculty: facultyCount,
+        totalStudents: studentCount,
+        totalEvents: recentEvents.length,
+        upcomingEvents: upcomingEvents.length
+      },
+      colleges: collegeStats,
+      departments: departmentStats,
+      recentEvents,
+      upcomingEvents,
+      achievementStats: achievementStats.reduce((acc, stat) => {
+        acc[stat._id.toLowerCase()] = stat.count;
         return acc;
-      }, []).length,
-      totalDepartments: departments.length,
-      totalFaculty: faculty.length,
-      totalStudents: students.length,
-      totalEvents: events.length,
-    },
-    departmentBreakdown: departments.map((dept) => {
-      const deptStudents = students.filter(
-        (s) => s.department?._id?.toString() === dept._id.toString()
-      );
-      const deptFaculty = faculty.filter(
-        (f) => f.department?._id?.toString() === dept._id.toString()
-      );
+      }, { pending: 0, approved: 0, rejected: 0 })
+    };
 
-      return {
-        name: dept.name,
-        code: dept.code,
-        college: dept.college?.name || "N/A",
-        students: deptStudents.length,
-        faculty: deptFaculty.length,
-        ratio:
-          deptFaculty.length > 0
-            ? (deptStudents.length / deptFaculty.length).toFixed(1)
-            : "N/A",
-      };
-    }),
-  };
-}
+    res.json(dashboardData);
+  } catch (error) {
+    console.error("Institute dashboard error:", error);
+    res.status(500).json({ error: "Failed to fetch institute dashboard data" });
+  }
+});
 
-function generateDepartmentReport(departments, students, faculty) {
-  return {
-    departments: departments.map((dept) => {
-      const deptStudents = students.filter(
-        (s) => s.department?._id?.toString() === dept._id.toString()
-      );
-      const deptFaculty = faculty.filter(
-        (f) => f.department?._id?.toString() === dept._id.toString()
-      );
+// Get institute profile
+router.get("/profile/:id", requireAuth, async (req, res) => {
+  try {
+    const instituteId = req.params.id;
 
-      const avgGPA =
-        deptStudents.length > 0
-          ? (
-              deptStudents.reduce((sum, s) => sum + (s.gpa || 0), 0) /
-              deptStudents.length
-            ).toFixed(2)
-          : "N/A";
+    if (req.user.role !== "institute" && req.user.role !== "superadmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
-      const avgAttendance =
-        deptStudents.length > 0
-          ? (
-              deptStudents.reduce((sum, s) => sum + (s.attendance || 0), 0) /
-              deptStudents.length
-            ).toFixed(1)
-          : "N/A";
+    if (req.user.role === "institute" && req.user._id.toString() !== instituteId) {
+      return res.status(403).json({ error: "Access denied to this institute" });
+    }
 
-      return {
-        name: dept.name,
-        code: dept.code,
-        college: dept.college?.name || "N/A",
-        students: deptStudents.length,
-        faculty: deptFaculty.length,
-        averageGPA: avgGPA,
-        averageAttendance: avgAttendance,
-        studentFacultyRatio:
-          deptFaculty.length > 0
-            ? (deptStudents.length / deptFaculty.length).toFixed(1)
-            : "N/A",
-      };
-    }),
-  };
-}
+    const institute = await Institute.findById(instituteId).select("-password");
+    if (!institute) {
+      return res.status(404).json({ error: "Institute not found" });
+    }
 
-function generateFacultyReport(faculty, students) {
-  return {
-    totalFaculty: faculty.length,
-    facultyByDepartment: faculty.reduce((acc, fac) => {
-      const deptName = fac.department?.name || "Unknown";
-      acc[deptName] = (acc[deptName] || 0) + 1;
-      return acc;
-    }, {}),
-    facultyList: faculty.map((fac) => {
-      const facultyStudents = students.filter(
-        (s) => s.coordinator?.toString() === fac._id.toString()
-      );
-
-      return {
-        name: `${fac.name?.first || ""} ${fac.name?.last || ""}`.trim(),
-        email: fac.email,
-        department: fac.department?.name || "Unknown",
-        designation: fac.designation || "N/A",
-        studentsAssigned: facultyStudents.length,
-        status: fac.status || "Active",
-      };
-    }),
-  };
-}
-
-function generateStudentReport(students) {
-  const studentsWithGPA = students.filter((s) => s.gpa && s.gpa > 0);
-  const studentsWithAttendance = students.filter(
-    (s) => s.attendance && s.attendance > 0
-  );
-
-  return {
-    totalStudents: students.length,
-    academicStats: {
-      averageGPA:
-        studentsWithGPA.length > 0
-          ? (
-              studentsWithGPA.reduce((sum, s) => sum + s.gpa, 0) /
-              studentsWithGPA.length
-            ).toFixed(2)
-          : "N/A",
-      averageAttendance:
-        studentsWithAttendance.length > 0
-          ? (
-              studentsWithAttendance.reduce((sum, s) => sum + s.attendance, 0) /
-              studentsWithAttendance.length
-            ).toFixed(1)
-          : "N/A",
-      studentsAbove8GPA: studentsWithGPA.filter((s) => s.gpa >= 8).length,
-      studentsAbove90Attendance: studentsWithAttendance.filter(
-        (s) => s.attendance >= 90
-      ).length,
-    },
-    departmentDistribution: students.reduce((acc, student) => {
-      const deptName = student.department?.name || "Unknown";
-      acc[deptName] = (acc[deptName] || 0) + 1;
-      return acc;
-    }, {}),
-    yearDistribution: students.reduce((acc, student) => {
-      const year = student.year || "Unknown";
-      acc[year] = (acc[year] || 0) + 1;
-      return acc;
-    }, {}),
-  };
-}
-
-function generateEventsReport(events) {
-  return {
-    totalEvents: events.length,
-    eventsByType: events.reduce((acc, event) => {
-      const type = event.eventType || "Unknown";
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {}),
-    eventsByStatus: events.reduce((acc, event) => {
-      const status = event.status || "Unknown";
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    }, {}),
-    upcomingEvents: events.filter((e) => new Date(e.eventDate) > new Date())
-      .length,
-    pastEvents: events.filter((e) => new Date(e.eventDate) <= new Date())
-      .length,
-    recentEvents: events
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 10)
-      .map((event) => ({
-        title: event.title,
-        type: event.eventType,
-        date: event.eventDate,
-        status: event.status,
-        venue: event.venue || "N/A",
-      })),
-  };
-}
+    res.json(institute);
+  } catch (error) {
+    console.error("Institute profile error:", error);
+    res.status(500).json({ error: "Failed to fetch institute profile" });
+  }
+});
 
 module.exports = router;

@@ -201,6 +201,20 @@ export const departmentService = {
   },
 };
 
+export const instituteService = {
+  getInstituteDashboard: (id) => {
+    return api.get(`/institute/dashboard/${id}`);
+  },
+
+  getInstituteProfile: (id) => {
+    return api.get(`/institute/profile/${id}`);
+  },
+
+  updateProfile: (id, profileData) => {
+    return api.put(`/institute/profile/${id}`, profileData);
+  },
+};
+
 export const eventService = {
   getCollegeEvents: (collegeId, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -238,42 +252,6 @@ export const eventService = {
 
   registerForEvent: (eventId) => {
     return api.post(`/events/${eventId}/register`);
-  },
-};
-
-export const instituteService = {
-  getInstituteDashboard: (id) => {
-    return api.get(`/institute/dashboard/${id}`);
-  },
-
-  getInstituteReports: (id, params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return api.get(`/institute/reports/${id}?${queryString}`);
-  },
-
-  getColleges: (id) => {
-    return api.get(`/institute/colleges/${id}`);
-  },
-
-  addCollege: (collegeData) => {
-    return api.post(`/institute/colleges`, collegeData);
-  },
-
-  getDepartments: (id) => {
-    return api.get(`/institute/departments/${id}`);
-  },
-
-  getFaculty: (id) => {
-    return api.get(`/institute/faculty/${id}`);
-  },
-
-  getStudents: (id, params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    return api.get(`/institute/students/${id}?${queryString}`);
-  },
-
-  getAnalytics: (id) => {
-    return api.get(`/institute/analytics/${id}`);
   },
 };
 
