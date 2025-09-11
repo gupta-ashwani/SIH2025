@@ -15,6 +15,14 @@ const StudentDashboard = () =>{
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [projectForm, setProjectForm] = useState({
+    title: '',
+    description: '',
+    technologies: '',
+    link: '',
+    duration: ''
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,6 +136,41 @@ const StudentDashboard = () =>{
   const handleCloseModal = () => {
     setShowActivityModal(false);
     setSelectedActivity(null);
+  };
+
+  const handleProjectModalClose = () => {
+    setShowProjectModal(false);
+    setProjectForm({
+      title: '',
+      description: '',
+      technologies: '',
+      link: '',
+      duration: ''
+    });
+  };
+
+  const handleProjectInputChange = (e) => {
+    const { name, value } = e.target;
+    setProjectForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleProjectSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await studentService.addProject(id, projectForm);
+      if (response.success) {
+        alert('Project added successfully!');
+        handleProjectModalClose();
+        // Refresh dashboard data to show new project
+        await fetchDashboardData();
+      }
+    } catch (error) {
+      console.error('Error adding project:', error);
+      alert(error.response?.data?.error || 'Failed to add project');
+    }
   };
 
   // Check if current user is viewing their own dashboard
@@ -442,7 +485,172 @@ const StudentDashboard = () =>{
             </div>
           </div>
         </div>
+
+        {/* Projects Section */}
+        <div className="projects-section">
+          <div className="content-card projects-card">
+            <div className="card-header">
+              <h2>My Projects</h2>
+              {isOwnDashboard && !isFacultyViewing && (
+                <button
+                  className="add-new-btn"
+                  onClick={() => setShowProjectModal(true)}
+                >
+                  + Add Project
+                </button>
+              )}
+            </div>
+            <div className="projects-list">
+              {dashboardData?.student?.projects && dashboardData.student.projects.length > 0 ? (
+                dashboardData.student.projects.map((project, index) => (
+                  <div key={index} className="project-item">
+                    <div className="project-header">
+                      <h3 className="project-title">{project.title}</h3>
+                      {project.link && (
+                        <a
+                          href={project.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="project-external-link"
+                        >
+                          <i className="fas fa-external-link-alt"></i>
+                        </a>
+                      )}
+                    </div>
+                    {project.description && (
+                      <p className="project-description">{project.description}</p>
+                    )}
+                    {project.technologies && (
+                      <div className="project-technologies">
+                        <span className="tech-label">Technologies:</span>
+                        <div className="tech-tags">
+                          {project.technologies.split(',').map((tech, i) => (
+                            <span key={i} className="tech-tag">{tech.trim()}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {project.duration && (
+                      <div className="project-duration">
+                        <i className="fas fa-clock"></i>
+                        <span>{project.duration}</span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon">
+                    <i className="fas fa-code"></i>
+                  </div>
+                  <h3>No Projects Yet</h3>
+                  <p>
+                    {isOwnDashboard && !isFacultyViewing
+                      ? "Start showcasing your work by adding your first project!"
+                      : "This student hasn't added any projects yet."}
+                  </p>
+                  {isOwnDashboard && !isFacultyViewing && (
+                    <button
+                      className="cta-btn"
+                      onClick={() => setShowProjectModal(true)}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Add Your First Project
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Add Project Modal */}
+      {showProjectModal && (
+        <div className="modal-overlay" onClick={handleProjectModalClose}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Add New Project</h2>
+              <button className="modal-close" onClick={handleProjectModalClose}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <form onSubmit={handleProjectSubmit} className="modal-form">
+              <div className="form-group">
+                <label htmlFor="title">Project Title *</label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={projectForm.title}
+                  onChange={handleProjectInputChange}
+                  required
+                  placeholder="Enter project title"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={projectForm.description}
+                  onChange={handleProjectInputChange}
+                  rows="4"
+                  placeholder="Describe your project..."
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="technologies">Technologies Used</label>
+                <input
+                  type="text"
+                  id="technologies"
+                  name="technologies"
+                  value={projectForm.technologies}
+                  onChange={handleProjectInputChange}
+                  placeholder="e.g., React, Node.js, MongoDB (comma-separated)"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="link">Project Link</label>
+                <input
+                  type="url"
+                  id="link"
+                  name="link"
+                  value={projectForm.link}
+                  onChange={handleProjectInputChange}
+                  placeholder="https://github.com/username/project or live demo URL"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="duration">Duration</label>
+                <input
+                  type="text"
+                  id="duration"
+                  name="duration"
+                  value={projectForm.duration}
+                  onChange={handleProjectInputChange}
+                  placeholder="e.g., 2 months, Jan 2024 - Mar 2024"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="cancel-btn" onClick={handleProjectModalClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn">
+                  <i className="fas fa-plus"></i>
+                  Add Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Activity Preview Modal */}
       {showActivityModal && selectedActivity && (

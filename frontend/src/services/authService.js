@@ -141,6 +141,10 @@ export const studentService = {
       },
     });
   },
+
+  addProject: (id, projectData) => {
+    return api.post(`/students/profile/${id}/projects`, projectData);
+  },
 };
 
 export const facultyService = {

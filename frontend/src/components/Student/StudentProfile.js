@@ -650,6 +650,93 @@ const StudentProfile = () => {
             </div>
           </div>
 
+          {/* Education Section Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Education Background</h3>
+            </div>
+            <div className="card-content">
+              <div className="education-list">
+                {student.education?.length > 0 ? (
+                  student.education.map((edu, index) => (
+                    <div key={index} className="education-item">
+                      <div className="education-info">
+                        <h4>{edu.degree || "Degree"}</h4>
+                        <p className="institution">{edu.institution || "Institution"}</p>
+                        <div className="education-meta">
+                          <span className="location">{edu.location || "Location"}</span>
+                          <span className="year">{edu.year || "Year"}</span>
+                          {edu.grade && <span className="grade">Grade: {edu.grade}</span>}
+                        </div>
+                        {edu.description && (
+                          <p className="education-description">{edu.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <i className="fas fa-graduation-cap"></i>
+                    <p>No education background added yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Projects Section Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Projects</h3>
+            </div>
+            <div className="card-content">
+              <div className="projects-list">
+                {student.projects?.length > 0 ? (
+                  student.projects.map((project, index) => (
+                    <div key={index} className="project-item">
+                      <div className="project-header">
+                        <h4>{project.title || "Project Title"}</h4>
+                        {project.link && (
+                          <a
+                            href={project.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="project-link"
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </a>
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="project-description">{project.description}</p>
+                      )}
+                      {project.technologies && (
+                        <div className="project-tech">
+                          <strong>Technologies:</strong>
+                          <div className="tech-tags">
+                            {project.technologies.split(',').map((tech, i) => (
+                              <span key={i} className="tech-tag">{tech.trim()}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {project.duration && (
+                        <p className="project-duration">
+                          <strong>Duration:</strong> {project.duration}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <i className="fas fa-code"></i>
+                    <p>No projects added yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Save Button */}
           {isEditing && (
             <div className="form-actions">
