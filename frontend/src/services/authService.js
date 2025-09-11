@@ -188,6 +188,14 @@ export const facultyService = {
   generateReport: (id, reportType, params) => {
     return api.post(`/faculty/reports/${id}`, { reportType, ...params });
   },
+
+  editStudent: (facultyId, studentId, studentData) => {
+    return api.put(`/faculty/students/${facultyId}/${studentId}`, studentData);
+  },
+
+  deleteStudent: (facultyId, studentId) => {
+    return api.delete(`/faculty/students/${facultyId}/${studentId}`);
+  },
 };
 
 export const departmentService = {

@@ -714,6 +714,88 @@ router.get("/analytics/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Edit Student
+router.put("/students/:facultyId/:studentId", requireAuth, async (req, res) => {
+  try {
+    const { facultyId, studentId } = req.params;
+    const updateData = req.body;
+
+    // Security check: Ensure the logged-in user is the faculty
+    if (req.user.role !== "faculty" || req.user._id.toString() !== facultyId) {
+      return res.status(403).json({
+        error: "Access denied. You can only edit your own students.",
+      });
+    }
+
+    // Check if student exists and is assigned to this faculty
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (student.coordinator.toString() !== facultyId) {
+      return res.status(403).json({
+        error: "Access denied. This student is not assigned to you.",
+      });
+    }
+
+    // Remove sensitive fields from update
+    const { password, role, _id, __v, achievements, ...safeUpdateData } = updateData;
+
+    // Update student
+    const updatedStudent = await Student.findByIdAndUpdate(
+      studentId,
+      safeUpdateData,
+      { new: true, runValidators: true }
+    ).populate("department", "name");
+
+    res.json({
+      message: "Student updated successfully",
+      student: updatedStudent,
+    });
+  } catch (error) {
+    console.error("Edit student error:", error);
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: "Failed to update student" });
+  }
+});
+
+// Delete Student
+router.delete("/students/:facultyId/:studentId", requireAuth, async (req, res) => {
+  try {
+    const { facultyId, studentId } = req.params;
+
+    // Security check: Ensure the logged-in user is the faculty
+    if (req.user.role !== "faculty" || req.user._id.toString() !== facultyId) {
+      return res.status(403).json({
+        error: "Access denied. You can only delete your own students.",
+      });
+    }
+
+    // Check if student exists and is assigned to this faculty
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+
+    if (student.coordinator.toString() !== facultyId) {
+      return res.status(403).json({
+        error: "Access denied. This student is not assigned to you.",
+      });
+    }
+
+    // Delete the student
+    await Student.findByIdAndDelete(studentId);
+
+    res.json({ message: "Student deleted successfully" });
+  } catch (error) {
+    console.error("Delete student error:", error);
+    res.status(500).json({ error: "Failed to delete student" });
+  }
+});
+
 // Faculty Profile Routes
 router.get('/profile/:id', requireAuth, async (req, res) => {
   try {

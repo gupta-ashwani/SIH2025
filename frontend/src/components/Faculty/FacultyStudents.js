@@ -11,6 +11,11 @@ const FacultyStudents = () => {
   const [error, setError] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     fetchStudents();
@@ -35,6 +40,85 @@ const FacultyStudents = () => {
 
   const handleViewPortfolio = (studentId) => {
     navigate(`/students/portfolio/${studentId}`);
+  };
+
+  const handleEditStudent = (e, student) => {
+    e.stopPropagation();
+    setEditingStudent(student);
+    setEditForm({
+      name: {
+        first: student.name?.first || "",
+        last: student.name?.last || ""
+      },
+      email: student.email || "",
+      studentID: student.studentID || "",
+      batch: student.batch || "",
+      enrollmentYear: student.enrollmentYear || "",
+      contactNumber: student.contactNumber || "",
+      address: student.address || "",
+      guardianName: student.guardianName || "",
+      guardianContact: student.guardianContact || "",
+      gpa: student.gpa || "",
+      attendance: student.attendance || ""
+    });
+    setShowEditModal(true);
+  };
+
+  const handleDeleteStudent = (e, student) => {
+    e.stopPropagation();
+    setStudentToDelete(student);
+    setShowDeleteModal(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await facultyService.editStudent(id, editingStudent._id, editForm);
+      setShowEditModal(false);
+      setEditingStudent(null);
+      setEditForm({});
+      await fetchStudents(); // Refresh the list
+    } catch (error) {
+      console.error("Edit student error:", error);
+      setError(error.response?.data?.error || "Failed to update student");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setLoading(true);
+      await facultyService.deleteStudent(id, studentToDelete._id);
+      setShowDeleteModal(false);
+      setStudentToDelete(null);
+      await fetchStudents(); // Refresh the list
+    } catch (error) {
+      console.error("Delete student error:", error);
+      setError(error.response?.data?.error || "Failed to delete student");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setEditForm(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setEditForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const getPerformanceColor = (score) => {
@@ -217,8 +301,24 @@ const FacultyStudents = () => {
                     </div>
                   </div>
 
-                  <div className="student-list-action">
-                    <i className="fas fa-chevron-right"></i>
+                  <div className="student-list-actions">
+                    <button
+                      className="action-btn edit-btn"
+                      onClick={(e) => handleEditStudent(e, student)}
+                      title="Edit Student"
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                      className="action-btn delete-btn"
+                      onClick={(e) => handleDeleteStudent(e, student)}
+                      title="Delete Student"
+                    >
+                      <i className="fas fa-trash"></i>
+                    </button>
+                    <div className="chevron-icon">
+                      <i className="fas fa-chevron-right"></i>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -244,6 +344,217 @@ const FacultyStudents = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Student Modal */}
+      {showEditModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit Student</h2>
+              <button
+                className="modal-close"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingStudent(null);
+                  setEditForm({});
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="modal-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    type="text"
+                    name="name.first"
+                    value={editForm.name?.first || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    type="text"
+                    name="name.last"
+                    value={editForm.name?.last || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={editForm.email || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Student ID</label>
+                  <input
+                    type="text"
+                    name="studentID"
+                    value={editForm.studentID || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Batch</label>
+                  <input
+                    type="text"
+                    name="batch"
+                    value={editForm.batch || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Enrollment Year</label>
+                  <input
+                    type="number"
+                    name="enrollmentYear"
+                    value={editForm.enrollmentYear || ""}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Contact Number</label>
+                  <input
+                    type="tel"
+                    name="contactNumber"
+                    value={editForm.contactNumber || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>GPA</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="10"
+                    name="gpa"
+                    value={editForm.gpa || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Address</label>
+                <textarea
+                  name="address"
+                  value={editForm.address || ""}
+                  onChange={handleInputChange}
+                  rows="3"
+                ></textarea>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Guardian Name</label>
+                  <input
+                    type="text"
+                    name="guardianName"
+                    value={editForm.guardianName || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Guardian Contact</label>
+                  <input
+                    type="tel"
+                    name="guardianContact"
+                    value={editForm.guardianContact || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingStudent(null);
+                    setEditForm({});
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="submit-btn" disabled={loading}>
+                  {loading ? "Updating..." : "Update Student"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content delete-modal">
+            <div className="modal-header">
+              <h2>Delete Student</h2>
+              <button
+                className="modal-close"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setStudentToDelete(null);
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-form">
+              <div className="delete-warning">
+                <i className="fas fa-exclamation-triangle"></i>
+                <p>
+                  Are you sure you want to delete{" "}
+                  <strong>
+                    {studentToDelete?.name?.first} {studentToDelete?.name?.last}
+                  </strong>?
+                </p>
+                <p className="warning-text">
+                  This action cannot be undone. All student data including achievements will be permanently removed.
+                </p>
+              </div>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setStudentToDelete(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="delete-confirm-btn"
+                  onClick={handleDeleteConfirm}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "Delete Student"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
