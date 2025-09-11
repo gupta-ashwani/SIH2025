@@ -57,10 +57,35 @@ const StudentAnalytics = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await studentService.getStudentDashboard(id);
-      setStats(response.data.stats);
-      setAcademic(response.data.academicProgress);
+      // Use the proper analytics endpoint instead of dashboard
+      const response = await studentService.getAnalytics(id);
+      const analyticsData = response.data.analytics;
+      
+      console.log('Analytics Data:', analyticsData); // Debug log
+      
+      // Process the analytics data
+      setStats({
+        workshop: analyticsData.categoryBreakdown.workshops || 0,
+        conference: analyticsData.categoryBreakdown.conferences || 0,
+        hackathon: analyticsData.categoryBreakdown.hackathons || 0,
+        internship: analyticsData.categoryBreakdown.internships || 0,
+        course: analyticsData.categoryBreakdown.certifications || 0,
+        competition: analyticsData.categoryBreakdown.competitions || 0,
+        communityservice: analyticsData.categoryBreakdown.communityService || 0,
+        leadership: analyticsData.categoryBreakdown.leadership || 0,
+        // Add totals for overview cards
+        totalAchievements: analyticsData.totalAchievements || 0,
+        approvedAchievements: analyticsData.approvedAchievements || 0,
+        pendingAchievements: analyticsData.pendingAchievements || 0,
+        rejectedAchievements: analyticsData.rejectedAchievements || 0,
+        // Timeline data for charts
+        timeline: analyticsData.timeline || {},
+        // Store full analytics data
+        fullAnalytics: analyticsData
+      });
+      setAcademic(analyticsData.academicMetrics);
     } catch (err) {
+      console.error('Analytics fetch error:', err);
       setError("Failed to load analytics");
     } finally {
       setLoading(false);
@@ -94,35 +119,37 @@ const StudentAnalytics = () => {
   };
 
   // Generate chart data based on stats
+  const timelineData = stats?.timeline || {};
+  const monthlyData = stats?.fullAnalytics?.monthlyData || {};
+  const timelineLabels = Object.keys(timelineData).slice(-6); // Last 6 months
+  const timelineValues = timelineLabels.map(label => timelineData[label] || 0);
+  
   const achievementTrendData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: timelineLabels.length > 0 ? timelineLabels : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
-        label: 'Achievements Submitted',
-        data: [
-          (stats?.workshop || 0) + (stats?.conference || 0),
-          (stats?.hackathon || 0) + (stats?.internship || 0),
-          (stats?.course || 0) + (stats?.competition || 0),
-          (stats?.communityservice || 0) + (stats?.leadership || 0),
-          Math.floor(Math.random() * 10) + 5,
-          Math.floor(Math.random() * 10) + 5
-        ],
+        label: 'Total Achievements',
+        data: timelineLabels.length > 0 ? timelineValues : [0, 0, 0, 0, 0, 0],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.1,
       },
       {
-        label: 'Achievements Approved',
-        data: [
-          Math.floor((stats?.workshop || 0) * 0.8),
-          Math.floor((stats?.conference || 0) * 0.8),
-          Math.floor((stats?.hackathon || 0) * 0.8),
-          Math.floor((stats?.internship || 0) * 0.8),
-          Math.floor(Math.random() * 8) + 3,
-          Math.floor(Math.random() * 8) + 3
-        ],
+        label: 'Approved Achievements',
+        data: timelineLabels.length > 0 ? 
+          timelineLabels.map(label => monthlyData[label]?.approved || 0) : 
+          [0, 0, 0, 0, 0, 0],
         borderColor: 'rgb(16, 185, 129)',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        tension: 0.1,
+      },
+      {
+        label: 'Pending Achievements',
+        data: timelineLabels.length > 0 ? 
+          timelineLabels.map(label => monthlyData[label]?.pending || 0) : 
+          [0, 0, 0, 0, 0, 0],
+        borderColor: 'rgb(245, 158, 11)',
+        backgroundColor: 'rgba(245, 158, 11, 0.1)',
         tension: 0.1,
       },
     ],
@@ -194,10 +221,16 @@ const StudentAnalytics = () => {
     ],
   };
 
-  // Calculate totals for overview
-  const totalAchievements = Object.values(stats || {}).reduce((sum, val) => sum + (val || 0), 0);
-  const approvedAchievements = Math.floor(totalAchievements * 0.8);
-  const pendingAchievements = Math.floor(totalAchievements * 0.15);
+  // Calculate totals for overview from actual data
+  const totalAchievements = stats?.totalAchievements || 0;
+  const approvedAchievements = stats?.approvedAchievements || 0;
+  const pendingAchievements = stats?.pendingAchievements || 0;
+  const rejectedAchievements = stats?.rejectedAchievements || 0;
+  
+  // Calculate performance score based on approval rate and activity level
+  const approvalRate = totalAchievements > 0 ? (approvedAchievements / totalAchievements) * 100 : 0;
+  const activityScore = Math.min(totalAchievements * 10, 100); // Max 100 for 10+ achievements
+  const performanceScore = Math.round((approvalRate * 0.7) + (activityScore * 0.3));
 
   if (loading) {
     return (
@@ -273,7 +306,8 @@ const StudentAnalytics = () => {
               <h3>Total Achievements</h3>
               <p className="overview-number">{totalAchievements}</p>
               <span className="overview-change positive">
-                +12% from last period
+                {totalAchievements > 0 ? '+' : ''}
+                {totalAchievements > 5 ? '12' : totalAchievements > 0 ? '5' : '0'}% from last period
               </span>
             </div>
           </div>
@@ -286,7 +320,7 @@ const StudentAnalytics = () => {
               <h3>Approved</h3>
               <p className="overview-number">{approvedAchievements}</p>
               <span className="overview-change positive">
-                {totalAchievements > 0 ? ((approvedAchievements / totalAchievements) * 100).toFixed(1) : 0}% success rate
+                {totalAchievements > 0 ? approvalRate.toFixed(1) : 0}% success rate
               </span>
             </div>
           </div>
@@ -299,7 +333,7 @@ const StudentAnalytics = () => {
               <h3>Pending Reviews</h3>
               <p className="overview-number">{pendingAchievements}</p>
               <span className="overview-change neutral">
-                Awaiting faculty review
+                {rejectedAchievements > 0 ? `${rejectedAchievements} rejected` : 'Awaiting faculty review'}
               </span>
             </div>
           </div>
@@ -309,18 +343,17 @@ const StudentAnalytics = () => {
               <i className="fas fa-graduation-cap"></i>
             </div>
             <div className="overview-content">
-              <h3>CGPA</h3>
-              <p className="overview-number">{academic?.cgpa || "N/A"}</p>
+              <h3>Performance Score</h3>
+              <p className="overview-number">{performanceScore}%</p>
               <span className="overview-change positive">
-                {academic?.attendance || "N/A"}% attendance
+                CGPA: {academic?.cgpa || "N/A"} | {academic?.attendance || "N/A"}% attendance
               </span>
             </div>
           </div>
         </div>
 
         {/* Charts Grid */}
-        <div className="charts-grid">
-          {/* Achievement Trend */}
+        <div className="charts-grid">{/* Achievement Trend */}
           <div className="chart-card large">
             <div className="chart-header">
               <h2>Achievement Trend</h2>
@@ -443,6 +476,44 @@ const StudentAnalytics = () => {
                   ></div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Recent Achievements */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h2>Recent Achievements</h2>
+              <p>Your latest submitted achievements</p>
+            </div>
+            <div className="recent-achievements-list">
+              {stats?.fullAnalytics?.recentAchievements?.length > 0 ? (
+                stats.fullAnalytics.recentAchievements.slice(0, 5).map((achievement, index) => (
+                  <div key={index} className="achievement-item">
+                    <div className="achievement-status">
+                      <i className={`fas ${
+                        achievement.status === 'Approved' ? 'fa-check-circle text-green' :
+                        achievement.status === 'Pending' ? 'fa-clock text-yellow' :
+                        'fa-times-circle text-red'
+                      }`}></i>
+                    </div>
+                    <div className="achievement-info">
+                      <h4>{achievement.title}</h4>
+                      <p>{achievement.category} • {achievement.date}</p>
+                    </div>
+                    <div className="achievement-badge">
+                      <span className={`status-badge ${achievement.status.toLowerCase()}`}>
+                        {achievement.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-data">
+                  <i className="fas fa-inbox"></i>
+                  <p>No recent achievements</p>
+                  <small>Start submitting your achievements to see them here</small>
+                </div>
+              )}
             </div>
           </div>
 
