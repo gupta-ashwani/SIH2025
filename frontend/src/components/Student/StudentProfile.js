@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { studentService } from "../../services/authService";
 import "./Student.css";
 
 const StudentProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("personal");
   const [isEditing, setIsEditing] = useState(false);
-  const [editedData, setEditedData] = useState({});
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     fetchStudentProfile();
@@ -20,9 +21,10 @@ const StudentProfile = () => {
   const fetchStudentProfile = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await studentService.getStudentProfile(id);
       setStudent(response.data.student);
-      setEditedData(response.data.student);
+      setEditForm(response.data.student);
     } catch (error) {
       console.error("Profile error:", error);
       setError(error.response?.data?.error || "Failed to load profile");
@@ -31,31 +33,41 @@ const StudentProfile = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      await studentService.updateProfile(id, editedData);
-      setStudent(editedData);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Update error:", error);
-      setError("Failed to update profile");
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+    if (!isEditing) {
+      setEditForm({ ...student });
     }
   };
 
-  const handleInputChange = (field, value) => {
-    if (field.includes(".")) {
-      const [parent, child] = field.split(".");
-      setEditedData((prev) => ({
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await studentService.updateProfile(id, editForm);
+      setStudent(response.data.student);
+      setIsEditing(false);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Update error:", error);
+      alert(error.response?.data?.error || "Failed to update profile");
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setEditForm(prev => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value,
-        },
+          [child]: value
+        }
       }));
     } else {
-      setEditedData((prev) => ({
+      setEditForm(prev => ({
         ...prev,
-        [field]: value,
+        [name]: value
       }));
     }
   };
@@ -69,16 +81,25 @@ const StudentProfile = () => {
     });
   };
 
-  const getInitials = (name) => {
-    if (!name) return "S";
-    const { first, last } = name;
-    return `${first?.charAt(0) || ""}${last?.charAt(0) || ""}`;
+  const getInitials = (firstName, lastName) => {
+    const first = firstName?.charAt(0) || "";
+    const last = lastName?.charAt(0) || "";
+    return (first + last).toUpperCase() || "S";
   };
+
+  // Check if current user can edit this profile
+  const canEdit = currentUser && currentUser._id === id;
+
+  // Define read-only fields for students
+  const readOnlyFields = [
+    'studentID', 'email', 'course', 'department', 'year', 'batch', 
+    'enrollmentYear', 'gpa', 'attendance'
+  ];
 
   if (loading) {
     return (
-      <div className="student-dashboard">
-        <div className="dashboard-content">
+      <div className="student-profile">
+        <div className="profile-content">
           <div className="loading-container">
             <div className="loading-spinner">
               <i className="fas fa-spinner fa-spin"></i>
@@ -92,15 +113,35 @@ const StudentProfile = () => {
 
   if (error) {
     return (
-      <div className="student-dashboard">
-        <div className="dashboard-content">
+      <div className="student-profile">
+        <div className="profile-content">
           <div className="error-container">
             <div className="error-icon">
               <i className="fas fa-exclamation-triangle"></i>
             </div>
-            <h3>Error Loading Profile</h3>
+            <h2>Error Loading Profile</h2>
             <p>{error}</p>
-            <button className="cta-btn" onClick={() => navigate(-1)}>
+            <button onClick={fetchStudentProfile} className="retry-btn">
+              <i className="fas fa-redo"></i>
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!student) {
+    return (
+      <div className="student-profile">
+        <div className="profile-content">
+          <div className="no-data-container">
+            <div className="no-data-icon">
+              <i className="fas fa-user-slash"></i>
+            </div>
+            <h2>Student Not Found</h2>
+            <p>The requested student profile could not be found.</p>
+            <button onClick={() => navigate(-1)} className="back-btn">
               <i className="fas fa-arrow-left"></i>
               Go Back
             </button>
@@ -111,608 +152,440 @@ const StudentProfile = () => {
   }
 
   return (
-    <div className="student-dashboard">
-      {/* Profile Header */}
+    <div className="student-profile">
+      {/* Header Section */}
       <div className="profile-header">
-        <div className="profile-header-content">
-          <div className="profile-avatar-section">
-            <div className="profile-avatar-large">
-              {student?.profilePicture ? (
-                <img
-                  src={student.profilePicture}
-                  alt="Profile"
-                  className="profile-image"
-                />
-              ) : (
-                <span className="profile-initials">
-                  {getInitials(student?.name)}
-                </span>
-              )}
-            </div>
-            <div className="profile-basic-info">
-              <h1 className="profile-name">
-                {student?.name?.first} {student?.name?.last}
-              </h1>
-              <p className="profile-id">Student ID: {student?.studentID}</p>
-              <p className="profile-department">
-                {student?.course} - {student?.department?.name}
-              </p>
-              <div className="profile-stats">
-                <div className="stat-item">
-                  <span className="stat-value">
-                    {student?.gpa?.toFixed(2) || "N/A"}
-                  </span>
-                  <span className="stat-label">CGPA</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">
-                    {student?.achievements?.length || 0}
-                  </span>
-                  <span className="stat-label">Achievements</span>
-                </div>
-                <div className="stat-item">
-                  <span className="stat-value">
-                    {student?.attendance
-                      ? student.attendance.toFixed(2)
-                      : "0.00"}
-                    %
-                  </span>
-                  <span className="stat-label">Attendance</span>
-                </div>
-              </div>
-            </div>
+        <div className="header-content">
+          <button onClick={() => navigate(-1)} className="back-button">
+            <i className="fas fa-arrow-left"></i>
+            Back
+          </button>
+          <div className="student-profile-title">
+            <h1>Student Profile</h1>
           </div>
-          <div className="profile-actions">
-            {!isEditing ? (
+          <div className="edit-btn">
+            {canEdit && (
               <button
-                className="edit-profile-btn"
-                onClick={() => setIsEditing(true)}
+                onClick={handleEditToggle}
+                className={`edit-btn ${isEditing ? "editing" : ""}`}
               >
-                <i className="fas fa-edit"></i>
-                Edit Profile
+                <i className={`fas ${isEditing ? "fa-times" : "fa-edit"}`}></i>
+                {isEditing ? "Cancel" : "Edit Profile"}
               </button>
-            ) : (
-              <div className="edit-actions">
-                <button className="save-btn" onClick={handleSaveProfile}>
-                  <i className="fas fa-save"></i>
-                  Save
-                </button>
-                <button
-                  className="cancel-btn"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditedData(student);
-                  }}
-                >
-                  <i className="fas fa-times"></i>
-                  Cancel
-                </button>
-              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Profile Navigation */}
-      <div className="profile-navigation">
-        <div className="nav-tabs">
-          <button
-            className={`nav-tab ${activeTab === "personal" ? "active" : ""}`}
-            onClick={() => setActiveTab("personal")}
-          >
-            <i className="fas fa-user"></i>
-            Personal Info
-          </button>
-          <button
-            className={`nav-tab ${activeTab === "academic" ? "active" : ""}`}
-            onClick={() => setActiveTab("academic")}
-          >
-            <i className="fas fa-graduation-cap"></i>
-            Academic Details
-          </button>
-          <button
-            className={`nav-tab ${activeTab === "contact" ? "active" : ""}`}
-            onClick={() => setActiveTab("contact")}
-          >
-            <i className="fas fa-address-book"></i>
-            Contact Info
-          </button>
-          <button
-            className={`nav-tab ${activeTab === "skills" ? "active" : ""}`}
-            onClick={() => setActiveTab("skills")}
-          >
-            <i className="fas fa-cogs"></i>
-            Skills & Interests
-          </button>
-          <button
-            className={`nav-tab ${activeTab === "additional" ? "active" : ""}`}
-            onClick={() => setActiveTab("additional")}
-          >
-            <i className="fas fa-graduation-cap"></i>
-            Education & Projects
-          </button>
-        </div>
-      </div>
-
       {/* Profile Content */}
       <div className="profile-content">
-        {activeTab === "personal" && (
-          <div className="personal-info-section">
-            <h2 className="section-title">Personal Information</h2>
-            <div className="profile-grid">
-              <div className="profile-field">
-                <label>First Name</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedData?.name?.first || ""}
-                    onChange={(e) =>
-                      handleInputChange("name.first", e.target.value)
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.name?.first || "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field">
-                <label>Last Name</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedData?.name?.last || ""}
-                    onChange={(e) =>
-                      handleInputChange("name.last", e.target.value)
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.name?.last || "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field">
-                <label>Date of Birth</label>
-                {isEditing ? (
-                  <input
-                    type="date"
-                    value={editedData?.dateOfBirth?.split("T")[0] || ""}
-                    onChange={(e) =>
-                      handleInputChange("dateOfBirth", e.target.value)
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {formatDate(student?.dateOfBirth)}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field">
-                <label>Gender</label>
-                {isEditing ? (
-                  <select
-                    value={editedData?.gender || ""}
-                    onChange={(e) =>
-                      handleInputChange("gender", e.target.value)
-                    }
-                    className="profile-input"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                ) : (
-                  <span className="profile-value">
-                    {student?.gender || "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field full-width">
-                <label>Bio</label>
-                {isEditing ? (
-                  <textarea
-                    value={editedData?.bio || ""}
-                    onChange={(e) => handleInputChange("bio", e.target.value)}
-                    className="profile-textarea"
-                    placeholder="Tell us about yourself..."
-                    rows="4"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.bio || "No bio available"}
-                  </span>
-                )}
-              </div>
+        <form onSubmit={handleSaveProfile} className="profile-form">
+          {/* Basic Information Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Basic Information</h3>
             </div>
-          </div>
-        )}
+            <div className="card-content">
+              <div className="info-grid">
+                <div className="info-group">
+                  <label>First Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="name.first"
+                      value={editForm.name?.first || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  ) : (
+                    <span>{student.name?.first || "Not specified"}</span>
+                  )}
+                </div>
 
-        {activeTab === "academic" && (
-          <div className="personal-info-section">
-            <h2 className="section-title">Academic Details</h2>
-            <div className="profile-grid">
-              <div className="profile-field">
-                <label>Student ID</label>
-                <span className="profile-value">{student?.studentID}</span>
-              </div>
-              <div className="profile-field">
-                <label>Course</label>
-                <span className="profile-value">{student?.course}</span>
-              </div>
-              <div className="profile-field">
-                <label>Department</label>
-                <span className="profile-value">
-                  {student?.department?.name}
-                </span>
-              </div>
-              <div className="profile-field">
-                <label>Year</label>
-                <span className="profile-value">{student?.year}</span>
-              </div>
-              <div className="profile-field">
-                <label>Batch</label>
-                <span className="profile-value">{student?.batch}</span>
-              </div>
-              <div className="profile-field">
-                <label>Enrollment Year</label>
-                <span className="profile-value">{student?.enrollmentYear}</span>
-              </div>
-              <div className="profile-field">
-                <label>Current CGPA</label>
-                <span className="profile-value">
-                  {student?.gpa?.toFixed(2) || "N/A"}
-                </span>
-              </div>
-              <div className="profile-field">
-                <label>Attendance</label>
-                <span className="profile-value">
-                  {student?.attendance ? student.attendance.toFixed(2) : "0.00"}
-                  %
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
+                <div className="info-group">
+                  <label>Last Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="name.last"
+                      value={editForm.name?.last || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  ) : (
+                    <span>{student.name?.last || "Not specified"}</span>
+                  )}
+                </div>
 
-        {activeTab === "contact" && (
-          <div className="personal-info-section">
-            <h2 className="section-title">Contact Information</h2>
-            <div className="profile-grid">
-              <div className="profile-field">
-                <label>Email Address</label>
-                <span className="profile-value">{student?.email}</span>
-              </div>
-              <div className="profile-field">
-                <label>Phone Number</label>
-                {isEditing ? (
-                  <input
-                    type="tel"
-                    value={editedData?.contactNumber || ""}
-                    onChange={(e) =>
-                      handleInputChange("contactNumber", e.target.value)
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.contactNumber || "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field full-width">
-                <label>Address</label>
-                {isEditing ? (
-                  <div className="address-grid">
+                <div className="info-group">
+                  <label>Student ID</label>
+                  <span className="readonly-field">{student.studentID || "Not assigned"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Email</label>
+                  <span className="readonly-field">{student.email || "Not specified"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Date of Birth</label>
+                  {isEditing ? (
                     <input
-                      type="text"
-                      placeholder="Address Line 1"
-                      value={editedData?.address?.line1 || ""}
-                      onChange={(e) =>
-                        handleInputChange("address.line1", e.target.value)
-                      }
-                      className="profile-input"
+                      type="date"
+                      name="dateOfBirth"
+                      value={editForm.dateOfBirth ? editForm.dateOfBirth.split('T')[0] : ""}
+                      onChange={handleInputChange}
                     />
+                  ) : (
+                    <span>{formatDate(student.dateOfBirth)}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>Gender</label>
+                  {isEditing ? (
+                    <select
+                      name="gender"
+                      value={editForm.gender || ""}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  ) : (
+                    <span>{student.gender || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>Contact Number</label>
+                  {isEditing ? (
                     <input
-                      type="text"
-                      placeholder="Address Line 2"
-                      value={editedData?.address?.line2 || ""}
-                      onChange={(e) =>
-                        handleInputChange("address.line2", e.target.value)
-                      }
-                      className="profile-input"
+                      type="tel"
+                      name="contactNumber"
+                      value={editForm.contactNumber || ""}
+                      onChange={handleInputChange}
                     />
-                    <input
-                      type="text"
-                      placeholder="City"
-                      value={editedData?.address?.city || ""}
-                      onChange={(e) =>
-                        handleInputChange("address.city", e.target.value)
-                      }
-                      className="profile-input"
+                  ) : (
+                    <span>{student.contactNumber || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group full-width">
+                  <label>Bio</label>
+                  {isEditing ? (
+                    <textarea
+                      name="bio"
+                      value={editForm.bio || ""}
+                      onChange={handleInputChange}
+                      rows="3"
+                      placeholder="Tell us about yourself..."
                     />
-                    <input
-                      type="text"
-                      placeholder="State"
-                      value={editedData?.address?.state || ""}
-                      onChange={(e) =>
-                        handleInputChange("address.state", e.target.value)
-                      }
-                      className="profile-input"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Country"
-                      value={editedData?.address?.country || ""}
-                      onChange={(e) =>
-                        handleInputChange("address.country", e.target.value)
-                      }
-                      className="profile-input"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Pincode"
-                      value={editedData?.address?.pincode || ""}
-                      onChange={(e) =>
-                        handleInputChange("address.pincode", e.target.value)
-                      }
-                      className="profile-input"
-                    />
-                  </div>
-                ) : (
-                  <span className="profile-value">
-                    {student?.address
-                      ? `${student.address.line1 || ""} ${
-                          student.address.line2 || ""
-                        }, ${student.address.city || ""}, ${
-                          student.address.state || ""
-                        }, ${student.address.country || ""} - ${
-                          student.address.pincode || ""
-                        }`
-                          .replace(/\s+/g, " ")
-                          .trim()
-                      : "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field">
-                <label>Emergency Contact Name</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedData?.emergencyContact?.name || ""}
-                    onChange={(e) =>
-                      handleInputChange("emergencyContact.name", e.target.value)
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.emergencyContact?.name || "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field full-width">
-                <label>Social Media Links</label>
-                <div className="social-links-grid">
-                  <div className="social-field">
-                    <label>LinkedIn</label>
-                    {isEditing ? (
-                      <input
-                        type="url"
-                        placeholder="https://linkedin.com/in/username"
-                        value={editedData?.social?.linkedin || ""}
-                        onChange={(e) =>
-                          handleInputChange("social.linkedin", e.target.value)
-                        }
-                        className="profile-input"
-                      />
-                    ) : (
-                      <span className="profile-value">
-                        {student?.social?.linkedin ? (
-                          <a
-                            href={student.social.linkedin}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {student.social.linkedin}
-                          </a>
-                        ) : (
-                          "Not specified"
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  <div className="social-field">
-                    <label>GitHub</label>
-                    {isEditing ? (
-                      <input
-                        type="url"
-                        placeholder="https://github.com/username"
-                        value={editedData?.social?.github || ""}
-                        onChange={(e) =>
-                          handleInputChange("social.github", e.target.value)
-                        }
-                        className="profile-input"
-                      />
-                    ) : (
-                      <span className="profile-value">
-                        {student?.social?.github ? (
-                          <a
-                            href={student.social.github}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {student.social.github}
-                          </a>
-                        ) : (
-                          "Not specified"
-                        )}
-                      </span>
-                    )}
-                  </div>
+                  ) : (
+                    <span>{student.bio || "No bio available"}</span>
+                  )}
                 </div>
               </div>
-              <div className="profile-field">
-                <label>Emergency Contact Name</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editedData?.emergencyContact?.name || ""}
-                    onChange={(e) =>
-                      handleInputChange("emergencyContact.name", e.target.value)
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.emergencyContact?.name || "Not specified"}
+            </div>
+          </div>
+
+          {/* Academic Information Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Academic Information</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-grid">
+                <div className="info-group">
+                  <label>Course</label>
+                  <span className="readonly-field">{student.course || "Not specified"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Department</label>
+                  <span className="readonly-field">{student.department?.name || "Not specified"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Year</label>
+                  <span className="readonly-field">{student.year || "Not specified"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Batch</label>
+                  <span className="readonly-field">{student.batch || "Not specified"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Enrollment Year</label>
+                  <span className="readonly-field">{student.enrollmentYear || "Not specified"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Current CGPA</label>
+                  <span className="readonly-field">{student.gpa?.toFixed(2) || "N/A"}</span>
+                </div>
+
+                <div className="info-group">
+                  <label>Attendance</label>
+                  <span className="readonly-field">
+                    {student.attendance ? student.attendance.toFixed(2) : "0.00"}%
                   </span>
-                )}
-              </div>
-              <div className="profile-field">
-                <label>Emergency Contact Phone</label>
-                {isEditing ? (
-                  <input
-                    type="tel"
-                    value={editedData?.emergencyContact?.phone || ""}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "emergencyContact.phone",
-                        e.target.value
-                      )
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.emergencyContact?.phone || "Not specified"}
-                  </span>
-                )}
-              </div>
-              <div className="profile-field">
-                <label>Emergency Contact Relationship</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    placeholder="e.g., Father, Mother, Guardian"
-                    value={editedData?.emergencyContact?.relationship || ""}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "emergencyContact.relationship",
-                        e.target.value
-                      )
-                    }
-                    className="profile-input"
-                  />
-                ) : (
-                  <span className="profile-value">
-                    {student?.emergencyContact?.relationship || "Not specified"}
-                  </span>
-                )}
+                </div>
               </div>
             </div>
           </div>
-        )}
 
-        {activeTab === "skills" && (
-          <div className="personal-info-section">
-            <h2 className="section-title">Skills & Interests</h2>
-            <div className="skills-section">
-              <div className="skills-grid">
-                <div className="profile-field full-width">
+          {/* Address Information Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Address Information</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-grid">
+                <div className="info-group full-width">
+                  <label>Address Line 1</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address.line1"
+                      value={editForm.address?.line1 || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.address?.line1 || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group full-width">
+                  <label>Address Line 2</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address.line2"
+                      value={editForm.address?.line2 || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.address?.line2 || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>City</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address.city"
+                      value={editForm.address?.city || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.address?.city || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>State</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address.state"
+                      value={editForm.address?.state || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.address?.state || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>Country</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address.country"
+                      value={editForm.address?.country || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.address?.country || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>Pin Code</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="address.pincode"
+                      value={editForm.address?.pincode || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.address?.pincode || "Not specified"}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Contact Information Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Emergency Contact Information</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-grid">
+                <div className="info-group">
+                  <label>Emergency Contact Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="emergencyContact.name"
+                      value={editForm.emergencyContact?.name || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.emergencyContact?.name || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>Emergency Contact Phone</label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      name="emergencyContact.phone"
+                      value={editForm.emergencyContact?.phone || ""}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <span>{student.emergencyContact?.phone || "Not specified"}</span>
+                  )}
+                </div>
+
+                <div className="info-group">
+                  <label>Relationship</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      name="emergencyContact.relationship"
+                      value={editForm.emergencyContact?.relationship || ""}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Father, Mother, Guardian"
+                    />
+                  ) : (
+                    <span>{student.emergencyContact?.relationship || "Not specified"}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills & Interests Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Skills & Interests</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-grid">
+                <div className="info-group full-width">
                   <label>Technical Skills</label>
                   {isEditing ? (
                     <textarea
-                      value={editedData?.skills?.technical?.join(", ") || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "skills.technical",
-                          e.target.value.split(", ").filter((s) => s.trim())
-                        )
-                      }
-                      className="profile-textarea"
-                      placeholder="Enter skills separated by commas (e.g., JavaScript, Python, React)"
+                      name="skills.technical"
+                      value={editForm.skills?.technical?.join(", ") || ""}
+                      onChange={(e) => {
+                        const skills = e.target.value.split(", ").filter(s => s.trim());
+                        setEditForm(prev => ({
+                          ...prev,
+                          skills: {
+                            ...prev.skills,
+                            technical: skills
+                          }
+                        }));
+                      }}
                       rows="3"
+                      placeholder="Enter skills separated by commas (e.g., JavaScript, Python, React)"
                     />
                   ) : (
                     <div className="skills-display">
-                      {student?.skills?.technical?.length > 0 ? (
+                      {student.skills?.technical?.length > 0 ? (
                         student.skills.technical.map((skill, index) => (
                           <span key={index} className="skill-tag technical">
                             {skill}
                           </span>
                         ))
                       ) : (
-                        <span className="profile-value">
-                          No technical skills added
-                        </span>
+                        <span>No technical skills added</span>
                       )}
                     </div>
                   )}
                 </div>
-                <div className="profile-field full-width">
+
+                <div className="info-group full-width">
                   <label>Soft Skills</label>
                   {isEditing ? (
                     <textarea
-                      value={editedData?.skills?.soft?.join(", ") || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "skills.soft",
-                          e.target.value.split(", ").filter((s) => s.trim())
-                        )
-                      }
-                      className="profile-textarea"
-                      placeholder="Enter skills separated by commas (e.g., Leadership, Communication, Teamwork)"
+                      name="skills.soft"
+                      value={editForm.skills?.soft?.join(", ") || ""}
+                      onChange={(e) => {
+                        const skills = e.target.value.split(", ").filter(s => s.trim());
+                        setEditForm(prev => ({
+                          ...prev,
+                          skills: {
+                            ...prev.skills,
+                            soft: skills
+                          }
+                        }));
+                      }}
                       rows="3"
+                      placeholder="Enter skills separated by commas (e.g., Leadership, Communication, Teamwork)"
                     />
                   ) : (
                     <div className="skills-display">
-                      {student?.skills?.soft?.length > 0 ? (
+                      {student.skills?.soft?.length > 0 ? (
                         student.skills.soft.map((skill, index) => (
                           <span key={index} className="skill-tag soft">
                             {skill}
                           </span>
                         ))
                       ) : (
-                        <span className="profile-value">
-                          No soft skills added
-                        </span>
+                        <span>No soft skills added</span>
                       )}
                     </div>
                   )}
                 </div>
-                <div className="profile-field full-width">
+
+                <div className="info-group full-width">
                   <label>Interests & Hobbies</label>
                   {isEditing ? (
                     <textarea
-                      value={editedData?.interests?.join(", ") || ""}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "interests",
-                          e.target.value.split(", ").filter((s) => s.trim())
-                        )
-                      }
-                      className="profile-textarea"
-                      placeholder="Enter interests separated by commas (e.g., Photography, Reading, Sports)"
+                      name="interests"
+                      value={editForm.interests?.join(", ") || ""}
+                      onChange={(e) => {
+                        const interests = e.target.value.split(", ").filter(s => s.trim());
+                        setEditForm(prev => ({
+                          ...prev,
+                          interests: interests
+                        }));
+                      }}
                       rows="3"
+                      placeholder="Enter interests separated by commas (e.g., Photography, Reading, Sports)"
                     />
                   ) : (
                     <div className="skills-display">
-                      {student?.interests?.length > 0 ? (
+                      {student.interests?.length > 0 ? (
                         student.interests.map((interest, index) => (
                           <span key={index} className="skill-tag interest">
                             {interest}
                           </span>
                         ))
                       ) : (
-                        <span className="profile-value">
-                          No interests added
-                        </span>
+                        <span>No interests added</span>
                       )}
                     </div>
                   )}
@@ -720,78 +593,73 @@ const StudentProfile = () => {
               </div>
             </div>
           </div>
-        )}
 
-        {activeTab === "additional" && (
-          <div className="personal-info-section">
-            <h2 className="section-title">Education & Projects</h2>
-            <div className="additional-content">
-              <div className="education-section">
-                <h3>Education Background</h3>
-                <div className="education-list">
-                  {student?.education?.length > 0 ? (
-                    student.education.map((edu, index) => (
-                      <div key={index} className="education-item">
-                        <div className="education-info">
-                          <h4>{edu.degree || "Degree"}</h4>
-                          <p>{edu.institution || "Institution"}</p>
-                          <span className="education-meta">
-                            {edu.location || "Location"} • {edu.year || "Year"}
-                          </span>
-                        </div>
-                      </div>
-                    ))
+          {/* Social Media Links Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Social Media Links</h3>
+            </div>
+            <div className="card-content">
+              <div className="info-grid">
+                <div className="info-group">
+                  <label>LinkedIn</label>
+                  {isEditing ? (
+                    <input
+                      type="url"
+                      name="social.linkedin"
+                      value={editForm.social?.linkedin || ""}
+                      onChange={handleInputChange}
+                      placeholder="https://linkedin.com/in/username"
+                    />
                   ) : (
-                    <div className="empty-state">
-                      <p>No education background added yet</p>
-                    </div>
+                    <span>
+                      {student.social?.linkedin ? (
+                        <a href={student.social.linkedin} target="_blank" rel="noopener noreferrer">
+                          {student.social.linkedin}
+                        </a>
+                      ) : (
+                        "Not specified"
+                      )}
+                    </span>
                   )}
                 </div>
-              </div>
 
-              <div className="projects-section">
-                <h3>Projects</h3>
-                <div className="projects-list">
-                  {student?.projects?.length > 0 ? (
-                    student.projects.map((project, index) => (
-                      <div key={index} className="project-item">
-                        <div className="project-header">
-                          <h4>{project.title || "Project Title"}</h4>
-                          {project.link && (
-                            <a
-                              href={project.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="project-link"
-                            >
-                              <i className="fas fa-external-link-alt"></i>
-                            </a>
-                          )}
-                        </div>
-                        {project.tech && (
-                          <p className="project-tech">
-                            <strong>Technologies:</strong> {project.tech}
-                          </p>
-                        )}
-                        {project.description?.length > 0 && (
-                          <ul className="project-description">
-                            {project.description.map((desc, i) => (
-                              <li key={i}>{desc}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))
+                <div className="info-group">
+                  <label>GitHub</label>
+                  {isEditing ? (
+                    <input
+                      type="url"
+                      name="social.github"
+                      value={editForm.social?.github || ""}
+                      onChange={handleInputChange}
+                      placeholder="https://github.com/username"
+                    />
                   ) : (
-                    <div className="empty-state">
-                      <p>No projects added yet</p>
-                    </div>
+                    <span>
+                      {student.social?.github ? (
+                        <a href={student.social.github} target="_blank" rel="noopener noreferrer">
+                          {student.social.github}
+                        </a>
+                      ) : (
+                        "Not specified"
+                      )}
+                    </span>
                   )}
                 </div>
               </div>
             </div>
           </div>
-        )}
+
+          {/* Save Button */}
+          {isEditing && (
+            <div className="form-actions">
+              <button type="submit" className="save-btn">
+                <i className="fas fa-save"></i>
+                Save Changes
+              </button>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );
