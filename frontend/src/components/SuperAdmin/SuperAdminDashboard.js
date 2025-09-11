@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { dashboardService } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
+import InstituteRequestsTable from "./InstituteRequestsTable";
 import "./SuperAdmin.css";
 
 const SuperAdminDashboard = () => {
@@ -325,6 +326,11 @@ const SuperAdminDashboard = () => {
              </div>
            </section>
          </div>
+
+        {/* Institute Registration Requests Section */}
+        <section className="dashboard-card institute-requests-section">
+          <InstituteRequestsTable />
+        </section>
 
         <section className="dashboard-card sa-stats">
           <h2>Platform Overview</h2>

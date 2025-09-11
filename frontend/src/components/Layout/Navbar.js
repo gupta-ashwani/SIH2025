@@ -29,7 +29,7 @@ const Navbar = () => {
   // Don't show navbar on auth pages
   if (
     location.pathname === "/login" ||
-    location.pathname === "/signup" ||
+    location.pathname === "/institute-registration" ||
     location.pathname === "/"
   ) {
     return null;

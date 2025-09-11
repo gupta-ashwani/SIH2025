@@ -1,66 +1,61 @@
 const mongoose = require("mongoose");
 
-const instituteSchema = new mongoose.Schema(
+const instituteRequestSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    code: {
-      type: String,
-      unique: true,
-      required: true,
-      uppercase: true,
-    },
+    // University Details
     aisheCode: {
       type: String,
+      required: true,
       trim: true,
     },
-    type: {
+    instituteType: {
       type: String,
-      enum: ["University", "StandaloneCollege", "Government", "Private", "Autonomous", "Deemed"],
       required: true,
+      enum: ["Government", "Private", "Autonomous", "Deemed"],
+    },
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    district: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    universityName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: true,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
+      trim: true,
     },
-    password: {
-      type: String,
-      required: true,
-    },
-    contactNumber: {
-      type: String,
-    },
-    address: {
-      line1: String,
-      line2: String,
-      city: String,
-      state: String,
-      district: String,
-      country: String,
-      pincode: String,
-    },
-    website: {
-      type: String,
-    },
-    
+
     // Head of Institute Details
     headOfInstitute: {
       name: {
         type: String,
+        required: true,
         trim: true,
       },
       email: {
         type: String,
+        required: true,
         lowercase: true,
         trim: true,
       },
       contact: {
         type: String,
+        required: true,
         trim: true,
       },
       alternateContact: {
@@ -69,19 +64,22 @@ const instituteSchema = new mongoose.Schema(
       },
     },
 
-    // Modal Officer Details
+    // Admin/Modal Officer Details
     modalOfficer: {
       name: {
         type: String,
+        required: true,
         trim: true,
       },
       email: {
         type: String,
+        required: true,
         lowercase: true,
         trim: true,
       },
       contact: {
         type: String,
+        required: true,
         trim: true,
       },
       alternateContact: {
@@ -90,9 +88,10 @@ const instituteSchema = new mongoose.Schema(
       },
     },
 
-    // Accreditation Details
+    // University Accreditation Details
     naacGrading: {
       type: Boolean,
+      required: true,
       default: false,
     },
     naacGrade: {
@@ -100,50 +99,46 @@ const instituteSchema = new mongoose.Schema(
       enum: ["A++", "A+", "A", "B++", "B+", "B", "C", ""],
       default: "",
     },
-    // hierarchy
-    colleges: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "College",
-      },
-    ],
-    // tracking
+
+    // Request Status
     status: {
-      type: String,
-      enum: ["Active", "Inactive", "Pending", "Rejected"],
-      default: "Pending",
-    },
-    // approval workflow
-    approvalStatus: {
       type: String,
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
-    approvedBy: {
+
+    // Review Details
+    reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "SuperAdmin",
     },
-    approvedAt: {
+    reviewedAt: {
       type: Date,
     },
-    rejectionReason: {
+    reviewComment: {
+      type: String,
+      trim: true,
+    },
+
+    // Generated Institute Details (after approval)
+    generatedInstituteId: {
+      type: String,
+      trim: true,
+    },
+    generatedPassword: {
       type: String,
     },
-    // additional fields for approval workflow
-    studentCount: {
-      type: Number,
-      default: 0,
-    },
-    location: {
-      city: String,
-      state: String,
-      country: {
-        type: String,
-        default: "India",
-      },
+    linkedInstitute: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Institute",
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Institute", instituteSchema);
+// Index for faster queries
+instituteRequestSchema.index({ status: 1 });
+instituteRequestSchema.index({ email: 1 });
+instituteRequestSchema.index({ aisheCode: 1 });
+
+module.exports = mongoose.model("InstituteRequest", instituteRequestSchema);

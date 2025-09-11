@@ -9,7 +9,7 @@ const Footer = () => {
   // Don't show footer on auth pages
   if (
     location.pathname === "/login" ||
-    location.pathname === "/signup" ||
+    location.pathname === "/institute-registration" ||
     location.pathname === "/"
   ) {
     return null;
