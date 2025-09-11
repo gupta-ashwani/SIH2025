@@ -94,6 +94,11 @@ const instituteRequestSchema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    naacGrade: {
+      type: String,
+      enum: ["A++", "A+", "A", "B++", "B+", "B", "C", ""],
+      default: "",
+    },
 
     // Request Status
     status: {

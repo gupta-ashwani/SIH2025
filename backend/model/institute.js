@@ -95,6 +95,11 @@ const instituteSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    naacGrade: {
+      type: String,
+      enum: ["A++", "A+", "A", "B++", "B+", "B", "C", ""],
+      default: "",
+    },
     // hierarchy
     colleges: [
       {

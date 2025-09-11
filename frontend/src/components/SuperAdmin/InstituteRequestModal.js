@@ -146,6 +146,12 @@ const InstituteRequestModal = ({ request, onClose, onApprove, onReject }) => {
                     {request.naacGrading ? "Yes" : "No"}
                   </span>
                 </div>
+                {request.naacGrading && request.naacGrade && (
+                  <div className="detail-item">
+                    <label>NAAC Grade:</label>
+                    <span className="naac-grade">{request.naacGrade}</span>
+                  </div>
+                )}
                 <div className="detail-item">
                   <label>Status:</label>
                   <span className={`status-${request.status.toLowerCase()}`}>

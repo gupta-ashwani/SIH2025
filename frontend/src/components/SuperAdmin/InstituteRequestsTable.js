@@ -184,7 +184,7 @@ const InstituteRequestsTable = () => {
                         <>
                           <button
                             className="approve-btn"
-                            onClick={() => handleApprove(request._id, "")}
+                            onClick={() => handleReview(request)}
                           >
                             Approve
                           </button>

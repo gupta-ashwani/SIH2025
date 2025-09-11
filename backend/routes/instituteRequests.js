@@ -42,6 +42,7 @@ router.post("/submit", async (req, res) => {
       headOfInstitute,
       modalOfficer,
       naacGrading,
+      naacGrade,
     } = req.body;
 
     // Check for duplicate registration
@@ -90,6 +91,7 @@ router.post("/submit", async (req, res) => {
       headOfInstitute,
       modalOfficer,
       naacGrading,
+      naacGrade,
     });
 
     await instituteRequest.save();
@@ -217,6 +219,7 @@ router.post("/:id/approve", async (req, res) => {
       headOfInstitute: request.headOfInstitute,
       modalOfficer: request.modalOfficer,
       naacGrading: request.naacGrading,
+      naacGrade: request.naacGrade,
       status: "Active",
       approvalStatus: "Approved",
       approvedBy: reviewedBy,

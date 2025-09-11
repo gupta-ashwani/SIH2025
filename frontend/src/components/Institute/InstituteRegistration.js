@@ -135,6 +135,12 @@ const InstituteRegistration = () => {
       return false;
     }
 
+    // NAAC Grade validation
+    if (formData.naacGrading && (!formData.naacGrade || formData.naacGrade.trim() === '')) {
+      setError('NAAC Grade is required when NAAC Grading is selected as Yes');
+      return false;
+    }
+
     return true;
   };
 
@@ -186,6 +192,11 @@ const InstituteRegistration = () => {
           naacGrading: false,
           naacGrade: "",
         });
+        
+        // Redirect to home page after 2 seconds
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
       } else {
         setError(data.message || "Failed to submit registration request");
       }
