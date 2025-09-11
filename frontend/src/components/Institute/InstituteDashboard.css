@@ -147,7 +147,9 @@
   max-width: 800px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Responsive Modal */
@@ -165,6 +167,7 @@
   background-color: #284B63;
   border-radius: 16px 16px 0 0;
   border-bottom: none;
+  flex-shrink: 0;
 }
 
 .institute-modal-title {
@@ -196,6 +199,8 @@
 /* Form Styles */
 .institute-college-form {
   padding: 32px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .institute-form-grid {
@@ -249,8 +254,7 @@
 .institute-form-section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #FFFFFF;
-  background-color: #284B63;
+  color: #284B63;
   margin: 0 0 16px 0;
   padding: 10px 16px;
   border-radius: 8px;
