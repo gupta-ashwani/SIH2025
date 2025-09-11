@@ -7,6 +7,7 @@ const College = require("../model/college");
 const Institute = require("../model/institute");
 const bcrypt = require("bcryptjs");
 const { requireAuth } = require("../middleware/auth");
+const emailService = require("../services/emailService");
 
 // Configure multer for file upload
 const storage = multer.memoryStorage();
@@ -164,58 +165,175 @@ router.post(
           .status(400)
           .json({ error: `Missing columns: ${missingColumns.join(", ")}` });
       }
-      // Prepare bulk insert
-      const collegesToInsert = [];
-      for (const row of data) {
-        // Check for required fields
-        if (
-          !row.name ||
-          !row.code ||
-          !row.email
-        )
-          continue;
-        // Determine institute from row or authenticated user
-        let instituteId = row.institute;
-        if (!instituteId && req.user?.role === "institute") {
-          instituteId = req.user._id.toString();
+      // Prepare results tracking
+      const results = {
+        success: [],
+        errors: [],
+        duplicates: [],
+        emailResults: {
+          sent: 0,
+          failed: 0,
+          details: []
         }
-        if (!instituteId || !mongoose.Types.ObjectId.isValid(instituteId)) {
-          // Skip rows without a valid institute id
-          console.warn("Skipping row without valid institute id:", row);
-          continue;
-        }
+      };
 
-        // Prepare password (default to code@123 if not provided)
-        const plainPassword = row.password || `${String(row.code).toUpperCase()}@123`;
-        const hashedPassword = await bcrypt.hash(plainPassword, 10);
-        collegesToInsert.push({
-          name: row.name,
-          code: row.code.toUpperCase(),
-          email: row.email.toLowerCase(),
-          password: hashedPassword,
-          institute: instituteId,
-          contactNumber: row.contactNumber || "",
-          address: {
-            line1: row.line1 || "",
-            line2: row.line2 || "",
-            city: row.city || "",
-            state: row.state || "",
-            country: row.country || "",
-            pincode: row.pincode || "",
-          },
-          website: row.website || "",
-          type: row.type || "Other",
-          status: row.status || "Active",
-        });
+      // Process each college
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const rowNumber = i + 2; // +2 because Excel rows start at 1 and we skip header
+
+        try {
+          // Check for required fields
+          if (!row.name || !row.code || !row.email) {
+            results.errors.push({
+              row: rowNumber,
+              data: row,
+              error: "Missing required fields (name, code, email)"
+            });
+            continue;
+          }
+
+          // Check for duplicates
+          const existingCollege = await College.findOne({
+            $or: [
+              { email: row.email.toLowerCase() },
+              { code: row.code.toUpperCase() }
+            ]
+          });
+
+          if (existingCollege) {
+            results.duplicates.push({
+              row: rowNumber,
+              data: row,
+              existing: existingCollege.email
+            });
+            continue;
+          }
+
+          // Determine institute from row or authenticated user
+          let instituteId = row.institute;
+          if (!instituteId && req.user?.role === "institute") {
+            instituteId = req.user._id.toString();
+          }
+          if (!instituteId || !mongoose.Types.ObjectId.isValid(instituteId)) {
+            results.errors.push({
+              row: rowNumber,
+              data: row,
+              error: "Invalid or missing institute ID"
+            });
+            continue;
+          }
+
+          // Prepare password (default to code@123 if not provided)
+          const plainPassword = row.password || `${String(row.code).toUpperCase()}@123`;
+          const hashedPassword = await bcrypt.hash(plainPassword, 10);
+          
+          const collegeData = {
+            name: row.name,
+            code: row.code.toUpperCase(),
+            email: row.email.toLowerCase(),
+            password: hashedPassword,
+            institute: instituteId,
+            contactNumber: row.contactNumber || "",
+            address: {
+              line1: row.line1 || "",
+              line2: row.line2 || "",
+              city: row.city || "",
+              state: row.state || "",
+              country: row.country || "",
+              pincode: row.pincode || "",
+            },
+            website: row.website || "",
+            type: row.type || "Other",
+            status: row.status || "Active",
+          };
+
+          // Create and save college
+          const newCollege = new College(collegeData);
+          const savedCollege = await newCollege.save();
+
+          results.success.push({
+            row: rowNumber,
+            collegeId: savedCollege._id,
+            name: savedCollege.name,
+            email: savedCollege.email,
+            code: savedCollege.code
+          });
+
+          // Send welcome email
+          console.log(`📧 Attempting to send email to: ${savedCollege.email}`);
+          try {
+            const emailResult = await emailService.sendEmail(
+              savedCollege.email,
+              'college',
+              {
+                name: savedCollege.name,
+                email: savedCollege.email,
+                password: plainPassword // Send original password in email
+              },
+              {
+                uploadedBy: req.user?.email || 'institute',
+                uploadType: 'bulk_colleges',
+                instituteId: instituteId,
+                collegeId: savedCollege._id
+              }
+            );
+
+            if (emailResult.success) {
+              results.emailResults.sent++;
+              console.log(`✅ Email sent successfully to ${savedCollege.email}`);
+            } else {
+              results.emailResults.failed++;
+              console.log(`❌ Email failed for ${savedCollege.email}:`, emailResult.error);
+            }
+
+            results.emailResults.details.push({
+              email: savedCollege.email,
+              name: savedCollege.name,
+              success: emailResult.success,
+              messageId: emailResult.messageId,
+              error: emailResult.error
+            });
+
+          } catch (emailError) {
+            console.error(`❌ Email sending failed for ${savedCollege.email}:`, emailError);
+            results.emailResults.failed++;
+            results.emailResults.details.push({
+              email: savedCollege.email,
+              name: savedCollege.name,
+              success: false,
+              error: emailError.message
+            });
+          }
+
+        } catch (error) {
+          console.error(`Error processing college at row ${rowNumber}:`, error);
+          results.errors.push({
+            row: rowNumber,
+            data: row,
+            error: error.message
+          });
+        }
       }
-      if (collegesToInsert.length === 0) {
-        return res
-          .status(400)
-          .json({ error: "No valid college records found in file" });
-      }
-      // Insert colleges
-      await College.insertMany(collegesToInsert);
-      res.json({ success: true, count: collegesToInsert.length });
+
+      console.log(`📊 Bulk college upload completed. Email summary:`, {
+        totalEmails: results.success.length,
+        emailsSent: results.emailResults.sent,
+        emailsFailed: results.emailResults.failed
+      });
+
+      res.json({
+        message: "Bulk college upload completed",
+        results: results,
+        summary: {
+          totalProcessed: data.length,
+          successful: results.success.length,
+          errors: results.errors.length,
+          duplicates: results.duplicates.length,
+          emailsSent: results.emailResults.sent,
+          emailsFailed: results.emailResults.failed,
+        },
+      });
     } catch (error) {
       console.error("Bulk college upload error:", error);
       res.status(500).json({ error: "Internal server error" });

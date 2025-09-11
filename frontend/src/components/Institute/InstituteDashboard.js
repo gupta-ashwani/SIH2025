@@ -12,6 +12,9 @@ const InstituteDashboard = () => {
   const [error, setError] = useState(null);
   const [showAddCollegeModal, setShowAddCollegeModal] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const [collegeFormData, setCollegeFormData] = useState({
     name: '',
     code: '',
@@ -42,8 +45,139 @@ const InstituteDashboard = () => {
     setShowBulkUploadModal(true);
   };
 
+  const handleCloseBulkUploadModal = () => {
+    setShowBulkUploadModal(false);
+    setSelectedFile(null);
+    setDragOver(false);
+    setUploading(false);
+    // Clear the hidden file input
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3030/api"}/bulk-colleges/download-template`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = 'college_bulk_upload_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      alert('Failed to download template. Please try again.');
+    }
+  };
+
   const handleInstituteHeaderClick = () => {
     navigate(`/institute/profile/${id}`);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (validateFile(file)) {
+        setSelectedFile(file);
+      }
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file && validateFile(file)) {
+      setSelectedFile(file);
+    }
+  };
+
+  const validateFile = (file) => {
+    const allowedTypes = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select an Excel file (.xlsx or .xls)');
+      return false;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleUploadColleges = async () => {
+    if (!selectedFile) {
+      alert('Please select a file first');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('excelFile', selectedFile);
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:3030/api"}/bulk-colleges/bulk-upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert(`Successfully uploaded ${result.count} colleges!`);
+        handleCloseBulkUploadModal();
+        fetchDashboardData(); // Refresh dashboard data
+      } else {
+        alert(`Upload failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
 const handleCloseModal = () => {
@@ -658,11 +792,11 @@ const handleSubmitCollege = async (e) => {
 
       {/* Bulk Upload Modal */}
       {showBulkUploadModal && (
-        <div className="institute-modal-overlay" onClick={() => setShowBulkUploadModal(false)}>
+        <div className="institute-modal-overlay" onClick={handleCloseBulkUploadModal}>
           <div className="institute-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
             <div className="institute-modal-header">
               <h2 className="institute-modal-title">Bulk Upload Colleges</h2>
-              <button className="institute-modal-close" onClick={() => setShowBulkUploadModal(false)}>
+              <button className="institute-modal-close" onClick={handleCloseBulkUploadModal}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"/>
                   <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
@@ -684,7 +818,9 @@ const handleSubmitCollege = async (e) => {
                 </ul>
                 
                 <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                  <button style={{
+                  <button 
+                  onClick={handleDownloadTemplate}
+                  style={{
                     backgroundColor: '#284B63',
                     color: 'white',
                     border: 'none',
@@ -708,39 +844,64 @@ const handleSubmitCollege = async (e) => {
               
               <div 
                 style={{ 
-                  border: '2px dashed #D1D5DB', 
+                  border: `2px dashed ${dragOver ? '#284B63' : '#D1D5DB'}`, 
                   borderRadius: '8px', 
                   padding: '32px', 
                   textAlign: 'center',
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: dragOver ? '#F0F4F8' : (selectedFile ? '#E8F5E8' : '#F9FAFB'),
                   marginBottom: '20px',
                   transition: 'all 0.2s ease',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transform: dragOver ? 'translateY(-2px)' : 'translateY(0px)',
+                  position: 'relative'
                 }}
-                onMouseEnter={(e) => {
-                  e.target.style.borderColor = '#284B63';
-                  e.target.style.backgroundColor = '#F0F4F8';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.borderColor = '#D1D5DB';
-                  e.target.style.backgroundColor = '#F9FAFB';
-                  e.target.style.transform = 'translateY(0px)';
-                }}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => document.getElementById('fileInput').click()}
               >
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px', color: '#6B7280' }}>
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
-                  <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2"/>
-                  <polyline points="10,9 9,9 8,9" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                <p style={{ margin: '8px 0', color: '#4B5563', fontSize: '16px', fontWeight: '500' }}>Drop Excel file here or click to browse</p>
+                {!selectedFile && (
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px', color: '#6B7280' }}>
+                    <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                    <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2"/>
+                    <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2"/>
+                    <polyline points="10,9 9,9 8,9" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                )}
+                {selectedFile ? (
+                  <div>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px', color: '#10B981' }}>
+                      <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    <p style={{ margin: '8px 0', color: '#10B981', fontSize: '16px', fontWeight: '500' }}>
+                      {selectedFile.name}
+                    </p>
+                    <p style={{ margin: '4px 0', color: '#6B7280', fontSize: '14px' }}>
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p style={{ margin: '8px 0', color: '#4B5563', fontSize: '16px', fontWeight: '500' }}>
+                      {dragOver ? 'Drop file here' : 'Drop Excel file here or click to browse'}
+                    </p>
+                  </div>
+                )}
+                
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                />
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button 
-                  onClick={() => setShowBulkUploadModal(false)}
+                  onClick={handleCloseBulkUploadModal}
                   style={{
                     padding: '10px 16px',
                     borderRadius: '6px',
@@ -755,21 +916,32 @@ const handleSubmitCollege = async (e) => {
                   Cancel
                 </button>
                 <button 
+                  onClick={handleUploadColleges}
+                  disabled={!selectedFile || uploading}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '6px',
                     border: 'none',
-                    backgroundColor: '#284B63',
+                    backgroundColor: (!selectedFile || uploading) ? '#9CA3AF' : '#284B63',
                     color: 'white',
-                    cursor: 'pointer',
+                    cursor: (!selectedFile || uploading) ? 'not-allowed' : 'pointer',
                     fontSize: '14px',
                     fontWeight: '500',
-                    transition: 'background-color 0.2s ease'
+                    transition: 'background-color 0.2s ease',
+                    opacity: (!selectedFile || uploading) ? 0.6 : 1
                   }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#1E3A4A'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#284B63'}
+                  onMouseEnter={(e) => {
+                    if (!e.target.disabled) {
+                      e.target.style.backgroundColor = '#1E3A4A';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!e.target.disabled) {
+                      e.target.style.backgroundColor = '#284B63';
+                    }
+                  }}
                 >
-                  Upload Colleges
+                  {uploading ? 'Uploading...' : 'Upload Colleges'}
                 </button>
               </div>
             </div>
