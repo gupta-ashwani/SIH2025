@@ -431,6 +431,7 @@ router.get(
             .length,
           workshops: achievements.filter((a) => a.type === "Workshop").length,
           hackathons: achievements.filter((a) => a.type === "Hackathon").length,
+          conferences: achievements.filter((a) => a.type === "Conference").length,
           communityService: achievements.filter(
             (a) => a.type === "CommunityService"
           ).length,
@@ -450,14 +451,32 @@ router.get(
           batch: student.batch,
         },
 
-        // Timeline data (achievements per month)
-        timeline: getAchievementTimeline(achievements),
+        // Enhanced timeline data
+        ...getAchievementTimeline(achievements),
+
+        // Recent achievements with full details
+        recentAchievements: achievements
+          .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
+          .slice(0, 10)
+          .map(achievement => ({
+            title: achievement.title || 'Achievement',
+            category: achievement.type,
+            status: achievement.status,
+            date: new Date(achievement.uploadedAt).toLocaleDateString(),
+            uploadedAt: achievement.uploadedAt
+          })),
 
         // Skills analysis
         skills: student.skills || [],
 
         // Performance insights
         insights: generateInsights(student, achievements),
+        
+        // Growth metrics
+        growthMetrics: calculateGrowthMetrics(achievements),
+        
+        // Goals tracking
+        monthlyGoals: calculateMonthlyGoals(achievements),
       };
 
       res.json({
@@ -477,14 +496,47 @@ router.get(
 // Helper function to generate achievement timeline
 function getAchievementTimeline(achievements) {
   const timeline = {};
+  const monthlyData = {};
+  
+  // Initialize last 12 months
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthKey = date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+    });
+    timeline[monthKey] = 0;
+    monthlyData[monthKey] = {
+      total: 0,
+      approved: 0,
+      pending: 0,
+      rejected: 0
+    };
+  }
+  
+  // Populate with actual data
   achievements.forEach((achievement) => {
     const month = new Date(achievement.uploadedAt).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
     });
-    timeline[month] = (timeline[month] || 0) + 1;
+    
+    if (timeline.hasOwnProperty(month)) {
+      timeline[month] = (timeline[month] || 0) + 1;
+      monthlyData[month].total++;
+      
+      if (achievement.status === 'Approved') {
+        monthlyData[month].approved++;
+      } else if (achievement.status === 'Pending') {
+        monthlyData[month].pending++;
+      } else if (achievement.status === 'Rejected') {
+        monthlyData[month].rejected++;
+      }
+    }
   });
-  return timeline;
+  
+  return { timeline, monthlyData };
 }
 
 // Helper function to generate performance insights
@@ -557,6 +609,70 @@ function generateInsights(student, achievements) {
   }
 
   return insights;
+}
+
+// Helper function to calculate growth metrics
+function calculateGrowthMetrics(achievements) {
+  const now = new Date();
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  
+  const thisMonthAchievements = achievements.filter(a => {
+    const date = new Date(a.uploadedAt);
+    return date >= thisMonth && date <= thisMonthEnd;
+  }).length;
+  
+  const lastMonthAchievements = achievements.filter(a => {
+    const date = new Date(a.uploadedAt);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    return date >= lastMonth && date <= lastMonthEnd;
+  }).length;
+  
+  const growthRate = lastMonthAchievements > 0 
+    ? ((thisMonthAchievements - lastMonthAchievements) / lastMonthAchievements) * 100
+    : thisMonthAchievements > 0 ? 100 : 0;
+    
+  return {
+    thisMonth: thisMonthAchievements,
+    lastMonth: lastMonthAchievements,
+    growthRate: Math.round(growthRate),
+    trend: growthRate > 0 ? 'up' : growthRate < 0 ? 'down' : 'stable'
+  };
+}
+
+// Helper function to calculate monthly goals
+function calculateMonthlyGoals(achievements) {
+  const now = new Date();
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  
+  const thisMonthCount = achievements.filter(a => {
+    const date = new Date(a.uploadedAt);
+    return date >= thisMonth && date <= thisMonthEnd;
+  }).length;
+  
+  const lastMonthCount = achievements.filter(a => {
+    const date = new Date(a.uploadedAt);
+    return date >= lastMonth && date <= lastMonthEnd;
+  }).length;
+  
+  const defaultTarget = 5; // Default monthly goal
+  
+  return {
+    currentMonth: {
+      target: defaultTarget,
+      achieved: thisMonthCount,
+      percentage: Math.round((thisMonthCount / defaultTarget) * 100)
+    },
+    lastMonth: {
+      target: defaultTarget,
+      achieved: lastMonthCount,
+      percentage: Math.round((lastMonthCount / defaultTarget) * 100)
+    }
+  };
 }
 
 // Generate and store PDF route
