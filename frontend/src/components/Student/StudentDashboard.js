@@ -487,7 +487,6 @@ const StudentDashboard = () =>{
         </div>
 
         {/* Projects Section */}
-        <div className="projects-section">
           <div className="content-card projects-card">
             <div className="card-header">
               <h2>My Projects</h2>
@@ -562,7 +561,6 @@ const StudentDashboard = () =>{
               )}
             </div>
           </div>
-        </div>
       </div>
 
       {/* Add Project Modal */}
@@ -576,8 +574,9 @@ const StudentDashboard = () =>{
               </button>
             </div>
             
-            <form onSubmit={handleProjectSubmit} className="modal-form">
-              <div className="form-group">
+            <div className="modal-form">
+              <form onSubmit={handleProjectSubmit}>
+                <div className="form-group">
                 <label htmlFor="title">Project Title *</label>
                 <input
                   type="text"
@@ -638,16 +637,17 @@ const StudentDashboard = () =>{
                 />
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="cancel-btn" onClick={handleProjectModalClose}>
-                  Cancel
-                </button>
-                <button type="submit" className="submit-btn">
-                  <i className="fas fa-plus"></i>
-                  Add Project
-                </button>
-              </div>
-            </form>
+                <div className="form-actions">
+                  <button type="button" className="cancel-btn" onClick={handleProjectModalClose}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="submit-btn">
+                    <i className="fas fa-plus"></i>
+                    Add Project
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

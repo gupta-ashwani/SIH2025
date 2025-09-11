@@ -26,16 +26,18 @@
   max-width: 500px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
-  padding: 24px 24px 0 24px;
+  padding: 24px 24px 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 24px;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -62,7 +64,9 @@
 }
 
 .modal-form {
-  padding: 0 24px 24px 24px;
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-group {
