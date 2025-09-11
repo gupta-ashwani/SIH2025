@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './InstituteDashboard.css'; 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { instituteService } from "../../services/authService";
 import "./InstituteDashboard.css";
 
 const InstituteDashboard = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +40,10 @@ const InstituteDashboard = () => {
 
   const handleBulkUploadClick = () => {
     setShowBulkUploadModal(true);
+  };
+
+  const handleInstituteHeaderClick = () => {
+    navigate(`/institute/profile/${id}`);
   };
 
 const handleCloseModal = () => {
@@ -163,7 +168,7 @@ const handleSubmitCollege = async (e) => {
   return (
     <div className="institute-dashboard-container">
       {/* Header Section */}
-      <div className="institute-dashboard-header">
+      <div className="institute-dashboard-header" onClick={handleInstituteHeaderClick} style={{ cursor: 'pointer' }}>
         <div className="institute-header-content">
           <h1 className="institute-dashboard-title">
             {institute.name || 'Tech Institute of Excellence'}

@@ -197,6 +197,43 @@ router.get("/profile/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Update institute profile
+router.put("/profile/:id", requireAuth, async (req, res) => {
+  try {
+    const instituteId = req.params.id;
+
+    if (req.user.role !== "institute" && req.user.role !== "superadmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    if (req.user.role === "institute" && req.user._id.toString() !== instituteId) {
+      return res.status(403).json({ error: "Access denied to this institute" });
+    }
+
+    const updateData = { ...req.body };
+    delete updateData.password; // Don't allow password updates through this route
+
+    const institute = await Institute.findByIdAndUpdate(
+      instituteId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!institute) {
+      return res.status(404).json({ error: "Institute not found" });
+    }
+
+    res.json(institute);
+  } catch (error) {
+    console.error("Institute profile update error:", error);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ error: `${field} already exists` });
+    }
+    res.status(500).json({ error: "Failed to update institute profile" });
+  }
+});
+
 // Add college to institute
 router.post("/colleges", requireAuth, async (req, res) => {
   try {

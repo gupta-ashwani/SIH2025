@@ -228,6 +228,8 @@ const Navbar = () => {
                     ? `/students/profile/${currentUser._id || currentUser.id}`
                     : currentUser.role === "faculty"
                     ? `/faculty/profile/${currentUser._id || currentUser.id}`
+                    : currentUser.role === "institute"
+                    ? `/institute/dashboard/${currentUser._id || currentUser.id}`
                     : "#"
                 }
                 className="user-info-link"

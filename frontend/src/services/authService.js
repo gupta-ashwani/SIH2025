@@ -214,6 +214,10 @@ export const instituteService = {
     return api.put(`/institute/profile/${id}`, profileData);
   },
 
+  updateInstituteProfile: (id, profileData) => {
+    return api.put(`/institute/profile/${id}`, profileData);
+  },
+
   addCollege: (collegeData) => {
     return api.post('/institute/colleges', collegeData);
   },

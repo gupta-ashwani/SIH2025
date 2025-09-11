@@ -23,6 +23,7 @@ import DepartmentDashboard from "./components/Department/DepartmentDashboard";
 import DepartmentFaculty from "./components/Department/DepartmentFaculty";
 import DepartmentStudents from "./components/Department/DepartmentStudents";
 import InstituteDashboard from "./components/Institute/InstituteDashboard";
+import InstituteProfile from "./components/Institute/InstituteProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SuperAdminDashboard from "./components/SuperAdmin/SuperAdminDashboard";
 import "./App.css";
@@ -252,6 +253,17 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <InstituteDashboard />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/institute/profile/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <InstituteProfile />
                     </div>
                   </ProtectedRoute>
                 }
