@@ -170,13 +170,16 @@ router.post(
         return res.status(404).json({ error: "Student not found" });
       }
 
-      const { category, title, organization, description, dateCompleted } =
+      const { category, title, organization, description, dateCompleted, instituteEmail } =
         req.body;
 
       const newAchievement = {
         title,
         type: category,
         description,
+        organization,
+        instituteEmail,
+        dateCompleted: dateCompleted ? new Date(dateCompleted) : null,
         fileUrl: req.file ? req.file.path : null,
         uploadedAt: new Date(),
         status: "Pending",
@@ -399,6 +402,10 @@ router.get(
           communityService: achievements.filter(
             (a) => a.type === "CommunityService"
           ).length,
+          leadership: achievements.filter((a) => a.type === "Leadership").length,
+          clubs: achievements.filter((a) => a.type === "Clubs").length,
+          volunteering: achievements.filter((a) => a.type === "Volunteering").length,
+          others: achievements.filter((a) => a.type === "Others").length,
         },
 
         // Academic metrics

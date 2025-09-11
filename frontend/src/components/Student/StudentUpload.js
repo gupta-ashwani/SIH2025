@@ -19,6 +19,7 @@ const StudentUpload = () => {
     title: "",
     organization: "",
     description: "",
+    instituteEmail: "",
     file: null,
   });
 
@@ -108,6 +109,7 @@ const StudentUpload = () => {
       uploadData.append("title", formData.title);
       uploadData.append("organization", formData.organization);
       uploadData.append("description", formData.description);
+      uploadData.append("instituteEmail", formData.instituteEmail);
       uploadData.append("dateCompleted", formData.dateCompleted);
 
       if (formData.file) {
@@ -125,6 +127,7 @@ const StudentUpload = () => {
         title: "",
         organization: "",
         description: "",
+        instituteEmail: "",
         file: null,
       });
 
@@ -244,6 +247,9 @@ const StudentUpload = () => {
                     <option value="Conference">Conference</option>
                     <option value="CommunityService">Community Service</option>
                     <option value="Leadership">Leadership</option>
+                    <option value="Clubs">Clubs</option>
+                    <option value="Volunteering">Volunteering</option>
+                    <option value="Others">Others</option>
                   </select>
                 </div>
 
@@ -289,6 +295,21 @@ const StudentUpload = () => {
                   required
                   disabled={submitting}
                   maxLength={200}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="instituteEmail">INSTITUTE/ADMIN EMAIL *</label>
+                <input
+                  type="email"
+                  id="instituteEmail"
+                  name="instituteEmail"
+                  value={formData.instituteEmail}
+                  onChange={handleInputChange}
+                  placeholder="e.g. admin@organization.com"
+                  required
+                  disabled={submitting}
+                  maxLength={100}
                 />
               </div>
 

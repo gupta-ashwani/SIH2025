@@ -426,10 +426,11 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  border-radius: 10px;
 }
 
 .card-header h2 {
-  color: #111827;
+  color: #ffffff !important;
   margin: 0;
 }
 

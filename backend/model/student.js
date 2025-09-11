@@ -71,9 +71,23 @@ const studentSchema = new mongoose.Schema(
             "Competition",
             "CommunityService",
             "Leadership",
+            "Clubs",
+            "Volunteering",
+            "Others",
           ],
         },
         description: String,
+        organization: String,
+        instituteEmail: {
+          type: String,
+          validate: {
+            validator: function(v) {
+              return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+            },
+            message: 'Please enter a valid email address'
+          }
+        },
+        dateCompleted: Date,
         fileUrl: String,
         status: {
           type: String,
