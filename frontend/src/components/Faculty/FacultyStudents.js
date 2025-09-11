@@ -201,21 +201,6 @@ const FacultyStudents = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {/* Sort Dropdown */}
-          <div className="sort-dropdown">
-            <label htmlFor="sort-select">Sort by:</label>
-            <select
-              id="sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="name">Name</option>
-              <option value="performance">Performance</option>
-              <option value="achievements">Achievements</option>
-              <option value="recent">Recent Activity</option>
-            </select>
-          </div>
         </div>
 
         <div className="students-summary">
@@ -234,90 +219,87 @@ const FacultyStudents = () => {
         {/* Students List */}
         <div className="students-container">
           {sortedStudents.length > 0 ? (
-            <div className="students-list">
-              {sortedStudents.map((student, index) => (
+            <div className="students-grid">
+              {students.map((student) => (
                 <div
-                  key={student._id || index}
-                  className="student-list-item"
+                  key={student._id}
+                  className="student-card"
                   onClick={() => handleViewStudent(student._id)}
                 >
-                  <div className="student-list-avatar">
-                    {student.profileImage ? (
-                      <>
-                        <img
-                          src={student.profileImage}
-                          alt={`${student.name?.first} ${student.name?.last}`}
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                            e.target.nextSibling.style.display = "flex";
-                          }}
-                        />
-                        <div
-                          className="student-list-avatar-fallback"
-                          style={{ display: "none" }}
-                        >
+                  <div className="student-card-header">
+                    <div className="student-avatar">
+                      {student.profilePicture ? (
+                        <>
+                          <img
+                            src={student.profilePicture}
+                            alt={`${student.name?.first} ${student.name?.last}`}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.nextSibling.style.display = "flex";
+                            }}
+                          />
+                          <div
+                            className="student-avatar-fallback"
+                            style={{ display: "none" }}
+                          >
+                            {student.name?.first?.charAt(0) || "S"}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="student-avatar-fallback">
                           {student.name?.first?.charAt(0) || "S"}
                         </div>
-                      </>
-                    ) : (
-                      <div className="student-list-avatar-fallback">
-                        {student.name?.first?.charAt(0) || "S"}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="student-list-info">
-                    <div className="student-list-main">
-                      <h3 className="student-list-name">
-                        {student.name?.first} {student.name?.last}
-                      </h3>
-                      <span className="student-list-id">
-                        ID: {student.studentID}
-                      </span>
+                      )}
                     </div>
-                    <div className="student-list-details">
-                      <span className="student-list-batch">
-                        Batch: {student.batch}
-                      </span>
-                      <span className="student-list-achievements">
-                        <i className="fas fa-trophy"></i>
-                        {student.achievementCount || 0} Achievements
-                      </span>
+                    <div className="student-card-actions">
+                      <button
+                        className="card-action-btn edit-btn"
+                        onClick={(e) => handleEditStudent(e, student)}
+                        title="Edit Student"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        className="card-action-btn delete-btn"
+                        onClick={(e) => handleDeleteStudent(e, student)}
+                        title="Delete Student"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
                     </div>
                   </div>
 
-                  <div className="student-list-stats">
-                    <div className="student-list-stat">
-                      <span className="stat-value">
+                  <div className="student-card-body">
+                    <h3 className="student-name">
+                      {student.name?.first} {student.name?.last}
+                    </h3>
+                    <div className="student-id">
+                      ID: {student.studentID}
+                    </div>
+                    <div className="student-batch">
+                      Batch: {student.batch}
+                    </div>
+                  </div>
+
+                  <div className="student-card-stats">
+                    <div className="stat-item">
+                      <div className="stat-value">
                         {student.cgpa ? `${student.cgpa.toFixed(2)}/10` : "N/A"}
-                      </span>
-                      <span className="stat-label">CGPA</span>
+                      </div>
+                      <div className="stat-label">CGPA</div>
                     </div>
-                    <div className="student-list-stat">
-                      <span className="stat-value">
+                    <div className="stat-item">
+                      <div className="stat-value">
                         {student.pendingReviews || 0}
-                      </span>
-                      <span className="stat-label">Pending</span>
+                      </div>
+                      <div className="stat-label">PENDING</div>
                     </div>
                   </div>
 
-                  <div className="student-list-actions">
-                    <button
-                      className="action-btn edit-btn"
-                      onClick={(e) => handleEditStudent(e, student)}
-                      title="Edit Student"
-                    >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button
-                      className="action-btn delete-btn"
-                      onClick={(e) => handleDeleteStudent(e, student)}
-                      title="Delete Student"
-                    >
-                      <i className="fas fa-trash"></i>
-                    </button>
-                    <div className="chevron-icon">
-                      <i className="fas fa-chevron-right"></i>
+                  <div className="student-card-footer">
+                    <div className="achievements-badge">
+                      <i className="fas fa-trophy"></i>
+                      <span>{student.achievementCount || 0} Achievements</span>
                     </div>
                   </div>
                 </div>
@@ -347,7 +329,13 @@ const FacultyStudents = () => {
 
       {/* Edit Student Modal */}
       {showEditModal && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowEditModal(false);
+            setEditingStudent(null);
+            setEditForm({});
+          }
+        }}>
           <div className="modal-content">
             <div className="modal-header">
               <h2>Edit Student</h2>
@@ -504,7 +492,12 @@ const FacultyStudents = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="modal-overlay">
+        <div className="modal-overlay" onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowDeleteModal(false);
+            setStudentToDelete(null);
+          }
+        }}>
           <div className="modal-content delete-modal">
             <div className="modal-header">
               <h2>Delete Student</h2>
