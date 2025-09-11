@@ -78,6 +78,11 @@
   font-weight: 700;
   margin: 0 0 8px 0;
   line-height: 1.2;
+  background-color: #284B63;
+  color: #FFFFFF;
+  padding: 16px 24px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
 .institute-dashboard-subtitle {
@@ -116,6 +121,206 @@
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+/* Modal Styles */
+.institute-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.institute-modal-content {
+  background-color: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.institute-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background-color: #284B63;
+  border-radius: 16px 16px 0 0;
+  border-bottom: none;
+}
+
+.institute-modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: transparent;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  display: block;
+}
+
+.institute-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #FFFFFF;
+  transition: all 0.2s ease;
+}
+
+.institute-modal-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+/* Form Styles */
+.institute-college-form {
+  padding: 32px;
+}
+
+.institute-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.institute-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.institute-form-group-full {
+  grid-column: 1 / -1;
+}
+
+.institute-form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #284B63;
+  margin-bottom: 8px;
+}
+
+.institute-form-input,
+.institute-form-select {
+  padding: 12px 16px;
+  border: 1px solid #D9D9D9;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background-color: #FFFFFF;
+}
+
+.institute-form-input:focus,
+.institute-form-select:focus {
+  outline: none;
+  border-color: #284B63;
+  box-shadow: 0 0 0 3px rgba(40, 75, 99, 0.1);
+}
+
+.institute-form-input::placeholder {
+  color: #9ca3af;
+}
+
+.institute-form-section {
+  margin-bottom: 32px;
+}
+
+.institute-form-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background-color: #284B63;
+  margin: 0 0 16px 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border-bottom: none;
+}
+
+.institute-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #D9D9D9;
+}
+
+.institute-btn-primary,
+.institute-btn-secondary {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.institute-btn-primary {
+  background-color: #284B63;
+  color: #FFFFFF;
+}
+
+.institute-btn-primary:hover {
+  background-color: #1e3a52;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 75, 99, 0.2);
+}
+
+.institute-btn-secondary {
+  background-color: #FFFFFF;
+  color: #284B63;
+  border: 1px solid #D9D9D9;
+}
+
+.institute-btn-secondary:hover {
+  background-color: #f8fafc;
+  border-color: #284B63;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+  .institute-modal-overlay {
+    padding: 16px;
+  }
+  
+  .institute-modal-content {
+    max-height: 95vh;
+  }
+  
+  .institute-modal-header {
+    padding: 20px 24px;
+  }
+  
+  .institute-college-form {
+    padding: 24px;
+  }
+  
+  .institute-form-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .institute-form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .institute-btn-primary,
+  .institute-btn-secondary {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -201,22 +406,29 @@
 .institute-section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 24px;
+  background-color: #284B63;
+  padding: 16px 24px;
+  border-radius: 12px;
+  width: 100%;
 }
 
 .institute-section-title {
   font-size: 20px;
   font-weight: 600;
-  color: #284B63;
+  color: #FFFFFF;
+  background-color: transparent;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0;
+  border-radius: 0;
 }
 
 .institute-section-title svg {
-  color: #284B63;
+  color: #FFFFFF;
 }
 
 .institute-management-grid {

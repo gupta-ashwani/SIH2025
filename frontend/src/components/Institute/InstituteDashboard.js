@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import './InstituteDashboard.css'; 
 import { useParams } from "react-router-dom";
 import { instituteService } from "../../services/authService";
 import "./InstituteDashboard.css";
@@ -8,10 +9,105 @@ const InstituteDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddCollegeModal, setShowAddCollegeModal] = useState(false);
+  const [collegeFormData, setCollegeFormData] = useState({
+    name: '',
+    code: '',
+    email: '',
+    password: '',
+    contactNumber: '',
+    address: {
+      line1: '',
+      line2: '',
+      city: '',
+      state: '',
+      country: '',
+      pincode: ''
+    },
+    website: '',
+    type: 'Other'
+  });
 
   useEffect(() => {
     fetchDashboardData();
   }, [id]);
+
+  const handleAddCollegeClick = () => {
+    setShowAddCollegeModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddCollegeModal(false);
+    setCollegeFormData({
+      name: '',
+      code: '',
+      email: '',
+      password: '',
+      contactNumber: '',
+      address: {
+        line1: '',
+        line2: '',
+        city: '',
+        state: '',
+        country: '',
+        pincode: ''
+      },
+      website: '',
+      type: 'Other'
+    });
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith('address.')) {
+      const addressField = name.split('.')[1];
+      setCollegeFormData(prev => ({
+        ...prev,
+        address: {
+          ...prev.address,
+          [addressField]: value
+        }
+      }));
+    } else {
+      setCollegeFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleSubmitCollege = async (e) => {
+    e.preventDefault();
+    try {
+      console.log('Submitting college data:', {
+        ...collegeFormData,
+        institute: id
+      });
+      
+      const response = await instituteService.addCollege({
+        ...collegeFormData,
+        institute: id
+      });
+      
+      console.log('API Response:', response);
+      
+      if (response.data) {
+        alert('College added successfully!');
+        handleCloseModal();
+        fetchDashboardData(); // Refresh data
+      }
+    } catch (error) {
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      
+      if (error.response) {
+        alert(`Error: ${error.response.data.message || error.response.statusText}`);
+      } else {
+        alert('Network error. Please check your connection.');
+      }
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -182,7 +278,7 @@ const InstituteDashboard = () => {
               </div>
             </div>
             
-            <div className="institute-management-card">
+            <div className="institute-management-card" onClick={handleAddCollegeClick}>
               <div className="institute-management-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -347,6 +443,208 @@ const InstituteDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Add College Modal */}
+      {showAddCollegeModal && (
+        <div className="institute-modal-overlay" onClick={handleCloseModal}>
+          <div className="institute-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="institute-modal-header">
+              <h2 className="institute-modal-title">Add New College</h2>
+              <button className="institute-modal-close" onClick={handleCloseModal}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </button>
+            </div>
+            
+            <form className="institute-college-form" onSubmit={handleSubmitCollege}>
+              <div className="institute-form-grid">
+                <div className="institute-form-group">
+                  <label className="institute-form-label">College Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={collegeFormData.name}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    required
+                    placeholder="Enter college name"
+                  />
+                </div>
+
+              <div className="institute-form-group">
+                <label className="institute-form-label">College Code *</label>
+                <input
+                  type="text"
+                  name="code"
+                  value={collegeFormData.code}
+                  onChange={handleFormChange}
+                  className="institute-form-input"
+                  required
+                  placeholder="Enter college code (e.g., TECH001)"
+                  style={{textTransform: 'uppercase'}}
+                />
+              </div>
+
+              <div className="institute-form-group">
+                <label className="institute-form-label">Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={collegeFormData.email}
+                  onChange={handleFormChange}
+                  className="institute-form-input"
+                  required
+                  placeholder="Enter college email"
+                />
+              </div>
+
+              <div className="institute-form-group">
+                <label className="institute-form-label">Password *</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={collegeFormData.password}
+                  onChange={handleFormChange}
+                  className="institute-form-input"
+                  required
+                  placeholder="Enter password"
+                />
+              </div>
+
+              <div className="institute-form-group">
+                <label className="institute-form-label">Contact Number</label>
+                <input
+                  type="tel"
+                  name="contactNumber"
+                  value={collegeFormData.contactNumber}
+                  onChange={handleFormChange}
+                  className="institute-form-input"
+                  placeholder="Enter contact number"
+                />
+              </div>
+
+              <div className="institute-form-group">
+                <label className="institute-form-label">College Type</label>
+                <select
+                  name="type"
+                  value={collegeFormData.type}
+                  onChange={handleFormChange}
+                  className="institute-form-select"
+                >
+                  <option value="Engineering College">Engineering College</option>
+                  <option value="Medical College">Medical College</option>
+                  <option value="Arts College">Arts College</option>
+                  <option value="Science College">Science College</option>
+                  <option value="Commerce College">Commerce College</option>
+                  <option value="Law College">Law College</option>
+                  <option value="Other">Other</option>
+                </select>
+                </div>
+
+                <div className="institute-form-group institute-form-group-full">
+                <label className="institute-form-label">Website</label>
+                <input
+                  type="url"
+                  name="website"
+                  value={collegeFormData.website}
+                  onChange={handleFormChange}
+                  className="institute-form-input"
+                  placeholder="Enter website URL"
+                />
+                </div>
+              </div>
+
+              <div className="institute-form-section">
+              <h3 className="institute-form-section-title">Address</h3>
+                <div className="institute-form-grid">
+                  <div className="institute-form-group">
+                  <label className="institute-form-label">Address Line 1</label>
+                  <input
+                    type="text"
+                    name="address.line1"
+                    value={collegeFormData.address.line1}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    placeholder="Enter address line 1"
+                  />
+                </div>
+
+                <div className="institute-form-group">
+                  <label className="institute-form-label">Address Line 2</label>
+                  <input
+                    type="text"
+                    name="address.line2"
+                    value={collegeFormData.address.line2}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    placeholder="Enter address line 2"
+                  />
+                </div>
+
+                <div className="institute-form-group">
+                  <label className="institute-form-label">City</label>
+                  <input
+                    type="text"
+                    name="address.city"
+                    value={collegeFormData.address.city}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    placeholder="Enter city"
+                  />
+                </div>
+
+                <div className="institute-form-group">
+                  <label className="institute-form-label">State</label>
+                  <input
+                    type="text"
+                    name="address.state"
+                    value={collegeFormData.address.state}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    placeholder="Enter state"
+                  />
+                </div>
+
+                <div className="institute-form-group">
+                  <label className="institute-form-label">Country</label>
+                  <input
+                    type="text"
+                    name="address.country"
+                    value={collegeFormData.address.country}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    placeholder="Enter country"
+                  />
+                </div>
+
+                <div className="institute-form-group">
+                  <label className="institute-form-label">Pincode</label>
+                  <input
+                    type="text"
+                    name="address.pincode"
+                    value={collegeFormData.address.pincode}
+                    onChange={handleFormChange}
+                    className="institute-form-input"
+                    placeholder="Enter pincode"
+                  />
+                  </div>
+                </div>
+              </div>
+
+              <div className="institute-form-actions">
+              <button type="button" className="institute-btn-secondary" onClick={handleCloseModal}>
+                Cancel
+              </button>
+              <button type="submit" className="institute-btn-primary">
+                Add College
+              </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -197,4 +197,77 @@ router.get("/profile/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Add college to institute
+router.post("/colleges", requireAuth, async (req, res) => {
+  try {
+    const {
+      name,
+      code,
+      email,
+      password,
+      contactNumber,
+      address,
+      website,
+      type,
+      institute
+    } = req.body;
+
+    // Verify the user has access to this institute
+    if (req.user.role !== "institute" && req.user.role !== "superadmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    if (req.user.role === "institute" && req.user._id.toString() !== institute) {
+      return res.status(403).json({ error: "Access denied to this institute" });
+    }
+
+    // Check if college code already exists
+    const existingCollege = await College.findOne({ code: code.toUpperCase() });
+    if (existingCollege) {
+      return res.status(400).json({ error: "College code already exists" });
+    }
+
+    // Check if email already exists
+    const existingEmail = await College.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // Create new college
+    const college = new College({
+      institute,
+      name: name.trim(),
+      code: code.toUpperCase(),
+      email: email.toLowerCase(),
+      password, // In production, this should be hashed
+      contactNumber,
+      address,
+      website,
+      type: type || 'Other'
+    });
+
+    await college.save();
+
+    res.status(201).json({
+      message: "College added successfully",
+      college: {
+        _id: college._id,
+        name: college.name,
+        code: college.code,
+        email: college.email,
+        type: college.type,
+        status: college.status
+      }
+    });
+  } catch (error) {
+    console.error("Add college error:", error);
+    if (error.code === 11000) {
+      // Duplicate key error
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ error: `${field} already exists` });
+    }
+    res.status(500).json({ error: "Failed to add college" });
+  }
+});
+
 module.exports = router;

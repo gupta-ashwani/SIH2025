@@ -213,6 +213,10 @@ export const instituteService = {
   updateProfile: (id, profileData) => {
     return api.put(`/institute/profile/${id}`, profileData);
   },
+
+  addCollege: (collegeData) => {
+    return api.post('/institute/colleges', collegeData);
+  },
 };
 
 export const eventService = {
