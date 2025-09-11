@@ -1,6 +1,11 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const roadmapSchema = new mongoose.Schema({
+  student_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
+    required: true,
+  },
   potential_roadmaps: [
     {
       career_title: {
@@ -27,8 +32,16 @@ const roadmapSchema = new mongoose.Schema({
       ],
     },
   ],
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
+  updated_at: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Roadmap = mongoose.model("Roadmap", roadmapSchema);
 
-export default Roadmap;
+module.exports = Roadmap;
