@@ -654,7 +654,7 @@ const handleSubmitCollege = async (e) => {
       {/* Bulk Upload Modal */}
       {showBulkUploadModal && (
         <div className="institute-modal-overlay" onClick={() => setShowBulkUploadModal(false)}>
-          <div className="institute-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="institute-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
             <div className="institute-modal-header">
               <h2 className="institute-modal-title">Bulk Upload Colleges</h2>
               <button className="institute-modal-close" onClick={() => setShowBulkUploadModal(false)}>
@@ -665,36 +665,72 @@ const handleSubmitCollege = async (e) => {
               </button>
             </div>
             
-            <div style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ marginTop: 0, color: '#284B63' }}>Bulk Upload Instructions</h3>
-                <p>To upload multiple colleges at once, please prepare an Excel file with the following columns:</p>
-                <ul style={{ paddingLeft: '24px', margin: '12px 0' }}>
-                  <li>Name (required)</li>
-                  <li>Code (required, unique)</li>
-                  <li>Email (required, unique)</li>
-                  <li>Password (required)</li>
-                  <li>Contact Number</li>
-                  <li>Address</li>
-                  <li>Type</li>
+            <div style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px', backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                <h3 style={{ marginTop: 0, color: '#284B63', fontSize: '16px', fontWeight: '600' }}>Instructions:</h3>
+                <ul style={{ paddingLeft: '20px', margin: '0', color: '#4B5563', fontSize: '14px', lineHeight: '1.6' }}>
+                  <li style={{ marginBottom: '6px' }}>Download the Excel template and fill in college details</li>
+                  <li style={{ marginBottom: '6px' }}><strong>Required columns:</strong> name, code, email</li>
+                  <li style={{ marginBottom: '6px' }}><strong>Optional columns:</strong> password, institute (ObjectId if not logged in as institute), contactNumber, line1, line2, city, state, country, pincode, website, type, status</li>
+                  <li style={{ marginBottom: '6px' }}>If no password is provided, default will be <strong>CODE@123</strong></li>
+                  <li style={{ marginBottom: '6px' }}><strong>Type:</strong> "Engineering College", "Medical College", "Arts College", etc.</li>
+                  <li style={{ marginBottom: '6px' }}><strong>Status:</strong> "Active" or "Inactive"</li>
+                  <li style={{ marginBottom: '6px' }}>Maximum file size: 5MB</li>
                 </ul>
+                
+                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                  <button style={{
+                    backgroundColor: '#284B63',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#1E3A4A'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#284B63'}
+                  >
+                    Download Excel Template
+                  </button>
+                </div>
               </div>
               
-              <div style={{ 
-                border: '2px dashed #D1D5DB', 
-                borderRadius: '8px', 
-                padding: '32px', 
-                textAlign: 'center',
-                backgroundColor: '#F9FAFB',
-                marginBottom: '24px'
-              }}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px' }}>
-                  <path d="M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M17 8L12 3L7 8" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 3L12 15" stroke="#4B5563" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <div 
+                style={{ 
+                  border: '2px dashed #D1D5DB', 
+                  borderRadius: '8px', 
+                  padding: '32px', 
+                  textAlign: 'center',
+                  backgroundColor: '#F9FAFB',
+                  marginBottom: '20px',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.borderColor = '#284B63';
+                  e.target.style.backgroundColor = '#F0F4F8';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.borderColor = '#D1D5DB';
+                  e.target.style.backgroundColor = '#F9FAFB';
+                  e.target.style.transform = 'translateY(0px)';
+                }}
+              >
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px', color: '#6B7280' }}>
+                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2"/>
+                  <polyline points="10,9 9,9 8,9" stroke="currentColor" strokeWidth="2"/>
                 </svg>
-                <p style={{ margin: '8px 0', color: '#4B5563' }}>Drag and drop your Excel file here, or <span style={{ color: '#3B82F6', cursor: 'pointer' }}>browse</span></p>
-                <p style={{ margin: 0, fontSize: '14px', color: '#6B7280' }}>Supports .xlsx, .xls (Max 5MB)</p>
+                <p style={{ margin: '8px 0', color: '#4B5563', fontSize: '16px', fontWeight: '500' }}>Drop Excel file here or click to browse</p>
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
@@ -715,17 +751,20 @@ const handleSubmitCollege = async (e) => {
                 </button>
                 <button 
                   style={{
-                    padding: '10px 16px',
+                    padding: '10px 20px',
                     borderRadius: '6px',
                     border: 'none',
                     backgroundColor: '#284B63',
                     color: 'white',
                     cursor: 'pointer',
                     fontSize: '14px',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    transition: 'background-color 0.2s ease'
                   }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#1E3A4A'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#284B63'}
                 >
-                  Upload File
+                  Upload Colleges
                 </button>
               </div>
             </div>
