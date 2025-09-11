@@ -1,9 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const axios = require("axios");
 const router = express.Router();
 const Faculty = require("../model/faculty");
 const Student = require("../model/student");
 const { requireAuth } = require("../middleware/auth");
+const { convertUploadCareUrl } = require("../utils/uploadCareUtils");
 
 // Faculty Dashboard
 router.get("/dashboard/:id", requireAuth, async (req, res) => {
@@ -304,6 +306,19 @@ router.post(
           .json({ error: "Access denied. You can only review as yourself." });
       }
 
+      // Get student and achievement details before updating
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      const achievement = student.achievements.find(
+        (ach) => ach._id.toString() === achievementId
+      );
+      if (!achievement) {
+        return res.status(404).json({ error: "Achievement not found" });
+      }
+
       // Update student's achievement status
       const reviewedAt = new Date();
       await Student.updateOne(
@@ -333,7 +348,74 @@ router.post(
         }
       );
 
-      res.json({ message: "Achievement reviewed successfully" });
+      // If achievement is approved and has a file URL, call Flask API
+      if (status === "Approved" && achievement.fileUrl) {
+        try {
+          console.log(`Calling Flask API for approved achievement: ${achievementId}`);
+          console.log(`Student ID: ${studentId}`);
+          console.log(`Original file URL: ${achievement.fileUrl}`);
+          
+          // Convert UploadCare URL to use correct domain
+          const processedUrl = convertUploadCareUrl(achievement.fileUrl);
+          const flaskApiUrl = process.env.FLASK_API_URL || 'http://localhost:5003';
+          
+          console.log(`Processed file URL: ${processedUrl}`);
+          console.log(`Flask API URL: ${flaskApiUrl}`);
+          
+          // Send GET request to Flask API with query parameters
+          const apiEndpoint = `${flaskApiUrl}/process_certificate_get`;
+          console.log(`Full API call: ${apiEndpoint}?document_url=${encodeURIComponent(processedUrl)}&student_id=${studentId}`);
+          
+          const response = await axios.get(apiEndpoint, {
+            params: {
+              document_url: processedUrl,
+              student_id: studentId
+            },
+            timeout: 30000, // 30 second timeout
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          console.log("Flask API response:", response.data);
+          
+          // Return success with Flask response
+          res.json({
+            message: "Achievement reviewed successfully",
+            flask_response: response.data,
+            status: "Flask API called successfully",
+            processed_url: processedUrl
+          });
+        } catch (flaskError) {
+          console.error("Flask API error:", flaskError.message);
+          
+          if (flaskError.code === 'ECONNREFUSED') {
+            console.error("Flask API server is not running or not accessible");
+          } else if (flaskError.code === 'ETIMEDOUT') {
+            console.error("Flask API request timed out");
+          }
+          
+          // Still return success for the review, but note the Flask API issue
+          res.json({
+            message: "Achievement reviewed successfully",
+            warning: "Flask API call failed",
+            flask_error: flaskError.message,
+            flask_error_code: flaskError.code || 'UNKNOWN'
+          });
+        }
+      } else {
+        // Normal response for non-approved or no file URL
+        const statusMessage = status === "Approved" 
+          ? "No file URL found for Flask processing" 
+          : `Achievement ${status.toLowerCase()}`;
+          
+        console.log(`Achievement review completed: ${statusMessage}`);
+        
+        res.json({ 
+          message: "Achievement reviewed successfully",
+          status: statusMessage
+        });
+      }
     } catch (error) {
       console.error("Review error:", error);
       res.status(500).json({ error: "Failed to review achievement" });
