@@ -5,6 +5,76 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:3030/api
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 
+// Mock data generator for analytics
+const generateMockAnalyticsData = (timeRange) => {
+  const getTimeRangeData = (range) => {
+    const now = new Date();
+    const days = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : 365;
+    const data = [];
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      data.push({
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        value: Math.floor(Math.random() * 100) + 50
+      });
+    }
+    return data;
+  };
+
+  return {
+    overview: {
+      totalInstitutes: 156,
+      totalStudents: 45230,
+      totalFaculty: 8940,
+      totalEvents: 234,
+      activeUsers: 12450,
+      systemUptime: '99.8%'
+    },
+    growth: {
+      instituteGrowth: getTimeRangeData(timeRange),
+      studentGrowth: getTimeRangeData(timeRange).map(item => ({ ...item, value: item.value * 100 })),
+      eventGrowth: getTimeRangeData(timeRange).map(item => ({ ...item, value: Math.floor(item.value / 2) }))
+    },
+    demographics: {
+      institutesByType: [
+        { label: 'Universities', value: 45, color: '#284B63' },
+        { label: 'Colleges', value: 78, color: '#10b981' },
+        { label: 'Technical', value: 23, color: '#f59e0b' },
+        { label: 'Medical', value: 10, color: '#ef4444' }
+      ],
+      studentsByYear: [
+        { label: '1st Year', value: 12500 },
+        { label: '2nd Year', value: 11200 },
+        { label: '3rd Year', value: 10800 },
+        { label: '4th Year', value: 10730 }
+      ],
+      facultyByDepartment: [
+        { label: 'Engineering', value: 3200 },
+        { label: 'Science', value: 2100 },
+        { label: 'Arts', value: 1800 },
+        { label: 'Commerce', value: 1840 }
+      ]
+    },
+    activity: {
+      dailyLogins: getTimeRangeData(timeRange).map(item => ({ ...item, value: Math.floor(item.value * 50) })),
+      eventParticipation: [
+        { label: 'Workshops', value: 1200 },
+        { label: 'Seminars', value: 890 },
+        { label: 'Competitions', value: 650 },
+        { label: 'Cultural', value: 420 }
+      ],
+      systemUsage: getTimeRangeData(timeRange).map(item => ({ ...item, value: Math.floor(item.value * 0.8) }))
+    },
+    performance: {
+      responseTime: getTimeRangeData(timeRange).map(item => ({ ...item, value: Math.floor(Math.random() * 200) + 100 })),
+      errorRate: getTimeRangeData(timeRange).map(item => ({ ...item, value: Math.random() * 2 })),
+      serverLoad: getTimeRangeData(timeRange).map(item => ({ ...item, value: Math.floor(Math.random() * 40) + 30 }))
+    }
+  };
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -390,6 +460,24 @@ export const superAdminService = {
           }
         ]
       };
+    }
+  },
+
+  // Analytics Data
+  getAnalyticsData: async (timeRange = '30d') => {
+    try {
+      const response = await api.get(`/dashboard/superadmin/analytics?timeRange=${timeRange}`);
+      
+      // If API doesn't exist yet, return structured mock data
+      if (!response.data || Object.keys(response.data).length === 0) {
+        return generateMockAnalyticsData(timeRange);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching analytics data:", error);
+      // Return mock data as fallback
+      return generateMockAnalyticsData(timeRange);
     }
   },
 

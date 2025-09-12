@@ -299,8 +299,8 @@ const SuperAdminDashboard = () => {
     try {
       switch (actionType) {
         case 'analytics':
-          // Open analytics in a new window/tab or navigate
-          window.open('/superadmin/analytics', '_blank');
+          // Navigate to analytics page
+          window.location.href = '/superadmin/analytics';
           break;
         case 'add-institute':
           // Navigate to institute registration page

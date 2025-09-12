@@ -1741,8 +1741,8 @@
 /* Section Header */
 .section-header {
   padding: 24px 32px 16px;
-  display: flex;
-  align-items: center;
+  /* display: flex; */
+  align-items: center !important;
   gap: 12px;
   border-bottom: 1px solid #f3f4f6;
   background: #fafbfc;
@@ -1783,6 +1783,10 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: #111827;
+  text-align: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+
 }
 
 /* Section Content */

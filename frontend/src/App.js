@@ -29,6 +29,7 @@ import InstituteDashboard from "./components/Institute/InstituteDashboard";
 import InstituteProfile from "./components/Institute/InstituteProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SuperAdminDashboard from "./components/SuperAdmin/SuperAdminDashboard";
+import SuperAdminAnalytics from "./components/SuperAdmin/SuperAdminAnalytics";
 import "./App.css";
 import "./styles/animations.css";
 import "./styles/utilities.css";
@@ -66,6 +67,16 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <SuperAdminDashboard />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/superadmin/analytics"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <SuperAdminAnalytics />
                     </div>
                   </ProtectedRoute>
                 }
