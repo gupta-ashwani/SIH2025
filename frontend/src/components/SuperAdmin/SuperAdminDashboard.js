@@ -30,6 +30,18 @@ const SuperAdminDashboard = () => {
   const [collegesFilter, setCollegesFilter] = useState('');
   const [totalCollegesPages, setTotalCollegesPages] = useState(1);
 
+  // Modal states
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    contactNumber: '',
+    permissions: ['full_access'],
+    status: 'Active'
+  });
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -196,17 +208,52 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const handleAdminFormChange = (e) => {
+    const { name, value } = e.target;
+    setAdminFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAdminFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setRefreshing(true);
+      await superAdminService.addAdmin({
+        name: {
+          first: adminFormData.firstName,
+          last: adminFormData.lastName
+        },
+        email: adminFormData.email,
+        password: adminFormData.password,
+        contactNumber: adminFormData.contactNumber,
+        permissions: adminFormData.permissions,
+        status: adminFormData.status
+      });
+      
+      alert('Admin added successfully!');
+      setShowAdminModal(false);
+      setAdminFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        contactNumber: '',
+        permissions: ['full_access'],
+        status: 'Active'
+      });
+      setRefreshing(false);
+    } catch (error) {
+      console.error('Error adding admin:', error);
+      alert('Failed to add admin. Please try again.');
+      setRefreshing(false);
+    }
+  };
+
   const handleQuickAction = async (actionType) => {
     try {
       switch (actionType) {
-        case 'backup':
-          if (window.confirm('Are you sure you want to create a system backup? This may take a few minutes.')) {
-            setRefreshing(true);
-            const backupResult = await superAdminService.createBackup();
-            alert('System backup initiated successfully! You will be notified when complete.');
-            setRefreshing(false);
-          }
-          break;
         case 'analytics':
           // Open analytics in a new window/tab or navigate
           window.open('/superadmin/analytics', '_blank');
@@ -216,24 +263,8 @@ const SuperAdminDashboard = () => {
           window.location.href = '/institute-registration';
           break;
         case 'manage-admins':
-          // Show admin management modal or navigate
-          const action = prompt('Admin Management:\n1. Add Admin\n2. View Admins\n3. Modify Permissions\n\nEnter option (1-3):');
-          if (action === '1') {
-            const adminEmail = prompt('Enter admin email:');
-            const adminRole = prompt('Enter admin role (superadmin, admin, moderator):');
-            if (adminEmail && adminRole) {
-              try {
-                await superAdminService.addAdmin({ email: adminEmail, role: adminRole });
-                alert('Admin added successfully!');
-              } catch (error) {
-                alert('Failed to add admin. Please check the email and try again.');
-              }
-            }
-          } else if (action === '2') {
-            window.open('/superadmin/admins', '_blank');
-          } else if (action === '3') {
-            window.open('/superadmin/permissions', '_blank');
-          }
+          // Show admin modal
+          setShowAdminModal(true);
           break;
         default:
           console.log(`Action: ${actionType}`);
@@ -270,19 +301,160 @@ const SuperAdminDashboard = () => {
   }
 
   return (
-    <div className="superadmin-dashboard-container">
+    <div className="superadmin-dashboard">
+      {/* Admin Modal */}
+      {showAdminModal && (
+        <div className="superadmin-modal-overlay" onClick={() => setShowAdminModal(false)}>
+          <div className="superadmin-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="superadmin-modal-header">
+              <h2>Add New Admin</h2>
+              <button 
+                className="superadmin-modal-close"
+                onClick={() => setShowAdminModal(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <form onSubmit={handleAdminFormSubmit} className="superadmin-admin-form">
+              <div className="superadmin-form-row">
+                <div className="superadmin-form-group">
+                  <label htmlFor="firstName">First Name *</label>
+                  <input
+                    type="text"
+                    id="firstName"
+                    name="firstName"
+                    value={adminFormData.firstName}
+                    onChange={handleAdminFormChange}
+                    required
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div className="superadmin-form-group">
+                  <label htmlFor="lastName">Last Name</label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="lastName"
+                    value={adminFormData.lastName}
+                    onChange={handleAdminFormChange}
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+
+              <div className="superadmin-form-group">
+                <label htmlFor="email">Email Address *</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={adminFormData.email}
+                  onChange={handleAdminFormChange}
+                  required
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div className="superadmin-form-group">
+                <label htmlFor="password">Password *</label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={adminFormData.password}
+                  onChange={handleAdminFormChange}
+                  required
+                  placeholder="Enter password"
+                  minLength="6"
+                />
+              </div>
+
+              <div className="superadmin-form-group">
+                <label htmlFor="contactNumber">Contact Number</label>
+                <input
+                  type="tel"
+                  id="contactNumber"
+                  name="contactNumber"
+                  value={adminFormData.contactNumber}
+                  onChange={handleAdminFormChange}
+                  placeholder="Enter contact number"
+                />
+              </div>
+
+              <div className="superadmin-form-row">
+                <div className="superadmin-form-group">
+                  <label htmlFor="permissions">Permissions</label>
+                  <select
+                    id="permissions"
+                    name="permissions"
+                    value={adminFormData.permissions[0]}
+                    onChange={(e) => setAdminFormData(prev => ({
+                      ...prev,
+                      permissions: [e.target.value]
+                    }))}
+                  >
+                    <option value="full_access">Full Access</option>
+                    <option value="limited_access">Limited Access</option>
+                    <option value="read_only">Read Only</option>
+                  </select>
+                </div>
+                <div className="superadmin-form-group">
+                  <label htmlFor="status">Status</label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={adminFormData.status}
+                    onChange={handleAdminFormChange}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="superadmin-modal-actions">
+                <button 
+                  type="button" 
+                  className="superadmin-btn-secondary"
+                  onClick={() => setShowAdminModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="superadmin-btn-primary"
+                  disabled={refreshing}
+                >
+                  {refreshing ? 'Adding...' : 'Add Admin'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="superadmin-dashboard-header">
         <div className="superadmin-header-content">
-          <h1 className="superadmin-dashboard-title">Super Admin Dashboard</h1>
-          <p className="superadmin-dashboard-subtitle">Manage and monitor the entire education platform</p>
-        </div>
-        <div className="superadmin-header-actions">
-          <button className="superadmin-btn-primary">
-            <i className="fas fa-download"></i> Export Report
-          </button>
-          <button className="superadmin-btn-secondary">
-            <i className="fas fa-cog"></i> Settings
-          </button>
+          <h1 className="superadmin-dashboard-title">SuperAdmin Dashboard</h1>
+          <p className="superadmin-dashboard-subtitle">
+            Comprehensive system management and oversight
+          </p>
+          <div className="superadmin-header-actions">
+            <button 
+              className="superadmin-btn-primary" 
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <i className={`fas fa-sync-alt ${refreshing ? 'fa-spin' : ''}`}></i>
+              {refreshing ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+            <button className="superadmin-btn-secondary">
+              <i className="fas fa-download"></i>
+              Export Report
+            </button>
+          </div>
         </div>
       </div>
 
@@ -338,12 +510,7 @@ const SuperAdminDashboard = () => {
               description="Add or modify admin privileges"
               onClick={() => handleQuickAction('manage-admins')}
             />
-            <QuickActionCard
-              icon="fas fa-database"
-              title="System Backup"
-              description="Create or restore system backup"
-              onClick={() => handleQuickAction('backup')}
-            />
+
             <QuickActionCard
               icon="fas fa-chart-line"
               title="Analytics"

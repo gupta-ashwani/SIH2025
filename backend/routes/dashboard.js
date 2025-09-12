@@ -3,6 +3,8 @@ const { requireAuth, requireRole } = require("../middleware/auth");
 const Institute = require("../model/institute");
 const Student = require("../model/student");
 const OcrOutput = require("../model/ocrOutput");
+const SuperAdmin = require("../model/superadmin");
+const bcrypt = require("bcrypt");
 const router = express.Router();
 
 // Super Admin Dashboard
@@ -289,6 +291,69 @@ function getTimeAgo(date) {
     return "Just now";
   }
 }
+
+// Add new admin
+router.post(
+  "/superadmin/add-admin",
+  requireAuth,
+  requireRole(["superadmin"]),
+  async (req, res) => {
+    try {
+      const { name, email, password, contactNumber, permissions, status } = req.body;
+
+      // Validate required fields
+      if (!name || !name.first || !email || !password) {
+        return res.status(400).json({ 
+          error: "Missing required fields: first name, email, and password are required" 
+        });
+      }
+
+      // Check if admin already exists
+      const existingAdmin = await SuperAdmin.findOne({ email: email.toLowerCase() });
+      if (existingAdmin) {
+        return res.status(400).json({ error: "Admin with this email already exists" });
+      }
+
+      // Hash password
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Create new admin
+      const newAdmin = new SuperAdmin({
+        name: {
+          first: name.first,
+          last: name.last || ""
+        },
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        contactNumber: contactNumber || "",
+        permissions: permissions || ["full_access"],
+        status: status || "Active"
+      });
+
+      await newAdmin.save();
+
+      // Return admin data without password
+      const adminResponse = {
+        id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        contactNumber: newAdmin.contactNumber,
+        permissions: newAdmin.permissions,
+        status: newAdmin.status,
+        createdAt: newAdmin.createdAt
+      };
+
+      res.status(201).json({
+        message: "Admin created successfully",
+        admin: adminResponse
+      });
+    } catch (error) {
+      console.error("Add admin error:", error);
+      res.status(500).json({ error: "Failed to create admin" });
+    }
+  }
+);
 
 // Create test institutions for demonstration (only for development)
 router.post(
