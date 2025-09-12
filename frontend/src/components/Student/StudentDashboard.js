@@ -340,66 +340,6 @@ const StudentDashboard = () =>{
           </div>
         </div>
 
-        {/* Quick Actions Section */}
-        {isOwnDashboard && !isFacultyViewing && (
-          <div className="quick-actions-section">
-            <h2>Quick Actions</h2>
-            <div className="quick-actions-grid">
-              <button
-                className="action-btn"
-                onClick={() => handleNavigate("upload")}
-              >
-                <div className="action-icon">
-                  <i className="fas fa-upload"></i>
-                </div>
-                <div className="action-content">
-                  <h3>Upload Documents</h3>
-                  <p>Add certificates, projects & achievements</p>
-                </div>
-              </button>
-              
-              <button
-                className="action-btn"
-                onClick={() => handleNavigate("portfolio")}
-              >
-                <div className="action-icon">
-                  <i className="fas fa-folder-open"></i>
-                </div>
-                <div className="action-content">
-                  <h3>View Portfolio</h3>
-                  <p>Browse your complete portfolio</p>
-                </div>
-              </button>
-              
-              <button
-                className="action-btn"
-                onClick={() => navigate(`/student/roadmap/${id}`)}
-              >
-                <div className="action-icon">
-                  <i className="fas fa-map-location-dot"></i>
-                </div>
-                <div className="action-content">
-                  <h3>Career Roadmap</h3>
-                  <p>Get personalized career guidance</p>
-                </div>
-              </button>
-              
-              <button
-                className="action-btn"
-                onClick={() => handleNavigate("analytics")}
-              >
-                <div className="action-icon">
-                  <i className="fas fa-chart-line"></i>
-                </div>
-                <div className="action-content">
-                  <h3>Analytics</h3>
-                  <p>View your progress & insights</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Main Content Grid */}
         <div className="main-content-grid">
           {/* Recent Activities */}

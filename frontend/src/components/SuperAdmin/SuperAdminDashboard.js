@@ -32,6 +32,10 @@ const SuperAdminDashboard = () => {
 
   // Modal states
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedInstitution, setSelectedInstitution] = useState(null);
+  const [reviewAction, setReviewAction] = useState(null);
+  const [rejectionComment, setRejectionComment] = useState('');
   const [adminFormData, setAdminFormData] = useState({
     firstName: '',
     lastName: '',
@@ -208,6 +212,46 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const handleReviewClick = (institution) => {
+    setSelectedInstitution(institution);
+    setReviewAction(null);
+    setRejectionComment('');
+    setShowReviewModal(true);
+  };
+
+  const handleReviewAction = async (action) => {
+    if (action === 'reject' && !rejectionComment.trim()) {
+      alert('Please provide a reason for rejection.');
+      return;
+    }
+
+    try {
+      if (action === 'approve') {
+        await superAdminService.approveCollege(selectedInstitution.id);
+      } else if (action === 'reject') {
+        await superAdminService.rejectCollege(selectedInstitution.id, rejectionComment);
+      }
+      
+      // Close modal and refresh data
+      setShowReviewModal(false);
+      setSelectedInstitution(null);
+      setRejectionComment('');
+      await fetchColleges();
+      await fetchStats();
+      await fetchPendingInstitutions();
+    } catch (error) {
+      console.error(`Error ${action}ing institute:`, error);
+      alert(`Failed to ${action} institute. Please try again.`);
+    }
+  };
+
+  const handleDirectReject = (institution) => {
+    setSelectedInstitution(institution);
+    setReviewAction('reject');
+    setRejectionComment('');
+    setShowReviewModal(true);
+  };
+
   const handleAdminFormChange = (e) => {
     const { name, value } = e.target;
     setAdminFormData(prev => ({
@@ -302,6 +346,156 @@ const SuperAdminDashboard = () => {
 
   return (
     <div className="superadmin-dashboard">
+      {/* Review Modal */}
+      {showReviewModal && selectedInstitution && (
+        <div className="superadmin-modal-overlay" onClick={() => setShowReviewModal(false)}>
+          <div className="superadmin-modal-content superadmin-review-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="superadmin-modal-header">
+              <h2>Review Institution Application</h2>
+              <button 
+                className="superadmin-modal-close"
+                onClick={() => setShowReviewModal(false)}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="superadmin-review-content">
+              {/* Institution Header */}
+              <div className="superadmin-review-header">
+                <div className="superadmin-institution-avatar-large">
+                  {selectedInstitution.avatar || selectedInstitution.name?.substring(0, 2).toUpperCase() || 'II'}
+                </div>
+                <div className="superadmin-review-title-section">
+                  <h3>{selectedInstitution.name || 'Institution Name'}</h3>
+                  <p className="superadmin-institution-type">{selectedInstitution.type || 'Educational Institution'}</p>
+                  <span className={`superadmin-status-badge ${selectedInstitution.reviewStatus || 'under-review'}`}>
+                    {selectedInstitution.reviewStatus === 'under-review' ? 'UNDER REVIEW' :
+                     selectedInstitution.reviewStatus === 'documentation-pending' ? 'DOCUMENTATION PENDING' :
+                     selectedInstitution.reviewStatus === 'final-review' ? 'FINAL REVIEW' : 'UNDER REVIEW'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Institution Details */}
+              <div className="superadmin-review-details">
+                <div className="superadmin-review-section">
+                  <h4><i className="fas fa-info-circle"></i> Basic Information</h4>
+                  <div className="superadmin-detail-grid">
+                    <div className="superadmin-detail-item">
+                      <label>Institution Name:</label>
+                      <span>{selectedInstitution.name || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Institution Type:</label>
+                      <span>{selectedInstitution.type || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Location:</label>
+                      <span>{selectedInstitution.location || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Contact Email:</label>
+                      <span>{selectedInstitution.contact || selectedInstitution.email || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="superadmin-review-section">
+                  <h4><i className="fas fa-users"></i> Statistics</h4>
+                  <div className="superadmin-detail-grid">
+                    <div className="superadmin-detail-item">
+                      <label>Total Students:</label>
+                      <span>{selectedInstitution.students || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Faculty Members:</label>
+                      <span>{selectedInstitution.faculty || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Departments:</label>
+                      <span>{selectedInstitution.departments || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Established:</label>
+                      <span>{selectedInstitution.established || 'N/A'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="superadmin-review-section">
+                  <h4><i className="fas fa-clock"></i> Application Details</h4>
+                  <div className="superadmin-detail-grid">
+                    <div className="superadmin-detail-item">
+                      <label>Application Date:</label>
+                      <span>{selectedInstitution.requested || selectedInstitution.submittedTime || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Application ID:</label>
+                      <span>{selectedInstitution.id || 'N/A'}</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Documents Status:</label>
+                      <span className="superadmin-status-text complete">Complete</span>
+                    </div>
+                    <div className="superadmin-detail-item">
+                      <label>Verification Status:</label>
+                      <span className="superadmin-status-text pending">Pending Review</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rejection Comment Section */}
+                {(reviewAction === 'reject' || rejectionComment) && (
+                  <div className="superadmin-review-section">
+                    <h4><i className="fas fa-comment"></i> Rejection Reason</h4>
+                    <textarea
+                      className="superadmin-rejection-textarea"
+                      placeholder="Please provide a detailed reason for rejection..."
+                      value={rejectionComment}
+                      onChange={(e) => setRejectionComment(e.target.value)}
+                      rows="4"
+                      required
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="superadmin-modal-actions superadmin-review-actions">
+              <button 
+                type="button" 
+                className="superadmin-btn-secondary"
+                onClick={() => setShowReviewModal(false)}
+              >
+                Close
+              </button>
+              <button 
+                type="button" 
+                className="superadmin-btn-success"
+                onClick={() => handleReviewAction('approve')}
+              >
+                <i className="fas fa-check"></i> Approve
+              </button>
+              <button 
+                type="button" 
+                className="superadmin-btn-danger"
+                onClick={() => {
+                  if (reviewAction !== 'reject') {
+                    setReviewAction('reject');
+                  } else {
+                    handleReviewAction('reject');
+                  }
+                }}
+              >
+                <i className="fas fa-times"></i> 
+                {reviewAction === 'reject' ? 'Confirm Reject' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Admin Modal */}
       {showAdminModal && (
         <div className="superadmin-modal-overlay" onClick={() => setShowAdminModal(false)}>
@@ -584,17 +778,14 @@ const SuperAdminDashboard = () => {
                       </button>
                       <button 
                         className="superadmin-action-btn reject"
-                        onClick={() => {
-                          const reason = prompt('Reason for rejection:');
-                          if (reason) handleCollegeAction('reject', institution.id, { reason });
-                        }}
+                        onClick={() => handleDirectReject(institution)}
                       >
                         <i className="fas fa-times"></i>
                         Reject
                       </button>
                       <button 
                         className="superadmin-action-btn review"
-                        onClick={() => console.log('View details:', institution.id)}
+                        onClick={() => handleReviewClick(institution)}
                       >
                         <i className="fas fa-eye"></i>
                         Review
