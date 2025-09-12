@@ -10,11 +10,7 @@
   background-color: #f8f9fa;
 }
 
-/* Faculty Analytics Page Layout */
-.faculty-analytics {
-  min-height: calc(100vh - 70px);
-  background-color: #f8f9fa;
-}
+/* Faculty Analytics Page Layout - Removed duplicate definition */
 
 /* Faculty Reviews Page Layout */
 .faculty-reviews {
