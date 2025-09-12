@@ -1,442 +1,344 @@
-import React, { useEffect, useState } from "react";
-import { dashboardService } from "../../services/authService";
-import { useNavigate } from "react-router-dom";
-import InstituteRequestsTable from "./InstituteRequestsTable";
-import "./SuperAdmin.css";
+import React, { useState, useEffect } from 'react';
+import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = () => {
-  const navigate = useNavigate();
-  const [metrics, setMetrics] = useState(null);
+  const [stats, setStats] = useState({
+    totalColleges: 0,
+    totalStudents: 0,
+    totalFaculty: 0,
+    totalEvents: 0,
+    activeUsers: 0,
+    systemHealth: 'Good'
+  });
+
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [colleges, setColleges] = useState([]);
+  const [systemAlerts, setSystemAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [pendingInstitutions, setPendingInstitutions] = useState([]);
-  const [platformHealth, setPlatformHealth] = useState(null);
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [actionLoading, setActionLoading] = useState({});
-  const [selectedInstitution, setSelectedInstitution] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [comment, setComment] = useState("");
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [metricsRes, pendingRes, healthRes, activityRes] = await Promise.all([
-          dashboardService.getDashboard("superadmin"),
-          dashboardService.getPendingInstitutions(),
-          dashboardService.getPlatformHealth(),
-          dashboardService.getRecentActivity()
-        ]);
-        
-        setMetrics(metricsRes.data.metrics || null);
-        setPendingInstitutions(pendingRes.data.institutions || []);
-        setPlatformHealth(healthRes.data.healthMetrics || null);
-        setRecentActivity(activityRes.data.activities || []);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-        setError("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchDashboardData();
   }, []);
 
-  const formatNumber = (value) => {
-    if (value == null) return "—";
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return value.toLocaleString();
-    return String(value);
-  };
-
-  const handleReview = (institution) => {
-    setSelectedInstitution(institution);
-    setComment("");
-    setShowModal(true);
-  };
-
-  const handleApprove = async () => {
-    if (!selectedInstitution) return;
-    
-    try {
-      setActionLoading(prev => ({ ...prev, [selectedInstitution.id]: 'approve' }));
-      await dashboardService.approveInstitution(selectedInstitution.id);
-      
-      // Remove from pending list
-      setPendingInstitutions(prev => prev.filter(inst => inst.id !== selectedInstitution.id));
-      
-      // Update metrics
-      setMetrics(prev => ({
-        ...prev,
-        pendingApprovals: prev.pendingApprovals - 1,
-        institutes: prev.institutes + 1
-      }));
-      
-      // Add to recent activity
-      setRecentActivity(prev => [{
-        id: selectedInstitution.id,
-        type: "institution_approved",
-        title: `${selectedInstitution.name}: Institution approved and activated`,
-        time: "Just now",
-        approvedBy: "You"
-      }, ...prev.slice(0, 4)]);
-      
-      setShowModal(false);
-      setSelectedInstitution(null);
-    } catch (err) {
-      console.error("Failed to approve institution", err);
-      setError("Failed to approve institution");
-    } finally {
-      setActionLoading(prev => ({ ...prev, [selectedInstitution.id]: null }));
-    }
-  };
-
-  const handleReject = async () => {
-    if (!selectedInstitution) return;
-    
-    if (!comment.trim()) {
-      setError("Comment is required for rejection");
-      return;
-    }
-    
-    try {
-      setActionLoading(prev => ({ ...prev, [selectedInstitution.id]: 'reject' }));
-      await dashboardService.rejectInstitution(selectedInstitution.id, comment);
-      
-      // Remove from pending list
-      setPendingInstitutions(prev => prev.filter(inst => inst.id !== selectedInstitution.id));
-      
-      // Update metrics
-      setMetrics(prev => ({
-        ...prev,
-        pendingApprovals: prev.pendingApprovals - 1
-      }));
-      
-      setShowModal(false);
-      setSelectedInstitution(null);
-      setComment("");
-    } catch (err) {
-      console.error("Failed to reject institution", err);
-      setError("Failed to reject institution");
-    } finally {
-      setActionLoading(prev => ({ ...prev, [selectedInstitution.id]: null }));
-    }
-  };
-
-  const handlePlatformAction = (action) => {
-    switch (action) {
-      case 'review':
-        navigate('/superadmin/review-institutions');
-        break;
-      case 'manage':
-        navigate('/superadmin/manage-admins');
-        break;
-      case 'add':
-        navigate('/superadmin/add-institution');
-        break;
-      case 'analytics':
-        navigate('/superadmin/analytics');
-        break;
-      default:
-        break;
-    }
-  };
-
-  const createTestData = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      await dashboardService.createTestInstitutions();
-      
-      // Refresh all data
-      const [metricsRes, pendingRes, healthRes, activityRes] = await Promise.all([
-        dashboardService.getDashboard("superadmin"),
-        dashboardService.getPendingInstitutions(),
-        dashboardService.getPlatformHealth(),
-        dashboardService.getRecentActivity()
+      // Simulate API calls - replace with actual API endpoints
+      await Promise.all([
+        fetchStats(),
+        fetchRecentActivities(),
+        fetchColleges(),
+        fetchSystemAlerts()
       ]);
-      
-      setMetrics(metricsRes.data.metrics || null);
-      setPendingInstitutions(pendingRes.data.institutions || []);
-      setPlatformHealth(healthRes.data.healthMetrics || null);
-      setRecentActivity(activityRes.data.activities || []);
-    } catch (err) {
-      console.error("Failed to create test data", err);
-      setError("Failed to create test data");
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="dashboard-container">
-      <main className="dashboard-content">
-        {error && (
-          <div className="alert alert-danger" role="alert">{error}</div>
+  const fetchStats = async () => {
+    // Mock data - replace with actual API call
+    setStats({
+      totalColleges: 45,
+      totalStudents: 12500,
+      totalFaculty: 850,
+      totalEvents: 320,
+      activeUsers: 1250,
+      systemHealth: 'Good'
+    });
+  };
+
+  const fetchRecentActivities = async () => {
+    // Mock data - replace with actual API call
+    setRecentActivities([
+      { id: 1, action: 'New college registered', college: 'MIT College', time: '2 hours ago', type: 'college' },
+      { id: 2, action: 'System backup completed', time: '4 hours ago', type: 'system' },
+      { id: 3, action: 'User reported issue', user: 'John Doe', time: '6 hours ago', type: 'support' },
+      { id: 4, action: 'Event created', event: 'Tech Fest 2024', time: '8 hours ago', type: 'event' },
+      { id: 5, action: 'Faculty profile updated', faculty: 'Dr. Smith', time: '1 day ago', type: 'profile' }
+    ]);
+  };
+
+  const fetchColleges = async () => {
+    // Mock data - replace with actual API call
+    setColleges([
+      { id: 1, name: 'MIT College of Engineering', students: 2500, faculty: 180, status: 'Active', lastActive: '2 hours ago' },
+      { id: 2, name: 'Stanford University', students: 3200, faculty: 220, status: 'Active', lastActive: '1 hour ago' },
+      { id: 3, name: 'Harvard University', students: 2800, faculty: 195, status: 'Active', lastActive: '3 hours ago' },
+      { id: 4, name: 'Oxford University', students: 1900, faculty: 145, status: 'Inactive', lastActive: '2 days ago' },
+      { id: 5, name: 'Cambridge University', students: 2100, faculty: 160, status: 'Active', lastActive: '30 minutes ago' }
+    ]);
+  };
+
+  const fetchSystemAlerts = async () => {
+    // Mock data - replace with actual API call
+    setSystemAlerts([
+      { id: 1, type: 'warning', message: 'Server load is high (85%)', time: '1 hour ago' },
+      { id: 2, type: 'info', message: 'Scheduled maintenance in 2 days', time: '3 hours ago' },
+      { id: 3, type: 'error', message: 'Failed login attempts detected', time: '5 hours ago' }
+    ]);
+  };
+
+  const StatCard = ({ icon, title, value, change }) => (
+    <div className="superadmin-stat-card">
+      <div className="superadmin-stat-icon">
+        <i className={icon}></i>
+      </div>
+      <div className="superadmin-stat-content">
+        <h3>{value}</h3>
+        <p>{title}</p>
+        {change && (
+          <span className={`superadmin-stat-change ${change.startsWith('+') ? 'positive' : 'negative'}`}>
+            {change}
+          </span>
         )}
-        <section className="dashboard-card sa-hero">
-          <div className="sa-hero-content">
-            <h1>Super Admin Panel</h1>
-            <p>Manage institutes, oversee operations, and access global reports.</p>
+      </div>
+    </div>
+  );
+
+  const QuickActionCard = ({ icon, title, description, onClick }) => (
+    <div className="superadmin-quick-action-card" onClick={onClick}>
+      <div className="superadmin-action-icon">
+        <i className={icon}></i>
+      </div>
+      <div className="superadmin-action-content">
+        <h4>{title}</h4>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="superadmin-loading-container">
+        <div className="superadmin-loading-spinner"></div>
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="superadmin-dashboard-container">
+      <div className="superadmin-dashboard-header">
+        <div className="superadmin-header-content">
+          <h1 className="superadmin-dashboard-title">Super Admin Dashboard</h1>
+          <p className="superadmin-dashboard-subtitle">Manage and monitor the entire education platform</p>
+        </div>
+        <div className="superadmin-header-actions">
+          <button className="superadmin-btn-primary">
+            <i className="fas fa-download"></i> Export Report
+          </button>
+          <button className="superadmin-btn-secondary">
+            <i className="fas fa-cog"></i> Settings
+          </button>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="superadmin-stats-grid">
+        <StatCard
+          icon="fas fa-university"
+          title="Total Colleges"
+          value={stats.totalColleges}
+          change="+3 this month"
+        />
+        <StatCard
+          icon="fas fa-user-graduate"
+          title="Total Students"
+          value={stats.totalStudents.toLocaleString()}
+          change="+12% this month"
+        />
+        <StatCard
+          icon="fas fa-chalkboard-teacher"
+          title="Total Faculty"
+          value={stats.totalFaculty}
+          change="+5% this month"
+        />
+        <StatCard
+          icon="fas fa-calendar-alt"
+          title="Active Events"
+          value={stats.totalEvents}
+          change="+8 this week"
+        />
+        <StatCard
+          icon="fas fa-users"
+          title="Active Users"
+          value={stats.activeUsers.toLocaleString()}
+          change="+15% today"
+        />
+        <StatCard
+          icon="fas fa-server"
+          title="System Health"
+          value={stats.systemHealth}
+        />
+      </div>
+
+      <div className="superadmin-dashboard-content">
+        {/* Quick Actions */}
+        <div className="superadmin-dashboard-section">
+          <div className="superadmin-section-header">
+            <h2 className="superadmin-section-title">
+              <i className="fas fa-tachometer-alt"></i>
+              Quick Management
+            </h2>
+            <p>Perform common administrative tasks</p>
           </div>
-        </section>
-        {/* Quick Stats Cards */}
-        <section className="sa-quick-stats">
-          <div className="sa-metric-card">
-            <div className="sa-metric-header">
-              <span className="sa-metric-icon"><i className="fas fa-school"></i></span>
-              <span className="sa-metric-title">Total Institutions</span>
-            </div>
-            <div className="sa-metric-value">{loading ? "—" : formatNumber(metrics?.institutes)}</div>
-            
+          <div className="superadmin-quick-actions-grid">
+            <QuickActionCard
+              icon="fas fa-plus"
+              title="Add New College"
+              description="Register a new educational institution"
+              onClick={() => console.log('Add college')}
+            />
+            <QuickActionCard
+              icon="fas fa-user-shield"
+              title="Manage Admins"
+              description="Add or modify admin privileges"
+              onClick={() => console.log('Manage admins')}
+            />
+            <QuickActionCard
+              icon="fas fa-database"
+              title="System Backup"
+              description="Create or restore system backup"
+              onClick={() => console.log('System backup')}
+            />
+            <QuickActionCard
+              icon="fas fa-chart-line"
+              title="Analytics"
+              description="View detailed system analytics"
+              onClick={() => console.log('Analytics')}
+            />
           </div>
+        </div>
 
-          <div className="sa-metric-card">
-            <div className="sa-metric-header">
-              <span className="sa-metric-icon"><i className="fas fa-user-graduate"></i></span>
-              <span className="sa-metric-title">Active Students</span>
-            </div>
-            <div className="sa-metric-value">{loading ? "—" : formatNumber(metrics?.activeStudents)}</div>
-            
-          </div>
-
-          <div className="sa-metric-card">
-            <div className="sa-metric-header">
-              <span className="sa-metric-icon"><i className="fas fa-clipboard-list"></i></span>
-              <span className="sa-metric-title">Activities Logged</span>
-            </div>
-            <div className="sa-metric-value">{loading ? "—" : formatNumber(metrics?.activitiesLogged)}</div>
-          </div>
-
-          <div className="sa-metric-card">
-            <div className="sa-metric-header">
-              <span className="sa-metric-icon"><i className="fas fa-hourglass-half"></i></span>
-              <span className="sa-metric-title">Pending Approvals</span>
-            </div>
-            <div className="sa-metric-value">{loading ? "—" : formatNumber(metrics?.pendingApprovals)}</div>
-            
-          </div>
-        </section>
-
-        
-
-         {/* Content Grid */}
-         <div className="content-grid">
-           {/* Pending Institution Approvals */}
-           <section className="pending-approvals">
-             <h3>Pending Institution Approvals</h3>
-             <div className="approvals-list">
-               {loading ? (
-                 <div className="loading-placeholder">Loading pending institutions...</div>
-               ) : pendingInstitutions.length === 0 ? (
-                 <div className="empty-state">No pending institution approvals</div>
-               ) : (
-                 pendingInstitutions.map((institution) => (
-                   <div key={institution.id} className="approval-item">
-                     <div className="institution-avatar">
-                       {institution.avatar}
-                     </div>
-                     <div className="institution-details">
-                       <h4>{institution.name}</h4>
-                       <p className="location">{institution.location}</p>
-                       <p className="type">Type: {institution.type}</p>
-                       <p className="students">Students: {institution.students.toLocaleString()}</p>
-                       <p className="requested">Requested: {institution.requested}</p>
-                       <p className="contact">Contact: {institution.contact}</p>
-                     </div>
-                  <div className="approval-actions">
-                    <button 
-                      className="review-btn"
-                      onClick={() => handleReview(institution)}
-                    >
-                      Review
-                    </button>
-                  </div>
-                   </div>
-                 ))
-               )}
-             </div>
-           </section>
-
-           {/* Platform Actions */}
-           <section className="platform-actions">
-             <h3>Platform Actions</h3>
-             <div className="actions-list">
-               <div className="action-item" onClick={() => handlePlatformAction('review')}>
-                 <span className="action-icon">📋</span>
-                 <span>Review Institution Requests</span>
-                 <span className="action-badge">{metrics?.pendingApprovals || 0}</span>
-               </div>
-               <div className="action-item" onClick={() => handlePlatformAction('manage')}>
-                 <span className="action-icon">👑</span>
-                 <span>Manage Super Admins</span>
-               </div>
-               <div className="action-item" onClick={() => handlePlatformAction('add')}>
-                 <span className="action-icon">➕</span>
-                 <span>Add New Institution</span>
-               </div>
-               <div className="action-item" onClick={() => handlePlatformAction('analytics')}>
-                 <span className="action-icon">📊</span>
-                 <span>Platform Analytics</span>
-               </div>
-             </div>
-           </section>
-
-           {/* Platform Health */}
-           <section className="platform-health">
-             <h3>Platform Health</h3>
-             <div className="health-metrics">
-               <div className="health-item">
-                 <span className="health-label">System Uptime:</span>
-                 <span className="health-value positive">{platformHealth?.systemUptime || "—"}</span>
-               </div>
-               <div className="health-item">
-                 <span className="health-label">Active Institutions:</span>
-                 <span className="health-value positive">{platformHealth?.activeInstitutions || "—"}</span>
-               </div>
-               <div className="health-item">
-                 <span className="health-label">Data Sync Status:</span>
-                 <span className="health-value warning">{platformHealth?.dataSyncStatus || "—"}</span>
-               </div>
-               <div className="health-item">
-                 <span className="health-label">Security Alerts:</span>
-                 <span className="health-value positive">{platformHealth?.securityAlerts || "—"}</span>
-               </div>
-             </div>
-           </section>
-
-           {/* Recent Activity */}
-           <section className="recent-activity">
-             <h3>Recent Activity</h3>
-             <div className="activity-list">
-               {loading ? (
-                 <div className="loading-placeholder">Loading recent activity...</div>
-               ) : recentActivity.length === 0 ? (
-                 <div className="empty-state">No recent activity</div>
-               ) : (
-                 recentActivity.map((activity) => (
-                   <div key={activity.id} className="activity-item">
-                     <span className="activity-icon">✅</span>
-                     <div className="activity-content">
-                       <p>{activity.title}</p>
-                       <span className="activity-time">{activity.time}</span>
-                     </div>
-                   </div>
-                 ))
-               )}
-             </div>
-           </section>
-         </div>
-
-        {/* Institute Registration Requests Section */}
-        <section className="dashboard-card institute-requests-section">
-          <InstituteRequestsTable />
-        </section>
-
-        <section className="dashboard-card sa-stats">
-          <h2>Platform Overview</h2>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <span className="stat-number">{formatNumber(metrics?.institutes)}</span>
-              <span className="stat-label">Institutes</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{formatNumber(metrics?.activeStudents)}</span>
-              <span className="stat-label">Students</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{formatNumber(metrics?.activitiesLogged)}</span>
-              <span className="stat-label">Activities</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{formatNumber(metrics?.pendingApprovals)}</span>
-              <span className="stat-label">Pending</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Review Modal */}
-        {showModal && selectedInstitution && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>Review Institution: {selectedInstitution.name}</h3>
-                <button 
-                  className="modal-close"
-                  onClick={() => setShowModal(false)}
-                >
-                  ×
+        <div className="superadmin-main-content-grid">
+          {/* Colleges Management */}
+          <div className="superadmin-colleges-section">
+            <div className="superadmin-section-header">
+              <h2 className="superadmin-section-title">
+                <i className="fas fa-university"></i>
+                Colleges Overview
+              </h2>
+              <div className="superadmin-section-actions">
+                <button className="superadmin-btn-icon">
+                  <i className="fas fa-search"></i>
+                </button>
+                <button className="superadmin-btn-icon">
+                  <i className="fas fa-filter"></i>
+                </button>
+                <button className="superadmin-btn-primary">
+                  <i className="fas fa-plus"></i> Add College
                 </button>
               </div>
-              
-              <div className="modal-body">
-                <div className="institution-overview">
-                  <div className="overview-section">
-                    <h4>Basic Information</h4>
-                    <div className="info-grid">
-                      <div className="info-item">
-                        <label>Name:</label>
-                        <span>{selectedInstitution.name}</span>
-                      </div>
-                      <div className="info-item">
-                        <label>Type:</label>
-                        <span>{selectedInstitution.type}</span>
-                      </div>
-                      <div className="info-item">
-                        <label>Location:</label>
-                        <span>{selectedInstitution.location}</span>
-                      </div>
-                      <div className="info-item">
-                        <label>Student Count:</label>
-                        <span>{selectedInstitution.students.toLocaleString()}</span>
-                      </div>
-                      <div className="info-item">
-                        <label>Contact Email:</label>
-                        <span>{selectedInstitution.contact}</span>
-                      </div>
-                      <div className="info-item">
-                        <label>Requested:</label>
-                        <span>{selectedInstitution.requested}</span>
-                      </div>
+            </div>
+            <div className="superadmin-colleges-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>College Name</th>
+                    <th>Students</th>
+                    <th>Faculty</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {colleges.map(college => (
+                    <tr key={college.id}>
+                      <td>
+                        <div className="superadmin-college-info">
+                          <strong>{college.name}</strong>
+                          <small>Last active: {college.lastActive}</small>
+                        </div>
+                      </td>
+                      <td>{college.students}</td>
+                      <td>{college.faculty}</td>
+                      <td>
+                        <span className={`superadmin-status ${college.status.toLowerCase()}`}>
+                          {college.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="superadmin-action-buttons">
+                          <button className="superadmin-btn-icon" title="View">
+                            <i className="fas fa-eye"></i>
+                          </button>
+                          <button className="superadmin-btn-icon" title="Edit">
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button className="superadmin-btn-icon danger" title="Delete">
+                            <i className="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Recent Activities & System Alerts */}
+          <div className="superadmin-dashboard-sidebar">
+            {/* System Alerts */}
+            <div className="superadmin-alerts-section">
+              <div className="superadmin-section-header">
+                <h3 className="superadmin-section-title">
+                  <i className="fas fa-bell"></i>
+                  System Alerts
+                </h3>
+              </div>
+              <div className="superadmin-alerts-list">
+                {systemAlerts.map(alert => (
+                  <div key={alert.id} className={`superadmin-alert-item ${alert.type}`}>
+                    <div className="superadmin-alert-icon">
+                      <i className="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div className="superadmin-alert-content">
+                      <p>{alert.message}</p>
+                      <small>{alert.time}</small>
                     </div>
                   </div>
-
-                  <div className="overview-section">
-                    <h4>Comments</h4>
-                    <textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Add comments for approval or rejection..."
-                      rows={4}
-                      className="comment-textarea"
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
+            </div>
 
-              <div className="modal-footer">
-                <button 
-                  className="reject-btn"
-                  onClick={handleReject}
-                  disabled={actionLoading[selectedInstitution.id]}
-                >
-                  {actionLoading[selectedInstitution.id] === 'reject' ? 'Rejecting...' : 'Reject'}
-                </button>
-                <button 
-                  className="approve-btn"
-                  onClick={handleApprove}
-                  disabled={actionLoading[selectedInstitution.id]}
-                >
-                  {actionLoading[selectedInstitution.id] === 'approve' ? 'Approving...' : 'Approve'}
-                </button>
+            {/* Recent Activities */}
+            <div className="superadmin-activities-section">
+              <div className="superadmin-section-header">
+                <h3 className="superadmin-section-title">
+                  <i className="fas fa-clipboard-list"></i>
+                  Recent Activities
+                </h3>
+              </div>
+              <div className="superadmin-activities-list">
+                {recentActivities.map(activity => (
+                  <div key={activity.id} className="superadmin-activity-item">
+                    <div className={`superadmin-activity-icon ${activity.type}`}>
+                      {activity.type === 'college' && <i className="fas fa-university"></i>}
+                      {activity.type === 'system' && <i className="fas fa-server"></i>}
+                      {activity.type === 'support' && <i className="fas fa-exclamation-triangle"></i>}
+                      {activity.type === 'event' && <i className="fas fa-calendar-alt"></i>}
+                      {activity.type === 'profile' && <i className="fas fa-users"></i>}
+                    </div>
+                    <div className="superadmin-activity-content">
+                      <p>{activity.action}</p>
+                      {activity.college && <small>College: {activity.college}</small>}
+                      {activity.user && <small>User: {activity.user}</small>}
+                      {activity.event && <small>Event: {activity.event}</small>}
+                      {activity.faculty && <small>Faculty: {activity.faculty}</small>}
+                      <small className="superadmin-activity-time">{activity.time}</small>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default SuperAdminDashboard;
-
-
