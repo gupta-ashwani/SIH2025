@@ -394,7 +394,7 @@ const handleSubmitCollege = async (e) => {
           </div>
           
           <div className="institute-management-grid">
-            <div className="institute-management-card">
+            <div className="institute-management-card" onClick={() => navigate(`/institute/manage-colleges/${id}`)}>
               <div className="institute-management-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/>
@@ -525,7 +525,10 @@ const handleSubmitCollege = async (e) => {
           
           {colleges.length > 2 && (
             <div className="institute-show-more">
-              <button className="institute-show-more-btn">
+              <button 
+                className="institute-show-more-btn"
+                onClick={() => navigate(`/institute/manage-colleges/${id}`)}
+              >
                 Show More Colleges ({colleges.length} total)
               </button>
             </div>

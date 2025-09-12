@@ -27,9 +27,10 @@ import DepartmentFaculty from "./components/Department/DepartmentFaculty";
 import DepartmentStudents from "./components/Department/DepartmentStudents";
 import InstituteDashboard from "./components/Institute/InstituteDashboard";
 import InstituteProfile from "./components/Institute/InstituteProfile";
+import ManageColleges from './components/Institute/ManageColleges';
 import ProtectedRoute from "./components/ProtectedRoute";
 import SuperAdminDashboard from "./components/SuperAdmin/SuperAdminDashboard";
-import SuperAdminAnalytics from "./components/SuperAdmin/SuperAdminAnalytics";
+import SuperAdminAnalytics from './components/SuperAdmin/SuperAdminAnalytics';
 import "./App.css";
 import "./styles/animations.css";
 import "./styles/utilities.css";
@@ -289,6 +290,17 @@ function App() {
                   <ProtectedRoute>
                     <div className="page-transition">
                       <InstituteProfile />
+                    </div>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/institute/manage-colleges/:id"
+                element={
+                  <ProtectedRoute>
+                    <div className="page-transition">
+                      <ManageColleges />
                     </div>
                   </ProtectedRoute>
                 }

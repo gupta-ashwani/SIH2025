@@ -278,6 +278,23 @@ export const instituteService = {
       },
     });
   },
+
+  // Manage Colleges API methods
+  getCollegesByInstitute: (instituteId) => {
+    return api.get(`/institute/${instituteId}/colleges`);
+  },
+
+  updateCollege: (collegeId, collegeData) => {
+    return api.put(`/colleges/${collegeId}`, collegeData);
+  },
+
+  deleteCollege: (collegeId) => {
+    return api.delete(`/colleges/${collegeId}`);
+  },
+
+  getCollegeDetails: (collegeId) => {
+    return api.get(`/colleges/${collegeId}`);
+  },
 };
 
 export const eventService = {
