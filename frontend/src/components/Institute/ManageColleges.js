@@ -44,73 +44,8 @@ const ManageColleges = () => {
       setError(null);
     } catch (error) {
       console.error('Error fetching colleges:', error);
-      setError('Failed to load colleges');
-      // Fallback to mock data for development
-      setColleges([
-        {
-          _id: '1',
-          name: 'Engineering College of Technology',
-          code: 'ECT001',
-          email: 'admin@ect.edu',
-          type: 'Engineering College',
-          contactNumber: '+91-9876543210',
-          website: 'https://ect.edu',
-          status: 'active',
-          departmentCount: 8,
-          facultyCount: 45,
-          studentCount: 1200,
-          address: {
-            line1: '123 Tech Street',
-            city: 'Mumbai',
-            state: 'Maharashtra',
-            country: 'India',
-            pincode: '400001'
-          },
-          createdAt: '2024-01-15T10:30:00Z'
-        },
-        {
-          _id: '2',
-          name: 'Medical College of Sciences',
-          code: 'MCS002',
-          email: 'admin@mcs.edu',
-          type: 'Medical College',
-          contactNumber: '+91-9876543211',
-          website: 'https://mcs.edu',
-          status: 'active',
-          departmentCount: 12,
-          facultyCount: 78,
-          studentCount: 800,
-          address: {
-            line1: '456 Health Avenue',
-            city: 'Delhi',
-            state: 'Delhi',
-            country: 'India',
-            pincode: '110001'
-          },
-          createdAt: '2024-02-20T14:15:00Z'
-        },
-        {
-          _id: '3',
-          name: 'Arts & Commerce Institute',
-          code: 'ACI003',
-          email: 'admin@aci.edu',
-          type: 'Arts College',
-          contactNumber: '+91-9876543212',
-          website: 'https://aci.edu',
-          status: 'active',
-          departmentCount: 6,
-          facultyCount: 32,
-          studentCount: 950,
-          address: {
-            line1: '789 Culture Road',
-            city: 'Pune',
-            state: 'Maharashtra',
-            country: 'India',
-            pincode: '411001'
-          },
-          createdAt: '2024-03-10T09:45:00Z'
-        }
-      ]);
+      setError('Failed to load colleges. Please try again.');
+      setColleges([]);
     } finally {
       setLoading(false);
     }

@@ -234,6 +234,64 @@ router.put("/profile/:id", requireAuth, async (req, res) => {
   }
 });
 
+// Get colleges by institute
+router.get("/:id/colleges", requireAuth, async (req, res) => {
+  try {
+    const instituteId = req.params.id;
+
+    // Verify the user has access to this institute
+    if (req.user.role !== "institute" && req.user.role !== "superadmin") {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    if (req.user.role === "institute" && req.user._id.toString() !== instituteId) {
+      return res.status(403).json({ error: "Access denied to this institute" });
+    }
+
+    // Get colleges under this institute with detailed information
+    const colleges = await College.find({ institute: instituteId })
+      .populate("departments", "name")
+      .select("name code email type contactNumber website address status createdAt");
+
+    // Get detailed stats for each college
+    const collegeStats = await Promise.all(
+      colleges.map(async (college) => {
+        const departments = await Department.find({ college: college._id });
+        const departmentIds = departments.map(d => d._id);
+        
+        const facultyCount = await Faculty.countDocuments({
+          department: { $in: departmentIds }
+        });
+        
+        const studentCount = await Student.countDocuments({
+          department: { $in: departmentIds }
+        });
+
+        return {
+          _id: college._id,
+          name: college.name,
+          code: college.code,
+          email: college.email,
+          type: college.type,
+          contactNumber: college.contactNumber,
+          website: college.website,
+          address: college.address,
+          status: college.status || 'active',
+          departmentCount: departments.length,
+          facultyCount,
+          studentCount,
+          createdAt: college.createdAt
+        };
+      })
+    );
+
+    res.json(collegeStats);
+  } catch (error) {
+    console.error("Get colleges error:", error);
+    res.status(500).json({ error: "Failed to fetch colleges" });
+  }
+});
+
 // Add college to institute
 router.post("/colleges", requireAuth, async (req, res) => {
   try {
