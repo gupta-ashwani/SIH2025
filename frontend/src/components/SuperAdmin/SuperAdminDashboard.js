@@ -529,39 +529,57 @@ const SuperAdminDashboard = () => {
           </div>
           <div className="superadmin-pending-institutions">
             {pendingInstitutions.length > 0 ? (
-              <div className="superadmin-pending-list">
+              <div className="superadmin-pending-cards-grid">
                 {pendingInstitutions.map(institution => (
-                  <div key={institution.id} className="superadmin-pending-item">
-                    <div className="superadmin-pending-content">
-                      <div className="superadmin-pending-main">
+                  <div key={institution.id} className="superadmin-pending-card">
+                    <div className="superadmin-card-header">
+                      <div className="superadmin-institution-avatar">
+                        {institution.avatar || institution.name?.substring(0, 2).toUpperCase() || 'II'}
+                      </div>
+                      <div className="superadmin-card-title-section">
                         <h3 className="superadmin-institution-name">
                           {institution.name || 'Indian Institute of Science, Bangalore'}
                         </h3>
                         <p className="superadmin-institution-type">
                           {institution.type || 'Technical University'}
                         </p>
-                        <div className="superadmin-institution-meta">
-                          <span className="superadmin-submitted-by">
-                            Submitted by: {institution.submittedBy || 'Dr. Rajesh Kumar'}
-                          </span>
-                          <span className="superadmin-submitted-time">
-                            {institution.submittedTime || '2 days ago'}
-                          </span>
-                        </div>
                       </div>
                       <div className="superadmin-pending-status">
                         <span className={`superadmin-status-badge ${institution.reviewStatus || 'under-review'}`}>
-                          {institution.reviewStatus === 'under-review' ? 'Under Review' :
-                           institution.reviewStatus === 'documentation-pending' ? 'Documentation Pending' :
-                           institution.reviewStatus === 'final-review' ? 'Final Review' : 'Under Review'}
+                          {institution.reviewStatus === 'under-review' ? 'UNDER REVIEW' :
+                           institution.reviewStatus === 'documentation-pending' ? 'DOCUMENTATION PENDING' :
+                           institution.reviewStatus === 'final-review' ? 'FINAL REVIEW' : 'UNDER REVIEW'}
                         </span>
                       </div>
                     </div>
-                    <div className="superadmin-pending-actions">
+                    
+                    <div className="superadmin-card-body">
+                      <div className="superadmin-institution-details">
+                        <div className="superadmin-detail-item">
+                          <i className="fas fa-map-marker-alt"></i>
+                          <span>{institution.location || 'Bangalore, Karnataka'}</span>
+                        </div>
+                        <div className="superadmin-detail-item">
+                          <i className="fas fa-envelope"></i>
+                          <span>{institution.contact || institution.email || 'admin@iisc.ac.in'}</span>
+                        </div>
+                        <div className="superadmin-detail-item">
+                          <i className="fas fa-users"></i>
+                          <span>{institution.students || '12,000'} Students</span>
+                        </div>
+                        <div className="superadmin-detail-item">
+                          <i className="fas fa-clock"></i>
+                          <span>Requested {institution.requested || institution.submittedTime || '2 days ago'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="superadmin-card-actions">
                       <button 
                         className="superadmin-action-btn approve"
                         onClick={() => handleCollegeAction('approve', institution.id)}
                       >
+                        <i className="fas fa-check"></i>
                         Approve
                       </button>
                       <button 
@@ -571,12 +589,14 @@ const SuperAdminDashboard = () => {
                           if (reason) handleCollegeAction('reject', institution.id, { reason });
                         }}
                       >
+                        <i className="fas fa-times"></i>
                         Reject
                       </button>
                       <button 
                         className="superadmin-action-btn review"
                         onClick={() => console.log('View details:', institution.id)}
                       >
+                        <i className="fas fa-eye"></i>
                         Review
                       </button>
                     </div>
