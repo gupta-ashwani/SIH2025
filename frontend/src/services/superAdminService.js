@@ -53,11 +53,29 @@ export const superAdminService = {
   // Colleges Management
   getAllColleges: async (page = 1, limit = 10, search = "", status = "") => {
     try {
-      const response = await api.get("/dashboard/superadmin/pending-institutions");
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search }),
+        ...(status && { status })
+      });
+      
+      const response = await api.get(`/dashboard/superadmin/institutes?${params}`);
       return {
-        colleges: response.data.institutions || [],
-        totalPages: 1,
-        currentPage: 1
+        colleges: (response.data.institutes || []).map(institute => ({
+          id: institute._id,
+          name: institute.name,
+          students: institute.totalStudents || 0,
+          faculty: institute.totalFaculty || 0,
+          status: institute.status || 'Active',
+          lastActive: institute.lastActive || 'Recently',
+          type: institute.type,
+          location: institute.address?.state,
+          email: institute.email,
+          code: institute.code
+        })),
+        totalPages: response.data.totalPages || 1,
+        currentPage: response.data.currentPage || 1
       };
     } catch (error) {
       console.error("Error fetching colleges:", error);
@@ -198,13 +216,35 @@ export const superAdminService = {
     }
   },
 
-  // System Backup
+  // System Management
   createBackup: async () => {
     try {
-      const response = await api.post("/superadmin/system/backup");
+      const response = await api.post("/dashboard/superadmin/backup");
       return response.data;
     } catch (error) {
       console.error("Error creating backup:", error);
+      throw error;
+    }
+  },
+
+  // Institute Management
+  addNewInstitute: async (instituteData) => {
+    try {
+      const response = await api.post("/dashboard/superadmin/add-institute", instituteData);
+      return response.data;
+    } catch (error) {
+      console.error("Error adding institute:", error);
+      throw error;
+    }
+  },
+
+  // Admin Management
+  addAdmin: async (adminData) => {
+    try {
+      const response = await api.post("/dashboard/superadmin/add-admin", adminData);
+      return response.data;
+    } catch (error) {
+      console.error("Error adding admin:", error);
       throw error;
     }
   },

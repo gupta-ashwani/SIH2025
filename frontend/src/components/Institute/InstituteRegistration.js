@@ -164,6 +164,33 @@ const InstituteRegistration = () => {
         body: JSON.stringify(formData),
       });
 
+      // Check if response is ok first
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorText = await response.text();
+          if (errorText.includes('<!DOCTYPE')) {
+            errorMessage = `Backend endpoint not found or server error (${response.status})`;
+          } else {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorMessage;
+          }
+        } catch (parseError) {
+          // If we can't parse the error, use the status
+          errorMessage = `Server error: ${response.status} - ${response.statusText}`;
+        }
+        setError(errorMessage);
+        return;
+      }
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        setError('Server returned invalid response format. Please check if the backend is running.');
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -202,7 +229,13 @@ const InstituteRegistration = () => {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      setError("Network error. Please try again.");
+      if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+        setError("Backend returned invalid response. Please check if the API endpoint exists and the server is running correctly.");
+      } else if (error.message.includes('Failed to fetch')) {
+        setError("Cannot connect to server. Please check if the backend is running.");
+      } else {
+        setError("Network error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -104,7 +104,7 @@ const SuperAdminDashboard = () => {
     try {
       const response = await superAdminService.getAllColleges(
         collegesPage,
-        5, // limit to 5 for dashboard view
+        10, // increased limit for better overview
         collegesSearch,
         collegesFilter
       );
@@ -200,20 +200,40 @@ const SuperAdminDashboard = () => {
     try {
       switch (actionType) {
         case 'backup':
-          const backupResult = await superAdminService.createBackup();
-          alert('System backup initiated successfully!');
+          if (window.confirm('Are you sure you want to create a system backup? This may take a few minutes.')) {
+            setRefreshing(true);
+            const backupResult = await superAdminService.createBackup();
+            alert('System backup initiated successfully! You will be notified when complete.');
+            setRefreshing(false);
+          }
           break;
         case 'analytics':
-          // Navigate to analytics page or show analytics modal
-          console.log('Navigate to analytics');
+          // Open analytics in a new window/tab or navigate
+          window.open('/superadmin/analytics', '_blank');
           break;
         case 'add-institute':
-          // Navigate to add institute page or show modal
-          console.log('Navigate to add institute');
+          // Navigate to institute registration page
+          window.location.href = '/institute-registration';
           break;
         case 'manage-admins':
-          // Navigate to admin management page
-          console.log('Navigate to admin management');
+          // Show admin management modal or navigate
+          const action = prompt('Admin Management:\n1. Add Admin\n2. View Admins\n3. Modify Permissions\n\nEnter option (1-3):');
+          if (action === '1') {
+            const adminEmail = prompt('Enter admin email:');
+            const adminRole = prompt('Enter admin role (superadmin, admin, moderator):');
+            if (adminEmail && adminRole) {
+              try {
+                await superAdminService.addAdmin({ email: adminEmail, role: adminRole });
+                alert('Admin added successfully!');
+              } catch (error) {
+                alert('Failed to add admin. Please check the email and try again.');
+              }
+            }
+          } else if (action === '2') {
+            window.open('/superadmin/admins', '_blank');
+          } else if (action === '3') {
+            window.open('/superadmin/permissions', '_blank');
+          }
           break;
         default:
           console.log(`Action: ${actionType}`);
@@ -221,6 +241,7 @@ const SuperAdminDashboard = () => {
     } catch (error) {
       console.error(`Error performing ${actionType}:`, error);
       alert(`Failed to perform ${actionType}. Please try again.`);
+      setRefreshing(false);
     }
   };
 
@@ -457,53 +478,60 @@ const SuperAdminDashboard = () => {
                     <tr key={college.id}>
                       <td>
                         <div className="superadmin-college-info">
-                          <strong>{college.name || 'Unknown Institute'}</strong>
-                          <small>Last active: {college.lastActive || 'Never'}</small>
+                          <strong>{college.name}</strong>
+                          <small>{college.type} • {college.location}</small>
+                          <small>Code: {college.code}</small>
                         </div>
                       </td>
-                      <td>{college.students || 0}</td>
-                      <td>{college.faculty || 0}</td>
                       <td>
-                        <span className={`superadmin-status ${(college.status || 'inactive').toLowerCase()}`}>
-                          {college.status || 'Inactive'}
+                        <div className="superadmin-count-display">
+                          <span className="count-number">{college.students.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="superadmin-count-display">
+                          <span className="count-number">{college.faculty.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`superadmin-status ${college.status.toLowerCase()}`}>
+                          <i className="fas fa-circle"></i>
+                          {college.status}
                         </span>
                       </td>
                       <td>
                         <div className="superadmin-action-buttons">
                           <button 
-                            className="superadmin-btn-icon" 
-                            title="View"
+                            className="superadmin-btn-icon view" 
+                            title="View Details"
                             onClick={() => console.log('View institute:', college.id)}
                           >
                             <i className="fas fa-eye"></i>
                           </button>
-                          {college.status === 'pending' && (
-                            <>
-                              <button 
-                                className="superadmin-btn-icon success" 
-                                title="Approve"
-                                onClick={() => handleCollegeAction('approve', college.id)}
-                              >
-                                <i className="fas fa-check"></i>
-                              </button>
-                              <button 
-                                className="superadmin-btn-icon warning" 
-                                title="Reject"
-                                onClick={() => {
-                                  const reason = prompt('Reason for rejection:');
-                                  if (reason) handleCollegeAction('reject', college.id, { reason });
-                                }}
-                              >
-                                <i className="fas fa-times"></i>
-                              </button>
-                            </>
-                          )}
+                          <button 
+                            className="superadmin-btn-icon edit" 
+                            title="Edit Institute"
+                            onClick={() => console.log('Edit institute:', college.id)}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button 
+                            className="superadmin-btn-icon analytics" 
+                            title="View Analytics"
+                            onClick={() => console.log('Analytics for:', college.id)}
+                          >
+                            <i className="fas fa-chart-bar"></i>
+                          </button>
                           <button 
                             className="superadmin-btn-icon danger" 
-                            title="Delete"
-                            onClick={() => handleCollegeAction('delete', college.id)}
+                            title="Suspend Institute"
+                            onClick={() => {
+                              if (window.confirm(`Are you sure you want to suspend ${college.name}?`)) {
+                                handleCollegeAction('suspend', college.id);
+                              }
+                            }}
                           >
-                            <i className="fas fa-trash"></i>
+                            <i className="fas fa-ban"></i>
                           </button>
                         </div>
                       </td>
