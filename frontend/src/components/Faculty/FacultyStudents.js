@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { facultyService } from "../../services/authService";
-import "./Faculty.css";
+import "./FacultyStudents.css";
 
 const FacultyStudents = () => {
   const { id } = useParams();
@@ -48,7 +48,7 @@ const FacultyStudents = () => {
     setEditForm({
       name: {
         first: student.name?.first || "",
-        last: student.name?.last || ""
+        last: student.name?.last || "",
       },
       email: student.email || "",
       studentID: student.studentID || "",
@@ -59,7 +59,7 @@ const FacultyStudents = () => {
       guardianName: student.guardianName || "",
       guardianContact: student.guardianContact || "",
       gpa: student.gpa || "",
-      attendance: student.attendance || ""
+      attendance: student.attendance || "",
     });
     setShowEditModal(true);
   };
@@ -78,7 +78,7 @@ const FacultyStudents = () => {
       setShowEditModal(false);
       setEditingStudent(null);
       setEditForm({});
-      await fetchStudents(); // Refresh the list
+      await fetchStudents(); // Refresh
     } catch (error) {
       console.error("Edit student error:", error);
       setError(error.response?.data?.error || "Failed to update student");
@@ -93,7 +93,7 @@ const FacultyStudents = () => {
       await facultyService.deleteStudent(id, studentToDelete._id);
       setShowDeleteModal(false);
       setStudentToDelete(null);
-      await fetchStudents(); // Refresh the list
+      await fetchStudents(); // Refresh
     } catch (error) {
       console.error("Delete student error:", error);
       setError(error.response?.data?.error || "Failed to delete student");
@@ -104,56 +104,43 @@ const FacultyStudents = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setEditForm(prev => ({
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setEditForm((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
-      setEditForm(prev => ({
+      setEditForm((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
-  const getPerformanceColor = (score) => {
-    if (score >= 80) return "#10b981";
-    if (score >= 60) return "#f59e0b";
-    return "#ef4444";
-  };
-
-  const getPerformanceLevel = (score) => {
-    if (score >= 80) return "High";
-    if (score >= 60) return "Medium";
-    return "Low";
-  };
-
-  // Filter students based on search term
+  // Filter
   const filteredStudents = students.filter((student) => {
     if (!searchTerm) return true;
-
     const fullName = `${student.name?.first || ""} ${
       student.name?.last || ""
     }`.toLowerCase();
     const studentId = (student.studentID || "").toLowerCase();
     const searchLower = searchTerm.toLowerCase();
-
     return fullName.includes(searchLower) || studentId.includes(searchLower);
   });
 
-  const sortedStudents = filteredStudents.sort((a, b) => {
+  // Sort
+  const sortedStudents = [...filteredStudents].sort((a, b) => {
     switch (sortBy) {
       case "name":
         return `${a.name?.first || ""} ${a.name?.last || ""}`.localeCompare(
           `${b.name?.first || ""} ${b.name?.last || ""}`
         );
-      case "performance":
-        return (b.performanceScore || 0) - (a.performanceScore || 0);
+      case "cgpa":
+        return (b.cgpa || 0) - (a.cgpa || 0);
       case "achievements":
         return (b.achievementCount || 0) - (a.achievementCount || 0);
       case "recent":
@@ -180,7 +167,7 @@ const FacultyStudents = () => {
 
   return (
     <div className="faculty-dashboard">
-      {/* Welcome Section - Full Width */}
+      {/* Welcome */}
       <div className="welcome-section">
         <div className="welcome-content">
           <h1>My Students</h1>
@@ -188,10 +175,10 @@ const FacultyStudents = () => {
         </div>
       </div>
 
-      {/* Students Controls */}
+      {/* Controls */}
       <div className="students-controls">
         <div className="search-and-sort">
-          {/* Search Box */}
+          {/* Search */}
           <div className="search-box">
             <i className="fas fa-search"></i>
             <input
@@ -201,8 +188,18 @@ const FacultyStudents = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {/* Sort */}
+          <div className="sort-box">
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+              <option value="name">Sort by Name</option>
+              <option value="cgpa">Sort by CGPA</option>
+              <option value="achievements">Sort by Achievements</option>
+              <option value="recent">Sort by Recent Activity</option>
+            </select>
+          </div>
         </div>
 
+        {/* Summary */}
         <div className="students-summary">
           <span className="student-count">
             {filteredStudents.length === students.length
@@ -214,20 +211,19 @@ const FacultyStudents = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="dashboard-content">
-        {/* Students List */}
-        <div className="students-container">
+      {/* Students Grid */}
+      <div className="faculty-student-dashboard-content">
+        <div className="faculty-students-container">
           {sortedStudents.length > 0 ? (
-            <div className="students-grid">
-              {students.map((student) => (
+            <div className="faculty-students-grid">
+              {sortedStudents.map((student) => (
                 <div
                   key={student._id}
-                  className="student-card"
+                  className="faculty-student-card"
                   onClick={() => handleViewStudent(student._id)}
                 >
-                  <div className="student-card-header">
-                    <div className="student-avatar">
+                  <div className="faculty-student-card-header">
+                    <div className="faculty-student-avatar">
                       {student.profilePicture ? (
                         <>
                           <img
@@ -239,28 +235,28 @@ const FacultyStudents = () => {
                             }}
                           />
                           <div
-                            className="student-avatar-fallback"
+                            className="faculty-student-avatar-fallback"
                             style={{ display: "none" }}
                           >
                             {student.name?.first?.charAt(0) || "S"}
                           </div>
                         </>
                       ) : (
-                        <div className="student-avatar-fallback">
+                        <div className="faculty-student-avatar-fallback">
                           {student.name?.first?.charAt(0) || "S"}
                         </div>
                       )}
                     </div>
-                    <div className="student-card-actions">
+                    <div className="faculty-student-card-actions">
                       <button
-                        className="card-action-btn edit-btn"
+                        className="faculty-card-action-btn faculty-edit-btn"
                         onClick={(e) => handleEditStudent(e, student)}
                         title="Edit Student"
                       >
                         <i className="fas fa-edit"></i>
                       </button>
                       <button
-                        className="card-action-btn delete-btn"
+                        className="faculty-card-action-btn faculty-delete-btn"
                         onClick={(e) => handleDeleteStudent(e, student)}
                         title="Delete Student"
                       >
@@ -269,35 +265,35 @@ const FacultyStudents = () => {
                     </div>
                   </div>
 
-                  <div className="student-card-body">
-                    <h3 className="student-name">
+                  <div className="faculty-student-card-body">
+                    <h3 className="faculty-student-name">
                       {student.name?.first} {student.name?.last}
                     </h3>
-                    <div className="student-id">
+                    <div className="faculty-student-id">
                       ID: {student.studentID}
                     </div>
-                    <div className="student-batch">
+                    <div className="faculty-student-batch">
                       Batch: {student.batch}
                     </div>
                   </div>
 
-                  <div className="student-card-stats">
-                    <div className="stat-item">
-                      <div className="stat-value">
+                  <div className="faculty-student-card-stats">
+                    <div className="faculty-stat-item">
+                      <div className="faculty-stat-value">
                         {student.cgpa ? `${student.cgpa.toFixed(2)}/10` : "N/A"}
                       </div>
-                      <div className="stat-label">CGPA</div>
+                      <div className="faculty-stat-label">CGPA</div>
                     </div>
-                    <div className="stat-item">
-                      <div className="stat-value">
+                    <div className="faculty-stat-item">
+                      <div className="faculty-stat-value">
                         {student.pendingReviews || 0}
                       </div>
-                      <div className="stat-label">PENDING</div>
+                      <div className="faculty-stat-label">PENDING</div>
                     </div>
                   </div>
 
-                  <div className="student-card-footer">
-                    <div className="achievements-badge">
+                  <div className="faculty-student-card-footer">
+                    <div className="faculty-achievements-badge">
                       <i className="fas fa-trophy"></i>
                       <span>{student.achievementCount || 0} Achievements</span>
                     </div>
@@ -306,8 +302,8 @@ const FacultyStudents = () => {
               ))}
             </div>
           ) : (
-            <div className="empty-state">
-              <div className="empty-icon">
+            <div className="faculty-empty-state">
+              <div className="faculty-empty-icon">
                 <i className="fas fa-search"></i>
               </div>
               <h3>No Students Found</h3>
@@ -317,7 +313,10 @@ const FacultyStudents = () => {
                   : "No students assigned to you yet"}
               </p>
               {searchTerm && (
-                <button className="cta-btn" onClick={() => setSearchTerm("")}>
+                <button
+                  className="faculty-cta-btn"
+                  onClick={() => setSearchTerm("")}
+                >
                   <i className="fas fa-times"></i>
                   Clear Search
                 </button>
@@ -327,15 +326,18 @@ const FacultyStudents = () => {
         </div>
       </div>
 
-      {/* Edit Student Modal */}
+      {/* Edit Modal */}
       {showEditModal && (
-        <div className="modal-overlay" onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setShowEditModal(false);
-            setEditingStudent(null);
-            setEditForm({});
-          }
-        }}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEditModal(false);
+              setEditingStudent(null);
+              setEditForm({});
+            }
+          }}
+        >
           <div className="modal-content">
             <div className="modal-header">
               <h2>Edit Student</h2>
@@ -351,6 +353,7 @@ const FacultyStudents = () => {
               </button>
             </div>
             <form onSubmit={handleEditSubmit} className="modal-form">
+              {/* Form Fields */}
               <div className="form-row">
                 <div className="form-group">
                   <label>First Name</label>
@@ -490,14 +493,17 @@ const FacultyStudents = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="modal-overlay" onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            setShowDeleteModal(false);
-            setStudentToDelete(null);
-          }
-        }}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDeleteModal(false);
+              setStudentToDelete(null);
+            }
+          }}
+        >
           <div className="modal-content delete-modal">
             <div className="modal-header">
               <h2>Delete Student</h2>
@@ -518,10 +524,12 @@ const FacultyStudents = () => {
                   Are you sure you want to delete{" "}
                   <strong>
                     {studentToDelete?.name?.first} {studentToDelete?.name?.last}
-                  </strong>?
+                  </strong>
+                  ?
                 </p>
                 <p className="warning-text">
-                  This action cannot be undone. All student data including achievements will be permanently removed.
+                  This action cannot be undone. All student data including
+                  achievements will be permanently removed.
                 </p>
               </div>
               <div className="form-actions">
