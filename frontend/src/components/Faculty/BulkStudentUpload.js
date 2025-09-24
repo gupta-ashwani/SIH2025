@@ -130,7 +130,7 @@ const BulkStudentUpload = ({ onClose, onSuccess }) => {
     return (
       <div className="bulk-upload-modal">
         <div className="bulk-upload-content">
-          <div className="upload-header">
+          <div className="bulk-upload-header">
             <h2>Upload Results</h2>
             <button className="close-btn" onClick={onClose}>
               <i className="fas fa-times"></i>
@@ -216,116 +216,128 @@ const BulkStudentUpload = ({ onClose, onSuccess }) => {
   }
 
   return (
-    <div className="bulk-upload-modal">
-      <div className="bulk-upload-content">
-        <div className="upload-header">
-          <h2>Bulk Student Upload</h2>
-          <button className="close-btn" onClick={onClose}>
-            <i className="fas fa-times"></i>
-          </button>
-        </div>
+    <div className="bulk-upload-overlay" onClick={onClose}>
+  <div
+    className="bulk-upload-content"
+    onClick={(e) => e.stopPropagation()}
+  >
+    {/* Header (sticky, not scrollable) */}
+    <div className="bulk-upload-header">
+      <h2>Bulk Student Upload</h2>
+      <button className="close-btn" onClick={onClose}>
+        <i className="fas fa-times"></i>
+      </button>
+    </div>
 
-        <div className="upload-instructions">
-          <h3>Instructions:</h3>
-          <ul>
-            <li>Download the Excel template and fill in student details</li>
-            <li>
-              <strong>Required columns:</strong> name.first, name.last, email,
-              studentID
-            </li>
-            <li>
-              <strong>Optional columns:</strong> dob, gender, contactNumber,
-              address fields (address.line1, address.city, etc.),
-              enrollmentYear, batch, gpa, attendance, skills, password, status
-            </li>
-            <li>If no password is provided, default will be studentID@123</li>
-            <li>
-              <strong>Skills:</strong> Enter as comma-separated values (e.g.,
-              "JavaScript, Python, React")
-            </li>
-            <li>
-              <strong>Date format:</strong> Use YYYY-MM-DD format for dates
-            </li>
-            <li>
-              The template includes an Instructions sheet with detailed field
-              descriptions
-            </li>
-            <li>Maximum file size: 5MB</li>
-            <li>
-              <strong>Note:</strong> Department and coordinator will be
-              automatically assigned based on your faculty profile
-            </li>
-          </ul>
-        </div>
+    {/* Scrollable body */}
+    <div className="bulk-upload-body">
+      <div className="upload-instructions">
+        <h3>Instructions:</h3>
+        <ul>
+          <li>Download the Excel template and fill in student details</li>
+          <li>
+            <strong>Required columns:</strong> name.first, name.last, email,
+            studentID
+          </li>
+          <li>
+            <strong>Optional columns:</strong> dob, gender, contactNumber,
+            address fields (address.line1, address.city, etc.),
+            enrollmentYear, batch, gpa, attendance, skills, password, status
+          </li>
+          <li>If no password is provided, default will be studentID@123</li>
+          <li>
+            <strong>Skills:</strong> Enter as comma-separated values (e.g.,
+            "JavaScript, Python, React")
+          </li>
+          <li>
+            <strong>Date format:</strong> Use YYYY-MM-DD format for dates
+          </li>
+          <li>
+            The template includes an Instructions sheet with detailed field
+            descriptions
+          </li>
+          <li>Maximum file size: 5MB</li>
+          <li>
+            <strong>Note:</strong> Department and coordinator will be
+            automatically assigned based on your faculty profile
+          </li>
+        </ul>
+      </div>
 
-        <div className="template-download">
-          <button className="btn secondary" onClick={downloadTemplate}>
-            <i className="fas fa-download"></i>
-            Download Excel Template
-          </button>
-        </div>
+      <div className="template-download">
+        <button className="btn secondary" onClick={downloadTemplate}>
+          <i className="fas fa-download"></i>
+          Download Excel Template
+        </button>
+      </div>
 
-        <div
-          className={`file-drop-zone ${dragOver ? "drag-over" : ""} ${
-            file ? "has-file" : ""
-          }`}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-        >
-          {file ? (
-            <div className="file-selected">
-              <i className="fas fa-file-excel"></i>
-              <span>{file.name}</span>
-              <button className="remove-file" onClick={() => setFile(null)}>
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-          ) : (
-            <div className="drop-zone-content">
-              <i className="fas fa-cloud-upload-alt"></i>
-              <p>Drop Excel file here or click to browse</p>
-              <input
-                type="file"
-                accept=".xls,.xlsx"
-                onChange={handleFileInputChange}
-                className="file-input"
-              />
-            </div>
-          )}
-        </div>
-
-        {error && (
-          <div className="error-message">
-            <i className="fas fa-exclamation-triangle"></i>
-            <span>{error}</span>
+      <div
+        className={`file-drop-zone ${dragOver ? "drag-over" : ""} ${
+          file ? "has-file" : ""
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        {file ? (
+          <div className="file-selected">
+            <i className="fas fa-file-excel"></i>
+            <span>{file.name}</span>
+            <button
+              className="remove-file"
+              onClick={() => setFile(null)}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+        ) : (
+          <div className="drop-zone-content">
+            <i className="fas fa-cloud-upload-alt"></i>
+            <p>Drop Excel file here or click to browse</p>
+            <input
+              type="file"
+              accept=".xls,.xlsx"
+              onChange={handleFileInputChange}
+              className="file-input"
+            />
           </div>
         )}
-
-        <div className="upload-actions">
-          <button className="btn secondary" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="btn primary"
-            onClick={handleUpload}
-            disabled={!file || uploading}
-          >
-            {uploading ? (
-              <>
-                <i className="fas fa-spinner fa-spin"></i>
-                Uploading...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-upload"></i>
-                Upload Students
-              </>
-            )}
-          </button>
-        </div>
       </div>
+
+      {error && (
+        <div className="error-message">
+          <i className="fas fa-exclamation-triangle"></i>
+          <span>{error}</span>
+        </div>
+      )}
     </div>
+
+    {/* Actions (sticky bottom, not scrollable) */}
+    <div className="upload-actions">
+      <button className="btn secondary" onClick={onClose}>
+        Cancel
+      </button>
+      <button
+        className="btn primary"
+        onClick={handleUpload}
+        disabled={!file || uploading}
+      >
+        {uploading ? (
+          <>
+            <i className="fas fa-spinner fa-spin"></i>
+            Uploading...
+          </>
+        ) : (
+          <>
+            <i className="fas fa-upload"></i>
+            Upload Students
+          </>
+        )}
+      </button>
+    </div>
+  </div>
+</div>
+
   );
 };
 
