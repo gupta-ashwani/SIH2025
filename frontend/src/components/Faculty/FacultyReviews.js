@@ -378,7 +378,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
             <div className="action-buttons">
               <div className="action-row">
                 <button
-                  className="action-btn approve-btn"
+                  className="faculty-review-action-btn faculty-review-approve-btn"
                   onClick={() =>
                     onReview(
                       review.achievement._id,
@@ -391,7 +391,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
                   Approve
                 </button>
                 <button
-                  className="action-btn reject-btn"
+                  className="faculty-review-action-btn faculty-review-reject-btn"
                   onClick={() => {
                     setReviewStatus("Rejected");
                     setShowModal(true);
@@ -402,7 +402,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
               </div>
               <div className="action-row">
                 <button
-                  className="action-btn review-btn"
+                  className="faculty-review-action-btn faculty-review-review-btn"
                   onClick={() => setShowModal(true)}
                 >
                   Review
@@ -413,7 +413,7 @@ const ReviewRow = ({ review, onReview, formatDate, getActivityIcon }) => {
           {review.achievement?.status &&
             review.achievement?.status !== "Pending" && (
               <button
-                className="action-btn view-details-btn"
+                className="faculty-review-action-btn faculty-review-view-details-btn"
                 onClick={() => setShowModal(true)}
               >
                 View Details
