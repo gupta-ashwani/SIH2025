@@ -150,7 +150,7 @@ const FacultyReviews = () => {
       </div>
 
       {/* Reviews Controls */}
-      <div className="students-controls">
+      <div className="reviews-controls">
         <div className="search-and-sort">
           {/* Search Box */}
           <div className="search-box">
@@ -195,8 +195,8 @@ const FacultyReviews = () => {
           </div>
         </div>
 
-        <div className="students-summary">
-          <span className="student-count">
+        <div className="reviews-summary">
+          <span className="review-count">
             {searchTerm
               ? `${filteredReviews.length} Review${
                   filteredReviews.length !== 1 ? "s" : ""
