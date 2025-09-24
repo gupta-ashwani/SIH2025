@@ -1829,73 +1829,6 @@
   transform: translateY(-1px);
 }
 
-/* Analytics Specific Styles */
-.analytics-overview {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-bottom: 32px;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 24px;
-}
-
-.overview-card {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.overview-icon {
-  width: 48px;
-  height: 48px;
-  background: #f3f4f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  font-size: 1.5rem;
-}
-
-.overview-content h3 {
-  margin: 0 0 8px 0;
-  color: #6b7280;
-  font-family: var(--font-body);
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.overview-number {
-  margin: 0 0 4px 0;
-  color: #111827;
-  font-family: var(--font-heading);
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.overview-change {
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.overview-change.positive {
-  color: #10b981;
-}
-
-.overview-change.negative {
-  color: #ef4444;
-}
-
 /* Charts Grid */
 .charts-grid {
   display: grid;
@@ -2993,8 +2926,7 @@
     gap: 12px;
   }
 
-  .stat-card,
-  .overview-card {
+  .stat-card {
     padding: 16px;
   }
 
@@ -4666,68 +4598,6 @@
   color: white;
 }
 
-.analytics-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  padding: 0 2rem 2rem;
-}
-
-.overview-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s ease;
-}
-
-.overview-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-}
-
-.overview-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #284b63, #1e3a50);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-}
-
-.overview-content h3 {
-  color: #6b7280;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.overview-number {
-  color: #1f2937;
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.overview-change {
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.overview-change.positive {
-  color: #10b981;
-}
-
-.overview-change.negative {
-  color: #ef4444;
-}
-
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -5903,7 +5773,7 @@
 
 .page-header h1 {
   margin: 0;
-  color: #1e293b;
+  color: #fff;
   font-size: 2.2rem;
   font-weight: 700;
   background: linear-gradient(135deg, #284b63 0%, #3c6382 100%);

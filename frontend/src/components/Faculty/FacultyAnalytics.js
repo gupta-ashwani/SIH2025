@@ -14,7 +14,7 @@ import {
   ArcElement,
 } from "chart.js";
 import { Bar, Line, Doughnut } from "react-chartjs-2";
-import "./Faculty.css";
+import "./FacultyAnalytics.css";
 
 ChartJS.register(
   CategoryScale,
@@ -121,9 +121,15 @@ const FacultyAnalytics = () => {
 
   const doughnutOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: "bottom",
+        position: "right",
+        align: "center",
+        labels: {
+          usePointStyle: true,
+          boxWidth: 12,
+        },
       },
     },
   };
@@ -168,13 +174,6 @@ const FacultyAnalytics = () => {
       {/* Header */}
       <div className="page-header">
         <div className="header-content">
-          <button
-            className="back-btn"
-            onClick={() => navigate(`/faculty/dashboard/${id}`)}
-          >
-            <i className="fas fa-arrow-left"></i>
-            Back to Dashboard
-          </button>
           <h1>Analytics Dashboard</h1>
         </div>
 
@@ -265,42 +264,75 @@ const FacultyAnalytics = () => {
         </div>
 
         {/* Charts Grid */}
+        {/* Submission Trend */}
         <div className="charts-grid">
-          {/* Submission Trend */}
-          <div className="chart-card large">
+          <div className="chart-card submission-trend">
             <div className="chart-header">
               <h2>Submission Trend</h2>
               <p>Student achievement submissions over time</p>
             </div>
-            <div className="chart-container">
-              <Line data={submissionTrendData} options={chartOptions} />
-            </div>
-          </div>
-
-          {/* Achievement Types */}
-          <div className="chart-card">
-            <div className="chart-header">
-              <h2>Achievement Types</h2>
-              <p>Distribution of achievement categories</p>
-            </div>
-            <div className="chart-container">
-              <Doughnut data={achievementTypeData} options={doughnutOptions} />
-            </div>
-          </div>
-
-          {/* Student Performance */}
-          <div className="chart-card">
-            <div className="chart-header">
-              <h2>Student Performance</h2>
-              <p>Performance scores distribution</p>
-            </div>
-            <div className="chart-container">
-              <Bar data={performanceData} options={chartOptions} />
+            <div className="chart-container" style={{ height: "350px" }}>
+              <Line
+                data={{
+                  labels: analyticsData?.submissionTrend?.labels || [],
+                  datasets: [
+                    {
+                      label: "Submissions",
+                      data: analyticsData?.submissionTrend?.data || [],
+                      borderColor: "rgba(59,130,246,1)", // blue line
+                      backgroundColor: "rgba(59,130,246,0.2)", // light blue area
+                      pointBackgroundColor: "rgba(59,130,246,1)",
+                      pointRadius: 5, // bigger dots
+                      pointHoverRadius: 7, // hover effect
+                      borderWidth: 2,
+                      tension: 0.3, // smooth curve
+                      fill: true, // area under line
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "top",
+                      labels: {
+                        usePointStyle: true,
+                        boxWidth: 10,
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function (context) {
+                          return `${context.raw} submissions`;
+                        },
+                      },
+                    },
+                  },
+                  scales: {
+                    x: {
+                      ticks: {
+                        maxRotation: 30, // tilt dates slightly
+                        minRotation: 30,
+                      },
+                      grid: { display: false },
+                    },
+                    y: {
+                      beginAtZero: true,
+                      grid: { color: "rgba(0,0,0,0.05)" },
+                      title: {
+                        display: true,
+                        text: "Number of Submissions",
+                      },
+                    },
+                  },
+                }}
+              />
             </div>
           </div>
 
           {/* Top Performers */}
-          <div className="chart-card">
+          <div className="chart-card top-performers">
             <div className="chart-header">
               <h2>Top Performers</h2>
               <p>Students with highest achievement scores</p>
@@ -323,25 +355,106 @@ const FacultyAnalytics = () => {
             </div>
           </div>
 
+          {/* Achievement Types */}
+          <div className="chart-card achievement-types">
+            <div className="chart-header">
+              <h2>Achievement Types</h2>
+              <p>Distribution of achievement categories</p>
+            </div>
+            <div className="chart-container" style={{ height: "300px" }}>
+              <Doughnut data={achievementTypeData} options={doughnutOptions} />
+            </div>
+          </div>
+
+          {/* Student Performance */}
+          <div className="chart-card student-performance">
+            <div className="chart-header">
+              <h2>Student Performance</h2>
+              <p>Performance scores distribution</p>
+            </div>
+            <div className="chart-container" style={{ height: "350px" }}>
+              <Bar
+                data={{
+                  labels: analyticsData?.studentPerformance?.labels || [],
+                  datasets: [
+                    {
+                      label: "Student Performance",
+                      data: analyticsData?.studentPerformance?.data || [],
+                      backgroundColor: (ctx) => {
+                        const value = ctx.raw;
+                        // highlight top performers
+                        return value >= 80
+                          ? "rgba(16, 185, 129, 1)" // darker green
+                          : "rgba(16, 185, 129, 0.5)"; // lighter green
+                      },
+                      borderRadius: 6, // rounded bars
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: "top" },
+                    tooltip: {
+                      callbacks: {
+                        label: function (context) {
+                          return `${context.label}: ${context.raw}%`;
+                        },
+                      },
+                    },
+                  },
+                  scales: {
+                    x: {
+                      ticks: {
+                        maxRotation: 30, // tilt labels slightly
+                        minRotation: 30,
+                        callback: function (value, index, ticks) {
+                          let label = this.getLabelForValue(value);
+                          return label.length > 15
+                            ? label.substring(0, 15) + "…" // trim long names
+                            : label;
+                        },
+                      },
+                      grid: { display: false }, // clean x-axis
+                    },
+                    y: {
+                      beginAtZero: true,
+                      grid: { color: "rgba(0,0,0,0.05)" }, // light grid
+                      title: {
+                        display: true,
+                        text: "Score (%)",
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
+
           {/* Recent Activity */}
-          <div className="chart-card">
+          <div className="chart-card recent-activity">
             <div className="chart-header">
               <h2>Recent Activity</h2>
               <p>Latest student activities</p>
             </div>
             <div className="activity-timeline">
-              {analyticsData?.recentActivity?.map((activity, index) => (
-                <div key={index} className="timeline-item">
-                  <div className="timeline-marker"></div>
-                  <div className="timeline-content">
-                    <h4>{activity.title}</h4>
-                    <p>
-                      {activity.student} • {activity.type}
-                    </p>
-                    <span className="timeline-date">{activity.date}</span>
-                  </div>
-                </div>
-              )) || (
+              {analyticsData?.recentActivity?.length > 0 ? (
+                analyticsData.recentActivity
+                  .slice(0, 5)
+                  .map((activity, index) => (
+                    <div key={index} className="timeline-item">
+                      <div className="timeline-marker"></div>
+                      <div className="timeline-content">
+                        <h4>{activity.title}</h4>
+                        <p>
+                          {activity.student} • {activity.type}
+                        </p>
+                        <span className="timeline-date">{activity.date}</span>
+                      </div>
+                    </div>
+                  ))
+              ) : (
                 <div className="no-data">
                   <p>No recent activity</p>
                 </div>
@@ -350,7 +463,7 @@ const FacultyAnalytics = () => {
           </div>
 
           {/* Monthly Statistics */}
-          <div className="chart-card large">
+          <div className="chart-card monthly-stats">
             <div className="chart-header">
               <h2>Monthly Statistics</h2>
               <p>Key metrics comparison by month</p>
