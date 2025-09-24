@@ -539,8 +539,8 @@
 .main-content {
   flex: 1;
   padding: 20px;
-  margin-top: 70px; /* Account for fixed navbar */
-  min-height: calc(100vh - 140px); /* Account for navbar and footer */
+  margin-top: 0; /* Account for fixed navbar */
+  min-height: calc(100vh - 70px); /* Account for navbar and footer */
 }
 
 .landing-main {

@@ -464,13 +464,6 @@ const FacultyDashboard = () => {
         {/* Quick Actions */}
         <div className="quick-actions">
           <button
-            className="action-btn profile-btn"
-            onClick={() => navigate(`/faculty/profile/${id}`)}
-          >
-            <i className="fas fa-user"></i>
-            View Profile
-          </button>
-          <button
             className="action-btn add-student"
             onClick={() => setShowAddStudent(true)}
           >
@@ -603,9 +596,9 @@ const FacultyDashboard = () => {
 
       {/* Event Creation Modal */}
       {showEventForm && (
-        <div className="modal-overlay">
-          <div className="modal-content event-modal">
-            <div className="modal-header">
+        <div className="modal-overlay" onClick={() => setShowEventForm(false)}>
+          <div className="event-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header sticky-modal-header">
               <h2>Create New Event</h2>
               <button
                 className="close-btn"
@@ -614,6 +607,7 @@ const FacultyDashboard = () => {
                 <i className="fas fa-times"></i>
               </button>
             </div>
+            <div className="modal-body-scroll">
             <form onSubmit={handleCreateEvent} className="event-form">
               <div className="form-row">
                 <div className="form-group">
@@ -740,7 +734,6 @@ const FacultyDashboard = () => {
                     checked={eventForm.registrationRequired}
                     onChange={handleEventInputChange}
                   />
-                  <span className="checkmark"></span>
                   Registration Required
                 </label>
               </div>
@@ -776,6 +769,7 @@ const FacultyDashboard = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
@@ -790,15 +784,22 @@ const FacultyDashboard = () => {
 
       {/* Single Student Form Modal */}
       {showAddStudent && (
-        <div className="modal-overlay">
-          <div className="modal-content student-modal">
-            <div className="modal-header">
+        <div
+          className="modal-overlay"
+          onClick={handleAddStudentClose}
+        >
+          <div
+            className=" student-modal"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header sticky-modal-header">
               <h2>Add New Student</h2>
               <button className="close-btn" onClick={handleAddStudentClose}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            <form onSubmit={handleAddStudentSubmit} className="student-form">
+            <div className="modal-body-scroll">
+              <form onSubmit={handleAddStudentSubmit} className="student-form">
               {/* Required Fields */}
               <div className="form-section">
                 <h3>Required Information</h3>
@@ -1089,6 +1090,7 @@ const FacultyDashboard = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
