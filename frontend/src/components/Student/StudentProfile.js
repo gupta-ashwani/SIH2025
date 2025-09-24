@@ -512,110 +512,101 @@ const StudentProfile = () => {
           </div>
 
           {/* Skills & Interests Card */}
-          <div className="profile-card">
+          <div className="profile-card skills-interests-card">
             <div className="card-header">
               <h3>Skills & Interests</h3>
             </div>
             <div className="card-content">
-              <div className="info-grid">
-                <div className="info-group full-width">
-                  <label>Technical Skills</label>
-                  {isEditing ? (
-                    <textarea
-                      name="skills.technical"
-                      value={editForm.skills?.technical?.join(", ") || ""}
-                      onChange={(e) => {
-                        const skills = e.target.value.split(", ").filter(s => s.trim());
-                        setEditForm(prev => ({
-                          ...prev,
-                          skills: {
-                            ...prev.skills,
-                            technical: skills
-                          }
-                        }));
-                      }}
-                      rows="3"
-                      placeholder="Enter skills separated by commas (e.g., JavaScript, Python, React)"
-                    />
-                  ) : (
-                    <div className="skills-display">
-                      {student.skills?.technical?.length > 0 ? (
-                        student.skills.technical.map((skill, index) => (
-                          <span key={index} className="skill-tag technical">
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span>No technical skills added</span>
-                      )}
-                    </div>
-                  )}
+              <div className="skills-section">
+                <div className="skills-category">
+                  <div className="skills-label">Technical Skills</div>
+                  <div className="skills-tags">
+                    {student.skills?.technical?.length > 0 ? (
+                      student.skills.technical.map((skill, idx) => (
+                        <span key={idx} className="skill-tag technical">{skill}</span>
+                      ))
+                    ) : (
+                      <span className="skill-tag empty">No technical skills</span>
+                    )}
+                  </div>
                 </div>
+                <div className="skills-category">
+                  <div className="skills-label">Soft Skills</div>
+                  <div className="skills-tags">
+                    {student.skills?.soft?.length > 0 ? (
+                      student.skills.soft.map((skill, idx) => (
+                        <span key={idx} className="skill-tag soft">{skill}</span>
+                      ))
+                    ) : (
+                      <span className="skill-tag empty">No soft skills</span>
+                    )}
+                  </div>
+                </div>
+                <div className="skills-category">
+                  <div className="skills-label">Interests & Hobbies</div>
+                  <div className="skills-tags">
+                    {student.interests?.length > 0 ? (
+                      student.interests.map((interest, idx) => (
+                        <span key={idx} className="skill-tag interest">{interest}</span>
+                      ))
+                    ) : (
+                      <span className="skill-tag empty">No interests</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <div className="info-group full-width">
-                  <label>Soft Skills</label>
-                  {isEditing ? (
-                    <textarea
-                      name="skills.soft"
-                      value={editForm.skills?.soft?.join(", ") || ""}
-                      onChange={(e) => {
-                        const skills = e.target.value.split(", ").filter(s => s.trim());
-                        setEditForm(prev => ({
-                          ...prev,
-                          skills: {
-                            ...prev.skills,
-                            soft: skills
-                          }
-                        }));
-                      }}
-                      rows="3"
-                      placeholder="Enter skills separated by commas (e.g., Leadership, Communication, Teamwork)"
-                    />
-                  ) : (
-                    <div className="skills-display">
-                      {student.skills?.soft?.length > 0 ? (
-                        student.skills.soft.map((skill, index) => (
-                          <span key={index} className="skill-tag soft">
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span>No soft skills added</span>
+          {/* Projects Section Card */}
+          <div className="profile-card">
+            <div className="card-header">
+              <h3>Projects</h3>
+            </div>
+            <div className="card-content">
+              <div className="projects-list">
+                {student.projects?.length > 0 ? (
+                  student.projects.map((project, index) => (
+                    <div key={index} className="project-item">
+                      <div className="project-header">
+                        <h4>{project.title || "Project Title"}</h4>
+                        {project.link && (
+                          <a
+                            href={project.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="project-link"
+                          >
+                            <i className="fas fa-external-link-alt"></i>
+                          </a>
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="project-description">{project.description}</p>
+                      )}
+                      {project.technologies && (
+                        <div className="project-tech">
+                          <strong>Technologies:</strong>
+                          <div className="tech-tags">
+                            {project.technologies.split(',').map((tech, i) => (
+                              <span key={i} className="tech-tag">{tech.trim()}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {project.duration && (
+                        <p className="project-duration">
+                          <strong>Duration:</strong> {project.duration}
+                        </p>
                       )}
                     </div>
-                  )}
-                </div>
-
-                <div className="info-group full-width">
-                  <label>Interests & Hobbies</label>
-                  {isEditing ? (
-                    <textarea
-                      name="interests"
-                      value={editForm.interests?.join(", ") || ""}
-                      onChange={(e) => {
-                        const interests = e.target.value.split(", ").filter(s => s.trim());
-                        setEditForm(prev => ({
-                          ...prev,
-                          interests: interests
-                        }));
-                      }}
-                      rows="3"
-                      placeholder="Enter interests separated by commas (e.g., Photography, Reading, Sports)"
-                    />
-                  ) : (
-                    <div className="skills-display">
-                      {student.interests?.length > 0 ? (
-                        student.interests.map((interest, index) => (
-                          <span key={index} className="skill-tag interest">
-                            {interest}
-                          </span>
-                        ))
-                      ) : (
-                        <span>No interests added</span>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <i className="fas fa-code"></i>
+                    <p>No projects added yet</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -704,59 +695,6 @@ const StudentProfile = () => {
                   <div className="empty-state">
                     <i className="fas fa-graduation-cap"></i>
                     <p>No education background added yet</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Projects Section Card */}
-          <div className="profile-card">
-            <div className="card-header">
-              <h3>Projects</h3>
-            </div>
-            <div className="card-content">
-              <div className="projects-list">
-                {student.projects?.length > 0 ? (
-                  student.projects.map((project, index) => (
-                    <div key={index} className="project-item">
-                      <div className="project-header">
-                        <h4>{project.title || "Project Title"}</h4>
-                        {project.link && (
-                          <a
-                            href={project.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="project-link"
-                          >
-                            <i className="fas fa-external-link-alt"></i>
-                          </a>
-                        )}
-                      </div>
-                      {project.description && (
-                        <p className="project-description">{project.description}</p>
-                      )}
-                      {project.technologies && (
-                        <div className="project-tech">
-                          <strong>Technologies:</strong>
-                          <div className="tech-tags">
-                            {project.technologies.split(',').map((tech, i) => (
-                              <span key={i} className="tech-tag">{tech.trim()}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {project.duration && (
-                        <p className="project-duration">
-                          <strong>Duration:</strong> {project.duration}
-                        </p>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty-state">
-                    <i className="fas fa-code"></i>
-                    <p>No projects added yet</p>
                   </div>
                 )}
               </div>

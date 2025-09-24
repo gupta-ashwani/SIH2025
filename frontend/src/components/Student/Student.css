@@ -1,3 +1,79 @@
+/* Minimalistic Skills & Interests Section */
+.skills-interests-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+  margin-bottom: 32px;
+  padding: 28px 32px 24px 32px;
+}
+.skills-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.skills-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skills-label {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #284b63;
+  margin-bottom: 2px;
+  letter-spacing: 0.01em;
+}
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.skill-tag {
+  padding: 7px 16px;
+  border-radius: 18px;
+  font-size: 0.97rem;
+  font-weight: 500;
+  background: #f4f6fb;
+  color: #284b63;
+  border: none;
+  box-shadow: 0 1px 2px rgba(44,62,80,0.04);
+  transition: background 0.2s;
+}
+.skill-tag.technical {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.skill-tag.soft {
+  background: #d1fae5;
+  color: #047857;
+}
+.skill-tag.interest {
+  background: #fff7e6;
+  color: #b45309;
+}
+.skill-tag.empty {
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-style: italic;
+}
+@media (max-width: 768px) {
+  .skills-interests-card {
+    padding: 18px 8px 16px 8px;
+  }
+  .skills-section {
+    gap: 16px;
+  }
+  .skills-label {
+    font-size: 1rem;
+  }
+  .skills-tags {
+    gap: 7px;
+  }
+  .skill-tag {
+    font-size: 0.92rem;
+    padding: 6px 12px;
+  }
+}
 /* Student Dashboard Layout */
 .student-dashboard {
   min-height: calc(100vh - 70px);
